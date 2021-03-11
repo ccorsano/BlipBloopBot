@@ -10,6 +10,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using BlipBloopBot.Twitch.API;
+using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace BlipBloopBot
 {
@@ -19,6 +22,10 @@ namespace BlipBloopBot
         {
             IConfiguration configuration = null;
             var builder = new HostBuilder()
+                .ConfigureLogging(configure =>
+                {
+                    configure.AddConsole();
+                })
                 .ConfigureAppConfiguration(configure =>
                 {
                     configure.AddUserSecrets<Program>();
@@ -32,6 +39,7 @@ namespace BlipBloopBot
                     services.Configure<TwitchChatClientOptions>(configuration.GetSection("twitch").GetSection("IrcOptions"));
                     services.AddSingleton<IMessageProcessor, TracingMessageProcessor>();
                     services.AddTransient<TwitchChatClient>();
+                    services.AddTransient<TwitchAPIClient>();
                 })
                 .UseConsoleLifetime();
 
@@ -39,14 +47,29 @@ namespace BlipBloopBot
 
             using(var scope = host.Services.CreateScope())
             {
-                var ircClient = scope.ServiceProvider.GetRequiredService<TwitchChatClient>();
-                var cancellationSource = new CancellationTokenSource();
-                await ircClient.ConnectAsync(cancellationSource.Token);
-                await ircClient.SendCommandAsync("JOIN", "#locklear", cancellationSource.Token);
-                while (!cancellationSource.IsCancellationRequested)
+                using (var apiClient = scope.ServiceProvider.GetRequiredService<TwitchAPIClient>())
                 {
-                    await ircClient.ReceiveIRCMessage(cancellationSource.Token);
+                    var appConfig = scope.ServiceProvider.GetRequiredService<IOptions<TwitchApplicationOptions>>();
+                    await apiClient.AuthenticateAsync(appConfig.Value.ClientId, appConfig.Value.ClientSecret);
+
+                    var results = await apiClient.SearchChannelsAsync("locklear");
+                    var channelId = results.First(c => c.BroadcasterLogin == "locklear").Id;
+                    var channel = await apiClient.GetChannelInfoAsync(channelId);
+
+
                 }
+
+                using (var ircClient = scope.ServiceProvider.GetRequiredService<TwitchChatClient>())
+                {
+                    var cancellationSource = new CancellationTokenSource();
+                    await ircClient.ConnectAsync(cancellationSource.Token);
+                    await ircClient.SendCommandAsync("JOIN", "#locklear", cancellationSource.Token);
+                    while (!cancellationSource.IsCancellationRequested)
+                    {
+                        await ircClient.ReceiveIRCMessage(cancellationSource.Token);
+                    }
+                }
+                
             }
         }
     }

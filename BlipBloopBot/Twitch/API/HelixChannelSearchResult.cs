@@ -33,6 +33,7 @@ namespace BlipBloopBot.Twitch.API
         public string Title { get; set; }
 
         [JsonPropertyName("started_at")]
-        public DateTimeOffset StartedAt { get; set; }
+        [JsonConverter(typeof(JsonDateTimeOffsetConverter))]
+        public DateTimeOffset? StartedAt { get; set; }
     }
 }
