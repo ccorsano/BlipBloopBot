@@ -26,7 +26,7 @@ namespace BlipBloopBotTests
             var enumerator = sourceString.ParseBotCommands('!');
             var hasNext = enumerator.MoveNext();
             Assert.True(hasNext);
-            Assert.Equal("ipsum", new string(enumerator.Current));
+            Assert.Equal("ipsum", enumerator.Current);
             hasNext = enumerator.MoveNext();
             Assert.False(hasNext);
         }
@@ -38,7 +38,7 @@ namespace BlipBloopBotTests
             var enumerator = sourceString.ParseBotCommands('!');
             var hasNext = enumerator.MoveNext();
             Assert.True(hasNext);
-            Assert.Equal("Lorem", new string(enumerator.Current));
+            Assert.Equal("Lorem", enumerator.Current);
             hasNext = enumerator.MoveNext();
             Assert.False(hasNext);
         }
@@ -50,7 +50,7 @@ namespace BlipBloopBotTests
             var enumerator = sourceString.ParseBotCommands('!');
             var hasNext = enumerator.MoveNext();
             Assert.True(hasNext);
-            Assert.Equal("laborum", new string(enumerator.Current));
+            Assert.Equal("laborum", enumerator.Current);
             hasNext = enumerator.MoveNext();
             Assert.False(hasNext);
         }
@@ -62,7 +62,7 @@ namespace BlipBloopBotTests
             var enumerator = sourceString.ParseBotCommands('!');
             var hasNext = enumerator.MoveNext();
             Assert.True(hasNext);
-            Assert.Equal("laborum", new string(enumerator.Current));
+            Assert.Equal("laborum", enumerator.Current);
             hasNext = enumerator.MoveNext();
             Assert.False(hasNext);
         }
@@ -95,19 +95,19 @@ namespace BlipBloopBotTests
             var enumerator = sourceString.ParseBotCommands('!');
             var hasNext = enumerator.MoveNext();
             Assert.True(hasNext);
-            Assert.Equal("ipsum", new string(enumerator.Current));
+            Assert.Equal("ipsum", enumerator.Current);
             hasNext = enumerator.MoveNext();
             Assert.True(hasNext);
-            Assert.Equal("sit", new string(enumerator.Current));
+            Assert.Equal("sit", enumerator.Current);
             hasNext = enumerator.MoveNext();
             Assert.True(hasNext);
-            Assert.Equal("elit", new string(enumerator.Current));
+            Assert.Equal("elit", enumerator.Current);
             hasNext = enumerator.MoveNext();
             Assert.True(hasNext);
-            Assert.Equal("do", new string(enumerator.Current));
+            Assert.Equal("do", enumerator.Current);
             hasNext = enumerator.MoveNext();
             Assert.True(hasNext);
-            Assert.Equal("est", new string(enumerator.Current));
+            Assert.Equal("est", enumerator.Current);
             hasNext = enumerator.MoveNext();
             Assert.False(hasNext);
         }
