@@ -1,18 +1,12 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using BlipBloopBot.Twitch.IRC;
-using System;
 using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.WebSockets;
-using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using BlipBloopBot.Twitch.API;
 using Microsoft.Extensions.Logging;
-using System.Linq;
+using BlipBloopBot.Options;
 
 namespace BlipBloopBot
 {
@@ -34,43 +28,28 @@ namespace BlipBloopBot
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
+                    // Load channels and command configuration from static json file, and inject
+                    var channelsConfig = new ConfigurationBuilder().AddJsonFile("channels.json").Build();
+                    IEnumerable<ChannelOptions> channelOptions = new List<ChannelOptions>();
+                    channelsConfig.GetSection("channels").Bind(channelOptions);
+                    services.AddTransient<IEnumerable<ChannelOptions>>((_) => channelOptions);
+
+                    // Configure services
                     services.AddHttpClient();
                     services.Configure<TwitchApplicationOptions>(configuration.GetSection("twitch"));
                     services.Configure<TwitchChatClientOptions>(configuration.GetSection("twitch").GetSection("IrcOptions"));
                     services.AddSingleton<IMessageProcessor, TracingMessageProcessor>();
                     services.AddTransient<TwitchChatClient>();
                     services.AddTransient<TwitchAPIClient>();
+
+                    // Add hosted chatbot service
+                    services.AddHostedService<BotHostedService>();
                 })
                 .UseConsoleLifetime();
 
             var host = builder.Build();
 
-            using(var scope = host.Services.CreateScope())
-            {
-                using (var apiClient = scope.ServiceProvider.GetRequiredService<TwitchAPIClient>())
-                {
-                    var appConfig = scope.ServiceProvider.GetRequiredService<IOptions<TwitchApplicationOptions>>();
-                    await apiClient.AuthenticateAsync(appConfig.Value.ClientId, appConfig.Value.ClientSecret);
-
-                    var results = await apiClient.SearchChannelsAsync("locklear");
-                    var channelId = results.First(c => c.BroadcasterLogin == "locklear").Id;
-                    var channel = await apiClient.GetChannelInfoAsync(channelId);
-
-
-                }
-
-                using (var ircClient = scope.ServiceProvider.GetRequiredService<TwitchChatClient>())
-                {
-                    var cancellationSource = new CancellationTokenSource();
-                    await ircClient.ConnectAsync(cancellationSource.Token);
-                    await ircClient.SendCommandAsync("JOIN", "#locklear", cancellationSource.Token);
-                    while (!cancellationSource.IsCancellationRequested)
-                    {
-                        await ircClient.ReceiveIRCMessage(cancellationSource.Token);
-                    }
-                }
-                
-            }
+            await host.RunAsync();
         }
     }
 }

@@ -1,0 +1,34 @@
+﻿{
+  "channels": [
+    {
+      "BroadcasterLogin": "miekyld",
+      "Commands": {
+        "twitter": {
+          "Type": "SavedSnippet",
+          "Parameters": {
+            "Text": "https://twitter.com/nuja"
+          }
+        },
+        "jeu": {
+          "Type": "GameSynopsis"
+        }
+      }
+    },
+    {
+      "BroadcasterLogin": "nuja",
+      "Commands": {
+        "jeu": {
+          "Type": "GameSynopsis"
+        }
+      }
+    },
+    {
+      "BroadcasterLogin": "locklear",
+      "Commands": {
+        "jeu": {
+          "Type": "GameSynopsis"
+        }
+      }
+    }
+  ]
+}

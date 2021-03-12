@@ -10,6 +10,10 @@ using System.Threading.Tasks;
 
 namespace BlipBloopBot.Twitch.IRC
 {
+    /// <summary>
+    /// A small Twitch IRC over WebSocket client.
+    /// Aimed to be low-allocation, low-overhead and extensible.
+    /// </summary>
     public class TwitchChatClient : IDisposable
     {
         private readonly TwitchChatClientOptions _options;
