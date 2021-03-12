@@ -28,6 +28,15 @@ namespace BlipBloopBot.Twitch.API
             _logger = logger;
         }
 
+        public async Task<string> AuthenticateAsync()
+        {
+            if (DateTime.UtcNow > _oauthTokenExpiration)
+            {
+                await AuthenticateAsync(_clientId, _clientSecret);
+            }
+            return _oauthToken;
+        }
+
         public async Task AuthenticateAsync(string clientId, string clientSecret)
         {
             _clientId = clientId;
@@ -54,10 +63,7 @@ namespace BlipBloopBot.Twitch.API
 
         public async Task<HelixChannelSearchResult[]> SearchChannelsAsync(string channelQuery)
         {
-            if (DateTime.UtcNow > _oauthTokenExpiration)
-            {
-                await AuthenticateAsync(_clientId, _clientSecret);
-            }
+            await AuthenticateAsync();
 
             var uri = new Uri($"https://api.twitch.tv/helix/search/channels?query={channelQuery}");
             var result = await _httpClient.GetAsync(uri);
@@ -77,10 +83,7 @@ namespace BlipBloopBot.Twitch.API
 
         public async Task<HelixChannelInfo> GetChannelInfoAsync(string broadcasterId)
         {
-            if (DateTime.UtcNow > _oauthTokenExpiration)
-            {
-                await AuthenticateAsync(_clientId, _clientSecret);
-            }
+            await AuthenticateAsync();
 
             var uri = new Uri($"https://api.twitch.tv/helix/channels?broadcaster_id={broadcasterId}");
             var result = await _httpClient.GetAsync(uri);

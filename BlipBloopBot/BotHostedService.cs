@@ -53,9 +53,12 @@ namespace BlipBloopBot
                 using (var scope = _host.Services.CreateScope())
                 {
                     using (var apiClient = scope.ServiceProvider.GetRequiredService<TwitchAPIClient>())
+                    using (var igdbClient = scope.ServiceProvider.GetRequiredService<IGDBClient>())
+                    using (var steamStoreClient = scope.ServiceProvider.GetRequiredService<SteamStoreClient>())
                     {
                         var appConfig = scope.ServiceProvider.GetRequiredService<IOptions<TwitchApplicationOptions>>();
                         await apiClient.AuthenticateAsync(appConfig.Value.ClientId, appConfig.Value.ClientSecret);
+                        await igdbClient.AuthenticateAsync(appConfig.Value.ClientId, appConfig.Value.ClientSecret);
 
                         var results = await apiClient.SearchChannelsAsync(options.BroadcasterLogin);
                         var channelStatus = results.First(c => c.BroadcasterLogin == options.BroadcasterLogin);
@@ -69,6 +72,17 @@ namespace BlipBloopBot
                         else
                         {
                             _logger.LogWarning($"Connecting to {channel.BroadcasterName}, currently live");
+                        }
+
+                        string gameDescription = null;
+                        var twitchExternalGameInfo = await igdbClient.SearchExternalGame("uid", $"\"{channel.GameId}\"", IGDBExternalGameCategory.Twitch);
+                        if (twitchExternalGameInfo?.FirstOrDefault() != null)
+                        {
+                            var fullGameInfo = await igdbClient.GetGameByIdAsync(twitchExternalGameInfo.First().Game);
+                            if (fullGameInfo != null)
+                            {
+                                gameDescription = fullGameInfo.Summary;
+                            }
                         }
 
                         using (var ircClient = scope.ServiceProvider.GetRequiredService<TwitchChatClient>())
