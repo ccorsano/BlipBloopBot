@@ -28,7 +28,6 @@ namespace BlipBloopBot.Twitch.API
         private string _clientId;
         private string _clientSecret;
 
-
         public IGDBClient(IHttpClientFactory httpClientFactory, IMemoryCache memoryCache, TwitchAPIClient twitchAPIClient, ILogger<IGDBClient> logger)
         {
             _httpClient = httpClientFactory.CreateClient();

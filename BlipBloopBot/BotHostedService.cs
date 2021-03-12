@@ -1,4 +1,5 @@
-﻿using BlipBloopBot.Options;
+﻿using BlipBloopBot.Commands;
+using BlipBloopBot.Options;
 using BlipBloopBot.Twitch.API;
 using BlipBloopBot.Twitch.IRC;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +19,7 @@ namespace BlipBloopBot
     {
         private readonly IHost _host;
         private readonly List<ChannelOptions> _channels;
-        private readonly IEnumerable<IMessageProcessor> _messageProcessors;
+        private readonly Dictionary<string, IMessageProcessor> _messageProcessors;
         private readonly ILogger _logger;
 
         private List<Task> _channelTasks;
@@ -26,12 +27,12 @@ namespace BlipBloopBot
         public BotHostedService(
             IHost host,
             IEnumerable<ChannelOptions> options,
-            IEnumerable<IMessageProcessor> processors,
+            IEnumerable<CommandRegistration> commands,
             ILogger<BotHostedService> logger)
         {
             _host = host;
             _channels = options.ToList();
-            _messageProcessors = processors;
+            _messageProcessors = commands.ToDictionary(c => c.Name, c => c.Processor());
             _logger = logger;
         }
 
@@ -52,47 +53,17 @@ namespace BlipBloopBot
             {
                 using (var scope = _host.Services.CreateScope())
                 {
-                    using (var apiClient = scope.ServiceProvider.GetRequiredService<TwitchAPIClient>())
-                    using (var igdbClient = scope.ServiceProvider.GetRequiredService<IGDBClient>())
-                    using (var steamStoreClient = scope.ServiceProvider.GetRequiredService<SteamStoreClient>())
+                    var commandProcessors = options.Commands.Select(c => (Command: c.Key, Processor: _messageProcessors[c.Value.Type])).ToArray();
+                    await Task.WhenAll(commandProcessors.Select(processor => processor.Processor.Init(options.BroadcasterLogin)));
+                    var channelName = options.BroadcasterLogin;
+
+                    using (var ircClient = scope.ServiceProvider.GetRequiredService<TwitchChatClient>())
                     {
-                        var appConfig = scope.ServiceProvider.GetRequiredService<IOptions<TwitchApplicationOptions>>();
-                        await apiClient.AuthenticateAsync(appConfig.Value.ClientId, appConfig.Value.ClientSecret);
-                        await igdbClient.AuthenticateAsync(appConfig.Value.ClientId, appConfig.Value.ClientSecret);
-
-                        var results = await apiClient.SearchChannelsAsync(options.BroadcasterLogin);
-                        var channelStatus = results.First(c => c.BroadcasterLogin == options.BroadcasterLogin);
-                        var channel = await apiClient.GetChannelInfoAsync(channelStatus.Id);
-                        var channelName = channel.BroadcasterName.ToLowerInvariant();
-
-                        if (!channelStatus.IsLive)
+                        await ircClient.ConnectAsync(cancellationToken);
+                        await ircClient.JoinAsync(channelName, cancellationToken);
+                        while (!cancellationToken.IsCancellationRequested)
                         {
-                            _logger.LogWarning($"{channelStatus.DisplayName} is not live");
-                        }
-                        else
-                        {
-                            _logger.LogWarning($"Connecting to {channel.BroadcasterName}, currently live");
-                        }
-
-                        string gameDescription = null;
-                        var twitchExternalGameInfo = await igdbClient.SearchExternalGame("uid", $"\"{channel.GameId}\"", IGDBExternalGameCategory.Twitch);
-                        if (twitchExternalGameInfo?.FirstOrDefault() != null)
-                        {
-                            var fullGameInfo = await igdbClient.GetGameByIdAsync(twitchExternalGameInfo.First().Game);
-                            if (fullGameInfo != null)
-                            {
-                                gameDescription = fullGameInfo.Summary;
-                            }
-                        }
-
-                        using (var ircClient = scope.ServiceProvider.GetRequiredService<TwitchChatClient>())
-                        {
-                            await ircClient.ConnectAsync(cancellationToken);
-                            await ircClient.SendCommandAsync("JOIN", $"#{channelName}", cancellationToken);
-                            while (!cancellationToken.IsCancellationRequested)
-                            {
-                                await ircClient.ReceiveIRCMessage(cancellationToken);
-                            }
+                            await ircClient.ReceiveIRCMessage(commandProcessors, cancellationToken);
                         }
                     }
                 }

@@ -48,7 +48,6 @@ namespace BlipBloopBot.Twitch.API
                 { "client_id", _clientId },
                 { "client_secret", _clientSecret },
                 { "grant_type", "client_credentials" },
-                //{ "scope", "chat:read chat:edit" }
             };
             var reqContent = new FormUrlEncodedContent(param);
 
@@ -58,6 +57,7 @@ namespace BlipBloopBot.Twitch.API
             _oauthToken = _tokenResponse.AccessToken;
             _oauthTokenExpiration = DateTime.UtcNow.AddSeconds(_tokenResponse.ExpiresIn);
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _oauthToken);
+            _httpClient.DefaultRequestHeaders.Remove("client-id");
             _httpClient.DefaultRequestHeaders.Add("client-id", _clientId);
         }
 

@@ -1,8 +1,10 @@
 ﻿using BlipBloopBot.Twitch.IRC;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace BlipBloopBot
+namespace BlipBloopBot.Commands
 {
     /// <summary>
     /// Dummy message processor, logging messages
@@ -16,14 +18,19 @@ namespace BlipBloopBot
             _logger = logger;
         }
 
-        public void OnMessage(ParsedIRCMessage message)
+        public Task Init(string channelName)
+        {
+            return Task.CompletedTask;
+        }
+
+        public void OnMessage(ParsedIRCMessage message, Action<string> _)
         {
             _logger.LogInformation(":{prefix} {command} : {message}", new string(message.Prefix), new string(message.Command), new string(message.Trailing));
 
             List<string> commands = new List<string>();
             foreach(var botCommand in message.Trailing.ParseBotCommands('!'))
             {
-                commands.Add(new string(botCommand));
+                commands.Add(botCommand);
             }
             if (commands.Count > 0)
             {

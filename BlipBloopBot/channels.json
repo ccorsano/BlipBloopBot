@@ -1,16 +1,23 @@
 ﻿{
+  "nope-channels": [
+    {
+      "BroadcasterLogin": "miekyld",
+      "Commands": {
+        "jeu": {
+          "Type": "GameSynopsis"
+        }
+      }
+    }
+  ],
   "channels": [
     {
       "BroadcasterLogin": "miekyld",
       "Commands": {
-        "twitter": {
-          "Type": "SavedSnippet",
-          "Parameters": {
-            "Text": "https://twitter.com/nuja"
-          }
-        },
         "jeu": {
           "Type": "GameSynopsis"
+        },
+        "*": {
+          "Type": "MessageTracer"
         }
       }
     },
@@ -27,6 +34,9 @@
       "Commands": {
         "jeu": {
           "Type": "GameSynopsis"
+        },
+        "jgkhjgkjhghj": {
+          "Type": "MessageTracer"
         }
       }
     }

@@ -8,6 +8,8 @@ using BlipBloopBot.Twitch.API;
 using Microsoft.Extensions.Logging;
 using BlipBloopBot.Options;
 using Microsoft.Extensions.Caching.Memory;
+using BlipBloopBot.Commands;
+using BlipBloopBot.Extensions;
 
 namespace BlipBloopBot
 {
@@ -45,6 +47,10 @@ namespace BlipBloopBot
                     services.AddTransient<IGDBClient>();
                     services.AddSingleton<IMemoryCache, MemoryCache>();
                     services.AddSingleton<SteamStoreClient>();
+
+                    // Configure commands
+                    services.AddCommand<GameSynopsisCommand>("GameSynopsis");
+                    services.AddCommand<TracingMessageProcessor>("MessageTracer");
 
                     // Add hosted chatbot service
                     services.AddHostedService<BotHostedService>();

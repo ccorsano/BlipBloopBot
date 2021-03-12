@@ -15,6 +15,6 @@ namespace BlipBloopBot.Twitch.IRC.Parsing
 
         public ReadOnlySpan<char> _cmd;
 
-        public static implicit operator ReadOnlySpan<char>(BotCommandItem entry) => entry._cmd;
+        public static implicit operator string(BotCommandItem entry) => new string(entry._cmd);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
@@ -22,6 +23,9 @@ namespace BlipBloopBot.Twitch.IRC
         private readonly byte[] _inBuffer;
         private readonly List<IMessageProcessor> _processors;
         private readonly ILogger _logger;
+        private string _joinedChannel;
+
+        private ConcurrentQueue<string> _outMessageQueue = new ConcurrentQueue<string>();
 
         public TwitchChatClient(IEnumerable<IMessageProcessor> processors, IOptions<TwitchChatClientOptions> options, ILogger<TwitchChatClient> logger)
         {
@@ -40,7 +44,13 @@ namespace BlipBloopBot.Twitch.IRC
 
             await SendCommandAsync("PASS", $"oauth:{_options.OAuthToken}", cancellationToken);
             await SendCommandAsync("NICK", _options.UserName, cancellationToken);
-            await ReceiveIRCMessage(cancellationToken);
+            await ReceiveIRCMessage(new List<(string, IMessageProcessor)>(), cancellationToken);
+        }
+
+        public async Task JoinAsync(string channelName, CancellationToken cancellationToken)
+        {
+            await SendCommandAsync("JOIN", $"#{channelName}", cancellationToken);
+            _joinedChannel = channelName;
         }
 
         public async Task SendCommandAsync(string cmd, string message, CancellationToken cancellationToken)
@@ -51,21 +61,53 @@ namespace BlipBloopBot.Twitch.IRC
             await _webSocket.SendAsync(_outBuffer.AsMemory().Slice(0, length), WebSocketMessageType.Text, true, cancellationToken);
         }
 
-        public async Task ReceiveIRCMessage(CancellationToken cancellationToken)
+        public async Task SendMessageAsync(string message, CancellationToken cancellationToken)
+        {
+            if (_joinedChannel == null)
+            {
+                throw new InvalidOperationException("No active channel");
+            }
+
+            var sendText = $"PRIVMSG #{_joinedChannel} :{message}";
+            var length = Encoding.UTF8.GetBytes(sendText.AsSpan(), _outBuffer.AsSpan());
+
+            await _webSocket.SendAsync(_outBuffer.AsMemory().Slice(0, length), WebSocketMessageType.Text, true, cancellationToken);
+        }
+
+        public async Task ReceiveIRCMessage(IEnumerable<(string,IMessageProcessor)> processors, CancellationToken cancellationToken)
         {
             var rcvResult = await _webSocket.ReceiveAsync(_inBuffer, cancellationToken);
             var stringMessage = Encoding.UTF8.GetString(_inBuffer.AsSpan().Slice(0, rcvResult.Count));
 
-            ParseMessage(stringMessage);
+            ParseMessage(stringMessage, processors);
+            
+            while (_outMessageQueue.TryDequeue(out var msg))
+            {
+                await SendMessageAsync(msg, cancellationToken);
+            }
         }
 
-        private void ParseMessage(string receivedMessage)
+        private void ParseMessage(string receivedMessage, IEnumerable<(string,IMessageProcessor)> processors)
         {
             foreach (var line in receivedMessage.SplitLines())
             {
-                foreach(var processor in _processors)
+                foreach(var botCommand in line.Message.Trailing.ParseBotCommands('!'))
                 {
-                    processor.OnMessage(line.Message);
+                    foreach (var (command, processor) in processors)
+                    {
+                        if (command == botCommand)
+                        {
+                            processor.OnMessage(line.Message, _outMessageQueue.Enqueue);
+                        }
+                    }
+                }
+
+                foreach (var (command, processor) in processors)
+                {
+                    if (command == "*")
+                    {
+                        processor.OnMessage(line.Message, _outMessageQueue.Enqueue);
+                    }
                 }
             }
         }
