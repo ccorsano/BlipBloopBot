@@ -14,10 +14,4 @@
     <ProjectReference Include="..\BlipBloopFramework\BlipBloopFramework.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="channels.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -99,6 +100,41 @@ namespace BlipBloopBot.Twitch.API
             }
 
             return null;
+        }
+
+        public async IAsyncEnumerable<HelixCategoriesSearchEntry> EnumerateTwitchCategoriesAsync()
+        {
+            await AuthenticateAsync();
+
+            HelixCategoriesSearchResponse response = null;
+            uint paginationRound = 1;
+            int totalItems = 0;
+            do
+            {
+                var uri = "https://api.twitch.tv/helix/search/categories";
+                _logger.LogDebug("Fetching categories from Twitch API, pagination {paginationCursor}, round {paginationRound}, total items {totalItems}", response?.Pagination?.Cursor, paginationRound, totalItems);
+                uri = QueryHelpers.AddQueryString(uri, "query", "*");
+                uri = QueryHelpers.AddQueryString(uri, "first", "100");
+                if (response?.Pagination?.Cursor != null)
+                {
+                    uri = QueryHelpers.AddQueryString(uri, "after", response.Pagination.Cursor);
+                }
+                var result = await _httpClient.GetAsync(uri);
+                response = await JsonSerializer.DeserializeAsync<HelixCategoriesSearchResponse>(await result.Content.ReadAsStreamAsync());
+
+                _logger.LogDebug("Received response from Twitch API, items {responseItems}, pagination cursor {paginationCursor}", response?.Data?.Length, response?.Pagination?.Cursor ?? "not set");
+                if (response.Data != null)
+                {
+                    foreach (var category in response.Data)
+                    {
+                        yield return category;
+                    }
+
+                    totalItems += response.Data.Length;
+                }
+
+                ++paginationRound;
+            } while (response.Pagination.Cursor != null);
         }
 
         public void Dispose()
