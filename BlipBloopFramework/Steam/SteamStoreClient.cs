@@ -21,6 +21,7 @@ namespace BlipBloopBot.Twitch.API
         {
             _httpClient = factory.CreateClient();
             _httpClient.BaseAddress = new Uri("https://store.steampowered.com/");
+            _cache = memoryCache;
             _logger = logger;
         }
 

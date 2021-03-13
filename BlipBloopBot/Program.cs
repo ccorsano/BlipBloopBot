@@ -10,6 +10,7 @@ using BlipBloopBot.Options;
 using Microsoft.Extensions.Caching.Memory;
 using BlipBloopBot.Commands;
 using BlipBloopBot.Extensions;
+using BlipBloopBot.Twitch;
 
 namespace BlipBloopBot
 {

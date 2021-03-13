@@ -1,6 +1,6 @@
 ﻿using BlipBloopBot.Twitch.IRC;
 
-namespace BlipBloopBot
+namespace BlipBloopBot.Twitch
 {
     public class TwitchApplicationOptions
     {
