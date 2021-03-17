@@ -52,7 +52,7 @@ namespace BlipBloopBot.Commands
             var twitchExternalGameInfo = await _igdbClient.SearchExternalGame("uid", $"\"{channel.GameId}\"", IGDBExternalGameCategory.Twitch);
             if (twitchExternalGameInfo?.FirstOrDefault() != null)
             {
-                var fullGameInfo = await _igdbClient.GetGameByIdAsync(twitchExternalGameInfo.First().Game);
+                var fullGameInfo = await _igdbClient.GetGameByIdAsync(twitchExternalGameInfo.First().Game.Id);
                 if (fullGameInfo != null)
                 {
                     _synopsis = fullGameInfo.Summary;

@@ -1,6 +1,10 @@
-﻿using Microsoft.Extensions.Caching.Memory;
+﻿using BlibBloopBot.IGDB.Generated;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using ProtoBuf;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
@@ -44,11 +48,11 @@ namespace BlipBloopBot.Twitch.API
             await _twitchAPIClient.AuthenticateAsync(clientId, clientSecret);
         }
 
-        public async Task<IGDBGame> GetGameByIdAsync(uint gameId)
+        public async Task<Game> GetGameByIdAsync(ulong gameId)
         {
             var cacheKey = $"igdb:games:{gameId}";
 
-            if (!_cache.TryGetValue(cacheKey, out IGDBGame result))
+            if (!_cache.TryGetValue(cacheKey, out Game result))
             {
                 var authToken = await _twitchAPIClient.AuthenticateAsync();
 
@@ -57,7 +61,7 @@ namespace BlipBloopBot.Twitch.API
                     throw new InvalidOperationException("Please authenticate first");
                 }
 
-                var message = new HttpRequestMessage(HttpMethod.Post, $"v4/games");
+                var message = new HttpRequestMessage(HttpMethod.Post, $"v4/games.pb");
                 message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
                 message.Headers.Add("Client-ID", _clientId);
                 message.Content = new StringContent($"fields *; where id = {gameId};");
@@ -67,10 +71,7 @@ namespace BlipBloopBot.Twitch.API
 
                 using (var responseStream = await response.Content.ReadAsStreamAsync())
                 {
-                    result = (await JsonSerializer.DeserializeAsync<IGDBGame[]>(responseStream, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    })).First();
+                    result = Serializer.Deserialize<GameResult>(responseStream).Games.FirstOrDefault();
                 }
 
                 _cache.Set(cacheKey, result);
@@ -78,11 +79,11 @@ namespace BlipBloopBot.Twitch.API
             return result;
         }
 
-        public async Task<IGDBExternalGame[]> SearchExternalGame(string fieldName, string fieldValue, IGDBExternalGameCategory category)
+        public async Task<ExternalGame[]> SearchExternalGame(string fieldName, string fieldValue, IGDBExternalGameCategory category)
         {
             var cacheKey = $"igdb:external:{fieldName}:{fieldValue}:{category}";
 
-            if (!_cache.TryGetValue(cacheKey, out IGDBExternalGame[] result))
+            if (!_cache.TryGetValue(cacheKey, out ExternalGame[] result))
             {
                 var authToken = await _twitchAPIClient.AuthenticateAsync();
 
@@ -91,7 +92,7 @@ namespace BlipBloopBot.Twitch.API
                     throw new InvalidOperationException("Please authenticate first");
                 }
 
-                var message = new HttpRequestMessage(HttpMethod.Post, $"v4/external_games");
+                var message = new HttpRequestMessage(HttpMethod.Post, $"v4/external_games.pb");
                 message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
                 message.Headers.Add("Client-ID", _clientId);
                 message.Content = new StringContent($"fields *; where {fieldName} = {fieldValue} & category = {(uint) category};");
@@ -101,15 +102,49 @@ namespace BlipBloopBot.Twitch.API
 
                 using (var responseStream = await response.Content.ReadAsStreamAsync())
                 {
-                    result = await JsonSerializer.DeserializeAsync<IGDBExternalGame[]>(responseStream, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
+                    result = Serializer.Deserialize<ExternalGameResult>(responseStream).Externalgames.ToArray();
                 }
 
                 _cache.Set(cacheKey, result);
             }
             return result;
+        }
+
+        public async IAsyncEnumerable<Platform> EnumeratePlatforms()
+        {
+            var authToken = await _twitchAPIClient.AuthenticateAsync();
+
+            List<Platform> response = null;
+            uint page = 0;
+            int totalItems = 0;
+            const int limit = 100;
+            do
+            {
+                var message = new HttpRequestMessage(HttpMethod.Post, $"v4/platforms.pb");
+                _logger.LogDebug("Fetching platforms from IGDB API, {offset}-{nextOffset}, total items {totalItems}", (page * limit) + 1, (page+1) * limit, totalItems);
+
+                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
+                message.Headers.Add("Client-ID", _clientId);
+                message.Content = new StringContent($"fields *; limit {limit}; offset {page * limit};");
+
+                var result = await _httpClient.SendAsync(message);
+                var platformResult = Serializer.Deserialize<PlatformResult>(await result.Content.ReadAsStreamAsync());
+                response = platformResult.Platforms;
+
+                _logger.LogDebug("Received response from IGDB API, items {responseItems}", response.Count);
+                
+                if (response != null)
+                {
+                    foreach (var platform in response)
+                    {
+                        yield return platform;
+                    }
+
+                    totalItems += response.Count;
+                }
+
+                ++page;
+            } while (response.Count == limit);
         }
 
         public void Dispose()

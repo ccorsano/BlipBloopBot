@@ -57,9 +57,15 @@ namespace BlipBloopBot.Twitch.API
             _tokenResponse = await JsonSerializer.DeserializeAsync<TwitchOAuthTokenResponse>(await result.Content.ReadAsStreamAsync());
             _oauthToken = _tokenResponse.AccessToken;
             _oauthTokenExpiration = DateTime.UtcNow.AddSeconds(_tokenResponse.ExpiresIn);
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _oauthToken);
-            _httpClient.DefaultRequestHeaders.Remove("client-id");
-            _httpClient.DefaultRequestHeaders.Add("client-id", _clientId);
+
+            lock (_httpClient)
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _oauthToken);
+                if (!_httpClient.DefaultRequestHeaders.Contains("client-id"))
+                {
+                    _httpClient.DefaultRequestHeaders.Add("client-id", _clientId);
+                }
+            }
         }
 
         public async Task<HelixChannelSearchResult[]> SearchChannelsAsync(string channelQuery)
