@@ -49,7 +49,9 @@ namespace BlipBloopBot.Twitch.IRC
 
         public async Task JoinAsync(string channelName, CancellationToken cancellationToken)
         {
+            var botUserName = _options.UserName.ToLowerInvariant();
             await SendCommandAsync("JOIN", $"#{channelName}", cancellationToken);
+            await SendCommandAsync($":{botUserName}!{botUserName}@{botUserName}.tmi.twitch.tv JOIN", $"#{channelName}", cancellationToken);
             _joinedChannel = channelName;
         }
 
@@ -104,7 +106,7 @@ namespace BlipBloopBot.Twitch.IRC
 
                 foreach (var (command, processor) in processors)
                 {
-                    if (command == "*")
+                    if (command == "*" && line.Message.Command.CompareTo("PRIVMSG", StringComparison.Ordinal) == 0)
                     {
                         processor.OnMessage(line.Message, _outMessageQueue.Enqueue);
                     }

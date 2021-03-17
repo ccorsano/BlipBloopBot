@@ -1,15 +1,18 @@
 ﻿{
-  "nope-channels": [
+  "channels": [
     {
       "BroadcasterLogin": "miekyld",
       "Commands": {
         "jeu": {
           "Type": "GameSynopsis"
+        },
+        "game": {
+          "Type": "GameSynopsis"
         }
       }
     }
   ],
-  "channels": [
+  "nope-channels": [
     {
       "BroadcasterLogin": "miekyld",
       "Commands": {
@@ -30,13 +33,10 @@
       }
     },
     {
-      "BroadcasterLogin": "locklear",
+      "BroadcasterLogin": "Colas_Bim",
       "Commands": {
-        "jeu": {
+        "*": {
           "Type": "GameSynopsis"
-        },
-        "jgkhjgkjhghj": {
-          "Type": "MessageTracer"
         }
       }
     }

@@ -1,4 +1,6 @@
-﻿using BlipBloopBot.Twitch;
+﻿using BlipBloopBot.Model;
+using BlipBloopBot.Storage;
+using BlipBloopBot.Twitch;
 using BlipBloopBot.Twitch.API;
 using BlipBloopBot.Twitch.IRC;
 using Microsoft.Extensions.Logging;
@@ -13,19 +15,22 @@ namespace BlipBloopBot.Commands
     {
         private readonly TwitchAPIClient _twitchAPIClient;
         private readonly IGDBClient _igdbClient;
+        private readonly IGameLocalizationStore _localizationStore;
         private readonly TwitchApplicationOptions _twitchOptions;
         private readonly ILogger _logger;
 
-        private string _synopsis;
+        private GameInfo _gameInfo;
 
         public GameSynopsisCommand(
             TwitchAPIClient twitchAPIClient,
             IGDBClient igdbClient,
+            IGameLocalizationStore localizationStore,
             IOptions<TwitchApplicationOptions> twitchOptions,
             ILogger<GameSynopsisCommand> logger)
         {
             _twitchAPIClient = twitchAPIClient;
             _igdbClient = igdbClient;
+            _localizationStore = localizationStore;
             _twitchOptions = twitchOptions.Value;
             _logger = logger;
         }
@@ -49,21 +54,12 @@ namespace BlipBloopBot.Commands
                 _logger.LogWarning($"Connecting to {channel.BroadcasterName}, currently live");
             }
 
-            var twitchExternalGameInfo = await _igdbClient.SearchExternalGame("uid", $"\"{channel.GameId}\"", IGDBExternalGameCategory.Twitch);
-            if (twitchExternalGameInfo?.FirstOrDefault() != null)
-            {
-                var fullGameInfo = await _igdbClient.GetGameByIdAsync(twitchExternalGameInfo.First().Game.Id);
-                if (fullGameInfo != null)
-                {
-                    _synopsis = fullGameInfo.Summary;
-                    _logger.LogWarning($"Playing {fullGameInfo.Name}: {fullGameInfo.Summary}");
-                }
-            }
+            _gameInfo = await _localizationStore.ResolveLocalizedGameInfo(channelStatus.BroadcasterLanguage, channelStatus.GameId);
         }
 
         public void OnMessage(ParsedIRCMessage message, Action<string> sendResponse)
         {
-            sendResponse(_synopsis ?? "Not playing, we are just chilling at the moment !");
+            sendResponse(_gameInfo?.Summary ?? "Not playing, we are just chilling at the moment !");
         }
     }
 }

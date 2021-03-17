@@ -54,8 +54,8 @@ namespace BlipBloopBot
                 using (var scope = _host.Services.CreateScope())
                 {
                     var commandProcessors = options.Commands.Select(c => (Command: c.Key, Processor: _messageProcessors[c.Value.Type])).ToArray();
-                    await Task.WhenAll(commandProcessors.Select(processor => processor.Processor.Init(options.BroadcasterLogin)));
-                    var channelName = options.BroadcasterLogin;
+                    await Task.WhenAll(commandProcessors.Select(processor => processor.Processor.Init(options.BroadcasterLogin.ToLowerInvariant())));
+                    var channelName = options.BroadcasterLogin.ToLowerInvariant();
 
                     using (var ircClient = scope.ServiceProvider.GetRequiredService<TwitchChatClient>())
                     {

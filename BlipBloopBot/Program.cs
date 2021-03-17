@@ -11,6 +11,7 @@ using Microsoft.Extensions.Caching.Memory;
 using BlipBloopBot.Commands;
 using BlipBloopBot.Extensions;
 using BlipBloopBot.Twitch;
+using BlipBloopBot.Storage;
 
 namespace BlipBloopBot
 {
@@ -48,6 +49,7 @@ namespace BlipBloopBot
                     services.AddTransient<IGDBClient>();
                     services.AddSingleton<IMemoryCache, MemoryCache>();
                     services.AddSingleton<SteamStoreClient>();
+                    services.AddSingleton<IGameLocalizationStore, EmbeddedGameLocalizationDb>();
 
                     // Configure commands
                     services.AddCommand<GameSynopsisCommand>("GameSynopsis");
