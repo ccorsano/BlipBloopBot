@@ -20,7 +20,7 @@ namespace TwitchCategoriesCrawler
                 .ConfigureLogging(configure =>
                 {
                     configure.AddConsole();
-                    configure.SetMinimumLevel(LogLevel.Debug);
+                    configure.SetMinimumLevel(LogLevel.Information);
                 })
                 .ConfigureAppConfiguration(configure =>
                 {

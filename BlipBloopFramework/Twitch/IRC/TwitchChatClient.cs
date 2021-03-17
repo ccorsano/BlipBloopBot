@@ -24,6 +24,7 @@ namespace BlipBloopBot.Twitch.IRC
         private readonly List<IMessageProcessor> _processors;
         private readonly ILogger _logger;
         private string _joinedChannel;
+        private bool _receivedPing;
 
         private ConcurrentQueue<string> _outMessageQueue = new ConcurrentQueue<string>();
 
@@ -82,6 +83,12 @@ namespace BlipBloopBot.Twitch.IRC
             var stringMessage = Encoding.UTF8.GetString(_inBuffer.AsSpan().Slice(0, rcvResult.Count));
 
             ParseMessage(stringMessage, processors);
+
+            if (_receivedPing)
+            {
+                await SendCommandAsync("PONG", ":tmi.twitch.tv", cancellationToken);
+                _receivedPing = false;
+            }
             
             while (_outMessageQueue.TryDequeue(out var msg))
             {
@@ -93,6 +100,11 @@ namespace BlipBloopBot.Twitch.IRC
         {
             foreach (var line in receivedMessage.SplitLines())
             {
+                if (line.Message.Command.CompareTo("PING", StringComparison.Ordinal) == 0)
+                {
+                    _receivedPing = true;
+                }
+
                 foreach(var botCommand in line.Message.Trailing.ParseBotCommands('!'))
                 {
                     foreach (var (command, processor) in processors)

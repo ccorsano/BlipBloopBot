@@ -6,9 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace BlipBloopBot.Storage
@@ -27,7 +25,7 @@ namespace BlipBloopBot.Storage
 
         private async Task LoadEmbeddedCSVFile()
         {
-            var file = Assembly.GetAssembly(this.GetType()).GetManifestResourceStream("BlipBloopBot.gamedb_fr.csv");
+            var file = Assembly.GetAssembly(this.GetType()).GetManifestResourceStream("BlipBloopCommands.gamedb_fr.csv");
             if (file == null)
             {
                 throw new Exception("Could not find embedded game localization data");

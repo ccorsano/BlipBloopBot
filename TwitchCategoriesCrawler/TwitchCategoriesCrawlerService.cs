@@ -45,7 +45,7 @@ namespace TwitchCategoriesCrawler
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            var targetLanguage = TwitchConstants.ENGLISH;
+            var targetLanguage = TwitchConstants.GERMAN;
 
             IDictionary<ulong, Platform> platformDb = new Dictionary<ulong, Platform>();
             IDictionary<(string, string), GameInfo> gameDb = new Dictionary<(string, string), GameInfo>();
@@ -111,7 +111,7 @@ namespace TwitchCategoriesCrawler
                         }
                         else
                         {
-                            if (!gameDb.TryAdd((category.Id, TwitchConstants.ENGLISH), gameInfo))
+                            if (steamLanguage.Key != TwitchConstants.ENGLISH && !gameDb.TryAdd((category.Id, TwitchConstants.ENGLISH), gameInfo))
                             {
                                 _logger.LogWarning("Received same category twice {categoryId} ({categoryName})", category.Id, category.Name);
                             }

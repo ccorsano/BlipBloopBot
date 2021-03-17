@@ -9,7 +9,7 @@ namespace BlipBloopBot.Commands
     /// <summary>
     /// Dummy message processor, logging messages
     /// </summary>
-    class TracingMessageProcessor : IMessageProcessor
+    public class TracingMessageProcessor : IMessageProcessor
     {
         private readonly ILogger _logger;
 

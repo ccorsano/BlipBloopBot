@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="gamedb_fr.csv" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="gamedb_fr.csv" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlipBloopFramework\BlipBloopFramework.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="26.0.1" />
+  </ItemGroup>
+
+</Project>
