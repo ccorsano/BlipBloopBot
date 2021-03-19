@@ -15,7 +15,7 @@ namespace BlipBloopBot.Model.EventSub
         public string Type { get; set; }
 
         [JsonPropertyName("version")]
-        public long Version { get; set; }
+        public string Version { get; set; }
 
         [JsonPropertyName("cost")]
         public long Cost { get; set; }
@@ -33,7 +33,7 @@ namespace BlipBloopBot.Model.EventSub
     public partial class TwitchEventSubCondition
     {
         [JsonPropertyName("broadcaster_user_id")]
-        public long BroadcasterUserId { get; set; }
+        public string BroadcasterUserId { get; set; }
     }
 
     public partial class TwitchEventSubTransport
