@@ -5,7 +5,7 @@ namespace BlipBloopBot.Model.EventSub
     public class TwitchEventSubEvent
     {
         [JsonPropertyName("user_id")]
-        public long UserId { get; set; }
+        public string UserId { get; set; }
 
         [JsonPropertyName("user_login")]
         public string UserLogin { get; set; }
@@ -14,7 +14,7 @@ namespace BlipBloopBot.Model.EventSub
         public string UserName { get; set; }
 
         [JsonPropertyName("broadcaster_user_id")]
-        public long BroadcasterUserId { get; set; }
+        public string BroadcasterUserId { get; set; }
 
         [JsonPropertyName("broadcaster_user_login")]
         public string BroadcasterUserLogin { get; set; }
