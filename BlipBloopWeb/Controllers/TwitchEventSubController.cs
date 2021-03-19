@@ -1,6 +1,7 @@
 ﻿using BlipBloopBot.Constants;
 using BlipBloopBot.Model;
 using BlipBloopBot.Model.EventSub;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -73,6 +74,8 @@ namespace BlipBloopWeb.Controllers
 
             var pool = ArrayPool<byte>.Shared;
 
+            TwitchEventSubCallbackPayload payload = null;
+
             var key = System.Text.Encoding.UTF8.GetBytes(secret);
             using (var signatureAlg = IncrementalHash.CreateHMAC(HashAlgorithmName.SHA256, key))
             {
@@ -87,6 +90,7 @@ namespace BlipBloopWeb.Controllers
                         signatureAlg.AppendData(segment.Span);
                         _logger.LogWarning(System.Text.Encoding.UTF8.GetString(segment.Span));
                     }
+                    payload = ReadPayload(result.Buffer);
                 } while (!result.IsCompleted && !result.IsCanceled);
                 var hashBytes = signatureAlg.GetCurrentHash();
                 var hashString = System.Convert.ToHexString(hashBytes).ToLowerInvariant();
@@ -94,10 +98,28 @@ namespace BlipBloopWeb.Controllers
                 if (hashString != signature.Split("=").Last())
                 {
                     _logger.LogError("Signature mismatch {received} =/= {computer}", signature, hashString);
+                    return new BadRequestResult();
                 }
+
+                if (payload.Subscription.Status == "webhook_callback_verification_pending")
+                {
+                    return new ContentResult
+                    {
+                        ContentType = "text/plain",
+                        Content = payload.Challenge,
+                        StatusCode = StatusCodes.Status200OK
+                    };
+                }
+
             }
 
             return new OkResult();
+        }
+
+        private TwitchEventSubCallbackPayload ReadPayload(ReadOnlySequence<byte> data)
+        {
+            var reader = new Utf8JsonReader(data);
+            return JsonSerializer.Deserialize<TwitchEventSubCallbackPayload>(ref reader);
         }
     }
 }
