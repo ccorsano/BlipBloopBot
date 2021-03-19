@@ -8,6 +8,16 @@ namespace BlipBloopBot.Constants
 {
     public static class TwitchConstants
     {
+        public static readonly string WEBHOOK_CALLBACK_VERIFICATION_PENDING = "webhook_callback_verification_pending";
+
+        public static readonly string EVENTSUB_HEADERNAME_MSGID = "twitch-eventsub-message-id";
+        public static readonly string EVENTSUB_HEADERNAME_RETRY = "twitch-eventsub-message-retry";
+        public static readonly string EVENTSUB_HEADERNAME_MSGTYPE = "twitch-eventsub-message-type";
+        public static readonly string EVENTSUB_HEADERNAME_SIGNATURE = "twitch-eventsub-message-signature";
+        public static readonly string EVENTSUB_HEADERNAME_TIMESTAMP = "twitch-eventsub-message-timestamp";
+        public static readonly string EVENTSUB_HEADERNAME_SUBTYPE = "twitch-eventsub-subscription-type";
+        public static readonly string EVENTSUB_HEADERNAME_SUBVERSION = "twitch-eventsub-subscription-version";
+
         public static string ENGLISH = "en";
         public static string INDONESIAN = "id";
         public static string CATALAN = "ca";
