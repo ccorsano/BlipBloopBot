@@ -29,7 +29,6 @@ namespace BlipBloopWeb.Controllers
         public async Task<IActionResult> Callback(CancellationToken cancellationToken)
         {
             var secret = "7517d8c3-28f4-4372-947a-0069efa2dcf6";
-            secret = "s3cRe7";
 
             foreach(var header in Request.Headers)
             {
