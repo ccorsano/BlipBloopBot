@@ -45,7 +45,7 @@ namespace TwitchCategoriesCrawler
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            var targetLanguage = TwitchConstants.GERMAN;
+            var targetLanguage = TwitchConstants.LanguageCodes.GERMAN;
 
             IDictionary<ulong, Platform> platformDb = new Dictionary<ulong, Platform>();
             IDictionary<(string, string), GameInfo> gameDb = new Dictionary<(string, string), GameInfo>();
@@ -105,13 +105,13 @@ namespace TwitchCategoriesCrawler
                             continue;
                         }
 
-                        if (gameDb.TryGetValue((category.Id, TwitchConstants.ENGLISH), out gameInfo))
+                        if (gameDb.TryGetValue((category.Id, TwitchConstants.LanguageCodes.ENGLISH), out gameInfo))
                         {
                             _logger.LogWarning("Found existing base EN entry for {categoryId}, {categoryName}", category.Id, category.Name);
                         }
                         else
                         {
-                            if (steamLanguage.Key != TwitchConstants.ENGLISH && !gameDb.TryAdd((category.Id, TwitchConstants.ENGLISH), gameInfo))
+                            if (steamLanguage.Key != TwitchConstants.LanguageCodes.ENGLISH && !gameDb.TryAdd((category.Id, TwitchConstants.LanguageCodes.ENGLISH), gameInfo))
                             {
                                 _logger.LogWarning("Received same category twice {categoryId} ({categoryName})", category.Id, category.Name);
                             }
