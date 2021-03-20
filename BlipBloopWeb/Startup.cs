@@ -1,3 +1,4 @@
+using BlipBloopWeb.Options;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -26,13 +27,14 @@ namespace BlipBloopWeb
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "BlipBloopWeb", Version = "v1" });
             });
             services.AddApplicationInsightsTelemetry();
+
+            services.Configure<EventSubOptions>(Configuration.GetSection("Twitch:EventSub"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

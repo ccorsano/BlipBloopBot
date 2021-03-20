@@ -7,10 +7,13 @@ namespace BlipBloopBot.Model.EventSub
         [JsonPropertyName("subscription")]
         public TwitchEventSubSubscription Subscription { get; set; }
 
-        [JsonPropertyName("event")]
-        public TwitchEventSubEvent Event { get; set; }
-
         [JsonPropertyName("challenge")]
         public string Challenge { get; set; }
+    }
+
+    public class TwitchEventSubCallbackPayload<TEvent> : TwitchEventSubCallbackPayload where TEvent : TwitchEventSubEvent
+    {
+        [JsonPropertyName("event")]
+        public TEvent Event { get; set; }
     }
 }
