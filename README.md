@@ -3,6 +3,7 @@
 [![.NET](https://github.com/ccorsano/BlipBloopBot/actions/workflows/dotnet.yml/badge.svg)](https://github.com/ccorsano/BlipBloopBot/actions/workflows/dotnet.yml)
 
 WIP Twitch bot framework / service
+Name is very much WIP as well :D
 
 # Generate IGDB API Types
 
