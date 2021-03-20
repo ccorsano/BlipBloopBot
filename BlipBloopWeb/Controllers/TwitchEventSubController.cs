@@ -13,6 +13,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using static BlipBloopBot.Constants.TwitchConstants;
 
 namespace BlipBloopWeb.Controllers
 {
@@ -37,37 +38,37 @@ namespace BlipBloopWeb.Controllers
             }
 
             string msgId = null;
-            if (Request.Headers.TryGetValue(TwitchConstants.EVENTSUB_HEADERNAME_MSGID, out var msgIdValues))
+            if (Request.Headers.TryGetValue(EventSubHeaderNames.MessageId, out var msgIdValues))
             {
                 msgId = msgIdValues.First();
             }
             int retry;
-            if (Request.Headers.TryGetValue(TwitchConstants.EVENTSUB_HEADERNAME_RETRY, out var retryValues))
+            if (Request.Headers.TryGetValue(EventSubHeaderNames.MessageRetry, out var retryValues))
             {
                 retry = int.Parse(retryValues.First());
             }
             string type;
-            if (Request.Headers.TryGetValue(TwitchConstants.EVENTSUB_HEADERNAME_MSGTYPE, out var typeValues))
+            if (Request.Headers.TryGetValue(EventSubHeaderNames.MessageType, out var typeValues))
             {
                 type = typeValues.First();
             }
             string signature = null;
-            if (Request.Headers.TryGetValue(TwitchConstants.EVENTSUB_HEADERNAME_SIGNATURE, out var signatureValues))
+            if (Request.Headers.TryGetValue(EventSubHeaderNames.MessageSignature, out var signatureValues))
             {
                 signature = signatureValues.First();
             }
             string timestamp = null;
-            if (Request.Headers.TryGetValue(TwitchConstants.EVENTSUB_HEADERNAME_TIMESTAMP, out var timestampValues))
+            if (Request.Headers.TryGetValue(EventSubHeaderNames.MessageTimeStamp, out var timestampValues))
             {
                 timestamp = timestampValues.First();
             }
             string subType;
-            if (Request.Headers.TryGetValue(TwitchConstants.EVENTSUB_HEADERNAME_SUBTYPE, out var subTypeValues))
+            if (Request.Headers.TryGetValue(EventSubHeaderNames.SubscriptionType, out var subTypeValues))
             {
                 subType = subTypeValues.First();
             }
             string subVersion;
-            if (Request.Headers.TryGetValue(TwitchConstants.EVENTSUB_HEADERNAME_SUBVERSION, out var subVersionValues))
+            if (Request.Headers.TryGetValue(EventSubHeaderNames.SubscriptionVersion, out var subVersionValues))
             {
                 subVersion = subVersionValues.First();
             }
