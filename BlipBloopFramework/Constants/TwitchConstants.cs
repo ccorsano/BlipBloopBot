@@ -12,76 +12,104 @@ namespace BlipBloopBot.Constants
 
         public static class EventSubHeaderNames
         {
-            public static readonly string MessageId = "twitch-eventsub-message-id";
-            public static readonly string MessageRetry = "twitch-eventsub-message-retry";
-            public static readonly string MessageType = "twitch-eventsub-message-type";
-            public static readonly string MessageSignature = "twitch-eventsub-message-signature";
-            public static readonly string MessageTimeStamp = "twitch-eventsub-message-timestamp";
-            public static readonly string SubscriptionType = "twitch-eventsub-subscription-type";
-            public static readonly string SubscriptionVersion = "twitch-eventsub-subscription-version";
+            public const string MessageId = "twitch-eventsub-message-id";
+            public const string MessageRetry = "twitch-eventsub-message-retry";
+            public const string MessageType = "twitch-eventsub-message-type";
+            public const string MessageSignature = "twitch-eventsub-message-signature";
+            public const string MessageTimeStamp = "twitch-eventsub-message-timestamp";
+            public const string SubscriptionType = "twitch-eventsub-subscription-type";
+            public const string SubscriptionVersion = "twitch-eventsub-subscription-version";
+        }
+
+        public enum EventSubStatus
+        {
+            Enabled,
+            WebhookCallVerificationPending,
+            WebhookCallVerificationFailed,
+            NotificationFailuresExceeded,
+            AuthorizationRevoked,
+            UserRemoved,
+        }
+
+        public static string GetEventSubStatusString(EventSubStatus status) =>
+            status switch
+            {
+                EventSubStatus.Enabled => "enabled",
+                EventSubStatus.WebhookCallVerificationPending => "webhook_callback_verification_pending",
+                EventSubStatus.WebhookCallVerificationFailed => "webhook_callback_verification_failed",
+                EventSubStatus.NotificationFailuresExceeded => "notification_failures_exceeded",
+                EventSubStatus.AuthorizationRevoked => "authorization_revoked",
+                EventSubStatus.UserRemoved => "user_removed",
+                _ => throw new NotImplementedException()
+            };
+
+    public static class EventSubMessageTypes
+        {
+            public const string Notification = "notification";
+            public const string WebHookCallbackVerification = "webhook_callback_verification";
         }
 
         public static class EventSubTypes
         {
-            public static readonly string ChannelBan = "channel.ban";
-            public static readonly string ChannelCheer = "channel.cheer";
-            public static readonly string ChannelCustomRewardAdd = "channel.channel_points_custom_reward.add";
-            public static readonly string ChannelCustomRewardUpdate = "channel.channel_points_custom_reward.update";
-            public static readonly string ChannelCustomRewardRemove = "channel.channel_points_custom_reward.remove";
-            public static readonly string ChannelCustomRewardRedemptionAdd = "channel.channel_points_custom_reward_redemption.add";
-            public static readonly string ChannelCustomRewardRedemptionUpdate = "channel.channel_points_custom_reward_redemption.update";
-            public static readonly string ChannelCustomRewardRedemptionRemove = "channel.channel_points_custom_reward_redemption.remove";
-            public static readonly string ChannelFollow = "channel.follow";
-            public static readonly string ChannelModAdd = "channel.moderator.add";
-            public static readonly string ChannelModRemove = "channel.moderator.remove";
-            public static readonly string ChannelRaid = "channel.raid";
-            public static readonly string ChannelSubscribe = "channel.subscribe";
-            public static readonly string ChannelUnban = "channel.unban";
-            public static readonly string ChannelUpdate = "channel.update";
-            public static readonly string HypeTrainBegin = "channel.hype_train.begin";
-            public static readonly string HypeTrainEnd = "channel.hype_train.end";
-            public static readonly string HypeTrainProgress = "channel.hype_train.progress";
-            public static readonly string StreamOffline = "channel.hype_train.end";
-            public static readonly string StreamOnline = "channel.hype_train.progress";
-            public static readonly string UserRevoke = "user.authorization.revoke";
-            public static readonly string UserUpdate = "user.update";
+            public const string ChannelBan = "channel.ban";
+            public const string ChannelCheer = "channel.cheer";
+            public const string ChannelCustomRewardAdd = "channel.channel_points_custom_reward.add";
+            public const string ChannelCustomRewardUpdate = "channel.channel_points_custom_reward.update";
+            public const string ChannelCustomRewardRemove = "channel.channel_points_custom_reward.remove";
+            public const string ChannelCustomRewardRedemptionAdd = "channel.channel_points_custom_reward_redemption.add";
+            public const string ChannelCustomRewardRedemptionUpdate = "channel.channel_points_custom_reward_redemption.update";
+            public const string ChannelCustomRewardRedemptionRemove = "channel.channel_points_custom_reward_redemption.remove";
+            public const string ChannelFollow = "channel.follow";
+            public const string ChannelModAdd = "channel.moderator.add";
+            public const string ChannelModRemove = "channel.moderator.remove";
+            public const string ChannelRaid = "channel.raid";
+            public const string ChannelSubscribe = "channel.subscribe";
+            public const string ChannelUnban = "channel.unban";
+            public const string ChannelUpdate = "channel.update";
+            public const string HypeTrainBegin = "channel.hype_train.begin";
+            public const string HypeTrainEnd = "channel.hype_train.end";
+            public const string HypeTrainProgress = "channel.hype_train.progress";
+            public const string StreamOffline = "stream.offline";
+            public const string StreamOnline = "stream.online";
+            public const string UserRevoke = "user.authorization.revoke";
+            public const string UserUpdate = "user.update";
         }
 
         public static class LanguageCodes
         {
-            public static readonly string ENGLISH = "en";
-            public static readonly string INDONESIAN = "id";
-            public static readonly string CATALAN = "ca";
-            public static readonly string DANISH = "da";
-            public static readonly string GERMAN = "de";
-            public static readonly string SPANISH = "es";
-            public static readonly string FRENCH = "fr";
-            public static readonly string ITALIAN = "it";
-            public static readonly string HUNGARIAN = "hu";
-            public static readonly string DUTCH = "nl";
-            public static readonly string NORWEGIAN = "no";
-            public static readonly string POLISH = "pl";
-            public static readonly string PORTUGUESE = "pt";
-            public static readonly string ROMANIAN = "ro";
-            public static readonly string SLOVAK = "sk";
-            public static readonly string FINNISH = "fi";
-            public static readonly string SWEDISH = "sv";
-            public static readonly string TAGALOG = "tl";
-            public static readonly string VIETNAMESE = "vi";
-            public static readonly string TURKISH = "tr";
-            public static readonly string CZECH = "cs";
-            public static readonly string GREEK = "el";
-            public static readonly string BULGARIAN = "bg";
-            public static readonly string RUSSIAN = "ru";
-            public static readonly string UKRAINIAN = "uk";
-            public static readonly string ARABIC = "ar";
-            public static readonly string MALAY = "ms";
-            public static readonly string HINDI = "hi";
-            public static readonly string THAI = "th";
-            public static readonly string CHINESE = "zh";
-            public static readonly string JAPANESE = "ja";
-            public static readonly string CHINESE_HONGKONG = "zh-hk";
-            public static readonly string KOREAN = "ko";
+            public const string ENGLISH = "en";
+            public const string INDONESIAN = "id";
+            public const string CATALAN = "ca";
+            public const string DANISH = "da";
+            public const string GERMAN = "de";
+            public const string SPANISH = "es";
+            public const string FRENCH = "fr";
+            public const string ITALIAN = "it";
+            public const string HUNGARIAN = "hu";
+            public const string DUTCH = "nl";
+            public const string NORWEGIAN = "no";
+            public const string POLISH = "pl";
+            public const string PORTUGUESE = "pt";
+            public const string ROMANIAN = "ro";
+            public const string SLOVAK = "sk";
+            public const string FINNISH = "fi";
+            public const string SWEDISH = "sv";
+            public const string TAGALOG = "tl";
+            public const string VIETNAMESE = "vi";
+            public const string TURKISH = "tr";
+            public const string CZECH = "cs";
+            public const string GREEK = "el";
+            public const string BULGARIAN = "bg";
+            public const string RUSSIAN = "ru";
+            public const string UKRAINIAN = "uk";
+            public const string ARABIC = "ar";
+            public const string MALAY = "ms";
+            public const string HINDI = "hi";
+            public const string THAI = "th";
+            public const string CHINESE = "zh";
+            public const string JAPANESE = "ja";
+            public const string CHINESE_HONGKONG = "zh-hk";
+            public const string KOREAN = "ko";
         }
 
         public static HashSet<string> SupportedLanguages = new HashSet<string>

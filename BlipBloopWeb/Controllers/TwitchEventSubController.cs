@@ -1,9 +1,11 @@
 ﻿using BlipBloopBot.Constants;
 using BlipBloopBot.Model;
 using BlipBloopBot.Model.EventSub;
+using BlipBloopWeb.Options;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -20,18 +22,18 @@ namespace BlipBloopWeb.Controllers
     [Route("twitch/eventsub")]
     public class TwitchEventSubController : Controller
     {
+        private readonly EventSubOptions _options;
         private readonly ILogger _logger;
 
-        public TwitchEventSubController(ILogger<TwitchEventSubController> logger)
+        public TwitchEventSubController(IOptions<EventSubOptions> options, ILogger<TwitchEventSubController> logger)
         {
+            _options = options.Value;
             _logger = logger;
         }
 
         [HttpPost]
         public async Task<IActionResult> Callback(CancellationToken cancellationToken)
         {
-            var secret = "7517d8c3-28f4-4372-947a-0069efa2dcf6";
-
             foreach(var header in Request.Headers)
             {
                 _logger.LogWarning("{headerName} = {headerValue}", header.Key, header.Value.FirstOrDefault());
@@ -47,7 +49,7 @@ namespace BlipBloopWeb.Controllers
             {
                 retry = int.Parse(retryValues.First());
             }
-            string type;
+            string type = null;
             if (Request.Headers.TryGetValue(EventSubHeaderNames.MessageType, out var typeValues))
             {
                 type = typeValues.First();
@@ -62,7 +64,7 @@ namespace BlipBloopWeb.Controllers
             {
                 timestamp = timestampValues.First();
             }
-            string subType;
+            string subType = null;
             if (Request.Headers.TryGetValue(EventSubHeaderNames.SubscriptionType, out var subTypeValues))
             {
                 subType = subTypeValues.First();
@@ -77,7 +79,7 @@ namespace BlipBloopWeb.Controllers
 
             TwitchEventSubCallbackPayload payload = null;
 
-            var key = System.Text.Encoding.UTF8.GetBytes(secret);
+            var key = System.Text.Encoding.UTF8.GetBytes(_options.WebHookSecret);
             using (var signatureAlg = IncrementalHash.CreateHMAC(HashAlgorithmName.SHA256, key))
             {
                 ReadResult result;
@@ -91,7 +93,7 @@ namespace BlipBloopWeb.Controllers
                         signatureAlg.AppendData(segment.Span);
                         _logger.LogWarning(System.Text.Encoding.UTF8.GetString(segment.Span));
                     }
-                    payload = ReadPayload(result.Buffer);
+                    payload = ReadPayload(subType, result.Buffer);
                 } while (!result.IsCompleted && !result.IsCanceled);
                 var hashBytes = signatureAlg.GetCurrentHash();
                 var hashString = System.Convert.ToHexString(hashBytes).ToLowerInvariant();
@@ -102,7 +104,7 @@ namespace BlipBloopWeb.Controllers
                     return new BadRequestResult();
                 }
 
-                if (payload.Subscription.Status == "webhook_callback_verification_pending")
+                if (type == EventSubMessageTypes.WebHookCallbackVerification)
                 {
                     return new ContentResult
                     {
@@ -117,10 +119,36 @@ namespace BlipBloopWeb.Controllers
             return new OkResult();
         }
 
-        private TwitchEventSubCallbackPayload ReadPayload(ReadOnlySequence<byte> data)
+        private TwitchEventSubCallbackPayload ReadPayload(string type, ReadOnlySequence<byte> data)
         {
             var reader = new Utf8JsonReader(data);
-            return JsonSerializer.Deserialize<TwitchEventSubCallbackPayload>(ref reader);
+            
+            return type switch
+            {
+                EventSubTypes.ChannelBan => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelBanEvent>>(ref reader),
+                EventSubTypes.ChannelCheer => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubChannelCheerEvent>>(ref reader),
+                EventSubTypes.ChannelCustomRewardAdd => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelPointsCustomRewardDefinitionEvent>>(ref reader),
+                EventSubTypes.ChannelCustomRewardUpdate => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelPointsCustomRewardDefinitionEvent>>(ref reader),
+                EventSubTypes.ChannelCustomRewardRemove => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelPointsCustomRewardDefinitionEvent>>(ref reader),
+                EventSubTypes.ChannelCustomRewardRedemptionAdd => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelPointsCustomRewardRedemptionEvent>>(ref reader),
+                EventSubTypes.ChannelCustomRewardRedemptionUpdate => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelPointsCustomRewardRedemptionEvent>>(ref reader),
+                EventSubTypes.ChannelCustomRewardRedemptionRemove => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelPointsCustomRewardRedemptionEvent>>(ref reader),
+                EventSubTypes.ChannelFollow => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelFollowEvent>>(ref reader),
+                EventSubTypes.ChannelModAdd => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubChannelModAddEvent>>(ref reader),
+                EventSubTypes.ChannelModRemove => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubChannelModRemoveEvent>>(ref reader),
+                EventSubTypes.ChannelRaid => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubChannelRaidEvent>>(ref reader),
+                EventSubTypes.ChannelSubscribe => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubChannelSubscribeEvent>>(ref reader),
+                EventSubTypes.ChannelUnban => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubChannelUnbanEvent>>(ref reader),
+                EventSubTypes.ChannelUpdate => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubChannelUpdateEvent>>(ref reader),
+                EventSubTypes.HypeTrainBegin => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubHypeTrainBeginEvent>>(ref reader),
+                EventSubTypes.HypeTrainEnd => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubHypeTrainEndEvent>>(ref reader),
+                EventSubTypes.HypeTrainProgress => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubHypeTrainProgressEvent>>(ref reader),
+                EventSubTypes.StreamOffline => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubStreamOfflineEvent>>(ref reader),
+                EventSubTypes.StreamOnline => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubStreamOnlineEvent>>(ref reader),
+                EventSubTypes.UserRevoke => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubUserRevokeEvent>>(ref reader),
+                EventSubTypes.UserUpdate => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubUserUpdateEvent>>(ref reader),
+                _ => throw new NotImplementedException()
+            };
         }
     }
 }
