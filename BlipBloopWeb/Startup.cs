@@ -1,3 +1,5 @@
+using BlipBloopBot.Extensions;
+using BlipBloopBot.Twitch.EventSub;
 using BlipBloopWeb.Options;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -35,6 +37,8 @@ namespace BlipBloopWeb
             services.AddApplicationInsightsTelemetry();
 
             services.Configure<EventSubOptions>(Configuration.GetSection("Twitch:EventSub"));
+            services.Configure<BlipBloopBot.Options.EventSubOptions>(Configuration.GetSection("Twitch:EventSub"));
+            services.AddTransient<EventSubHandler>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -52,6 +56,8 @@ namespace BlipBloopWeb
             app.UseRouting();
 
             app.UseAuthorization();
+
+            app.UseTwitchEventSub();
 
             app.UseEndpoints(endpoints =>
             {

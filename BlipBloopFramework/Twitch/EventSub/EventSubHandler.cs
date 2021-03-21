@@ -1,83 +1,40 @@
-﻿using BlipBloopBot.Constants;
-using BlipBloopBot.Model;
-using BlipBloopBot.Model.EventSub;
-using BlipBloopWeb.Options;
+﻿using BlipBloopBot.Model.EventSub;
+using BlipBloopBot.Options;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipelines;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using static BlipBloopBot.Constants.TwitchConstants;
 
-namespace BlipBloopWeb.Controllers
+namespace BlipBloopBot.Twitch.EventSub
 {
-    [Route("twitch/eventsub")]
-    public class TwitchEventSubController : Controller
+    public class EventSubHandler
     {
         private readonly EventSubOptions _options;
         private readonly ILogger _logger;
 
-        public TwitchEventSubController(IOptions<EventSubOptions> options, ILogger<TwitchEventSubController> logger)
+        public EventSubHandler(IOptions<EventSubOptions> options, ILogger<EventSubHandler> logger)
         {
             _options = options.Value;
             _logger = logger;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Callback(CancellationToken cancellationToken)
+        public async Task HandleRequestAsync(HttpContext context)
         {
-            foreach(var header in Request.Headers)
+            var eventSubContext = new EventSubContext();
+            
+            if (! ParseHeaders(context.Request, eventSubContext))
             {
-                _logger.LogWarning("{headerName} = {headerValue}", header.Key, header.Value.FirstOrDefault());
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                return;
             }
-
-            string msgId = null;
-            if (Request.Headers.TryGetValue(EventSubHeaderNames.MessageId, out var msgIdValues))
-            {
-                msgId = msgIdValues.First();
-            }
-            int retry;
-            if (Request.Headers.TryGetValue(EventSubHeaderNames.MessageRetry, out var retryValues))
-            {
-                retry = int.Parse(retryValues.First());
-            }
-            string type = null;
-            if (Request.Headers.TryGetValue(EventSubHeaderNames.MessageType, out var typeValues))
-            {
-                type = typeValues.First();
-            }
-            string signature = null;
-            if (Request.Headers.TryGetValue(EventSubHeaderNames.MessageSignature, out var signatureValues))
-            {
-                signature = signatureValues.First();
-            }
-            string timestamp = null;
-            if (Request.Headers.TryGetValue(EventSubHeaderNames.MessageTimeStamp, out var timestampValues))
-            {
-                timestamp = timestampValues.First();
-            }
-            string subType = null;
-            if (Request.Headers.TryGetValue(EventSubHeaderNames.SubscriptionType, out var subTypeValues))
-            {
-                subType = subTypeValues.First();
-            }
-            string subVersion;
-            if (Request.Headers.TryGetValue(EventSubHeaderNames.SubscriptionVersion, out var subVersionValues))
-            {
-                subVersion = subVersionValues.First();
-            }
-
-            var pool = ArrayPool<byte>.Shared;
-
             TwitchEventSubCallbackPayload payload = null;
             var isFirstSegment = true;
 
@@ -85,13 +42,13 @@ namespace BlipBloopWeb.Controllers
             using (var signatureAlg = IncrementalHash.CreateHMAC(HashAlgorithmName.SHA256, key))
             {
                 ReadResult result;
-                
-                signatureAlg.AppendData(System.Text.Encoding.UTF8.GetBytes(msgId));
-                signatureAlg.AppendData(System.Text.Encoding.UTF8.GetBytes(timestamp));
+
+                signatureAlg.AppendData(System.Text.Encoding.UTF8.GetBytes(eventSubContext.Headers.MessageId));
+                signatureAlg.AppendData(System.Text.Encoding.UTF8.GetBytes(eventSubContext.Headers.MessageTimeStamp));
 
                 do
                 {
-                    result = await Request.BodyReader.ReadAsync(cancellationToken);
+                    result = await context.Request.BodyReader.ReadAsync();
 
                     foreach (var segment in result.Buffer)
                     {
@@ -102,7 +59,7 @@ namespace BlipBloopWeb.Controllers
                     // If the first segment contains the whole body, read the payload from the segment
                     if (isFirstSegment && result.Buffer.IsSingleSegment)
                     {
-                        payload = ReadPayload(subType, result.Buffer);
+                        payload = ReadPayload(eventSubContext.Headers.SubscriptionType, result.Buffer);
                         break;
                     }
                     isFirstSegment = false;
@@ -112,40 +69,82 @@ namespace BlipBloopWeb.Controllers
                 var hashBytes = signatureAlg.GetCurrentHash();
                 var hashString = Convert.ToHexString(hashBytes).ToLowerInvariant();
                 _logger.LogWarning("Signature = {signature}", hashString);
-                if (hashString != signature.Split("=").Last())
+                if (hashString != eventSubContext.Headers.MessageSignature.Split("=").Last())
                 {
-                    _logger.LogError("Signature mismatch {received} =/= {computer}", signature, hashString);
-                    return new BadRequestResult();
+                    _logger.LogError("Signature mismatch {received} =/= {computer}", eventSubContext.Headers.MessageSignature, hashString);
+
+                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                    return;
                 }
 
                 // Degraded case: Body was more than a single segment, use Stream interface
                 if (payload == null)
                 {
-                    payload = await ReadPayloadAsync(subType, Request.Body);
+                    payload = await ReadPayloadAsync(eventSubContext.Headers.SubscriptionType, context.Request.Body);
                 }
 
-                if (type == EventSubMessageTypes.WebHookCallbackVerification)
+                if (eventSubContext.Headers.MessageType == EventSubMessageTypes.WebHookCallbackVerification)
                 {
-                    return new ContentResult
-                    {
-                        ContentType = "text/plain",
-                        Content = payload.Challenge,
-                        StatusCode = StatusCodes.Status200OK
-                    };
+                    await context.Response.WriteAsync(payload.Challenge);
+                    context.Response.StatusCode = StatusCodes.Status200OK;
+                    context.Response.ContentType = "text/plain";
+                    return;
                 }
             }
 
-            return new OkResult();
+            context.Response.StatusCode = StatusCodes.Status200OK;
+        }
+
+        public bool ParseHeaders(HttpRequest request, EventSubContext context)
+        {
+            if (! request.Headers.TryGetValue(EventSubHeaderNames.MessageId, out var msgIdValues))
+            {
+                return false;
+            }
+            if (! request.Headers.TryGetValue(EventSubHeaderNames.MessageRetry, out var retryValues))
+            {
+                return false;
+            }
+            if (! request.Headers.TryGetValue(EventSubHeaderNames.MessageType, out var typeValues))
+            {
+                return false;
+            }
+            if (! request.Headers.TryGetValue(EventSubHeaderNames.MessageSignature, out var signatureValues))
+            {
+                return false;
+            }
+            if (! request.Headers.TryGetValue(EventSubHeaderNames.MessageTimeStamp, out var timestampValues))
+            {
+                return false;
+            }
+            if (! request.Headers.TryGetValue(EventSubHeaderNames.SubscriptionType, out var subTypeValues))
+            {
+                return false;
+            }
+            if (! request.Headers.TryGetValue(EventSubHeaderNames.SubscriptionVersion, out var subVersionValues))
+            {
+                return false;
+            }
+
+            context.Headers.MessageId = msgIdValues.First();
+            context.Headers.MessageRetry = int.Parse(retryValues.First());
+            context.Headers.MessageType = typeValues.First();
+            context.Headers.MessageSignature = signatureValues.First();
+            context.Headers.MessageTimeStamp = timestampValues.First();
+            context.Headers.SubscriptionType = subTypeValues.First();
+            context.Headers.SubscriptionVersion = subVersionValues.First();
+
+            return true;
         }
 
         private TwitchEventSubCallbackPayload ReadPayload(string type, ReadOnlySequence<byte> data)
         {
             var reader = new Utf8JsonReader(data);
-            
+
             return type switch
             {
                 EventSubTypes.ChannelBan => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelBanEvent>>(ref reader),
-                EventSubTypes.ChannelCheer => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubChannelCheerEvent>>(ref reader),
+                EventSubTypes.ChannelCheer => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelCheerEvent>>(ref reader),
                 EventSubTypes.ChannelCustomRewardAdd => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelPointsCustomRewardDefinitionEvent>>(ref reader),
                 EventSubTypes.ChannelCustomRewardUpdate => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelPointsCustomRewardDefinitionEvent>>(ref reader),
                 EventSubTypes.ChannelCustomRewardRemove => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelPointsCustomRewardDefinitionEvent>>(ref reader),
@@ -153,19 +152,19 @@ namespace BlipBloopWeb.Controllers
                 EventSubTypes.ChannelCustomRewardRedemptionUpdate => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelPointsCustomRewardRedemptionEvent>>(ref reader),
                 EventSubTypes.ChannelCustomRewardRedemptionRemove => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelPointsCustomRewardRedemptionEvent>>(ref reader),
                 EventSubTypes.ChannelFollow => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelFollowEvent>>(ref reader),
-                EventSubTypes.ChannelModAdd => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubChannelModAddEvent>>(ref reader),
-                EventSubTypes.ChannelModRemove => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubChannelModRemoveEvent>>(ref reader),
-                EventSubTypes.ChannelRaid => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubChannelRaidEvent>>(ref reader),
-                EventSubTypes.ChannelSubscribe => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubChannelSubscribeEvent>>(ref reader),
-                EventSubTypes.ChannelUnban => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubChannelUnbanEvent>>(ref reader),
-                EventSubTypes.ChannelUpdate => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubChannelUpdateEvent>>(ref reader),
-                EventSubTypes.HypeTrainBegin => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubHypeTrainBeginEvent>>(ref reader),
-                EventSubTypes.HypeTrainEnd => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubHypeTrainEndEvent>>(ref reader),
-                EventSubTypes.HypeTrainProgress => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubHypeTrainProgressEvent>>(ref reader),
-                EventSubTypes.StreamOffline => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubStreamOfflineEvent>>(ref reader),
-                EventSubTypes.StreamOnline => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubStreamOnlineEvent>>(ref reader),
-                EventSubTypes.UserRevoke => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubUserRevokeEvent>>(ref reader),
-                EventSubTypes.UserUpdate => JsonSerializer.Deserialize< TwitchEventSubCallbackPayload<TwitchEventSubUserUpdateEvent>>(ref reader),
+                EventSubTypes.ChannelModAdd => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelModAddEvent>>(ref reader),
+                EventSubTypes.ChannelModRemove => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelModRemoveEvent>>(ref reader),
+                EventSubTypes.ChannelRaid => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelRaidEvent>>(ref reader),
+                EventSubTypes.ChannelSubscribe => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelSubscribeEvent>>(ref reader),
+                EventSubTypes.ChannelUnban => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelUnbanEvent>>(ref reader),
+                EventSubTypes.ChannelUpdate => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubChannelUpdateEvent>>(ref reader),
+                EventSubTypes.HypeTrainBegin => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubHypeTrainBeginEvent>>(ref reader),
+                EventSubTypes.HypeTrainEnd => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubHypeTrainEndEvent>>(ref reader),
+                EventSubTypes.HypeTrainProgress => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubHypeTrainProgressEvent>>(ref reader),
+                EventSubTypes.StreamOffline => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubStreamOfflineEvent>>(ref reader),
+                EventSubTypes.StreamOnline => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubStreamOnlineEvent>>(ref reader),
+                EventSubTypes.UserRevoke => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubUserRevokeEvent>>(ref reader),
+                EventSubTypes.UserUpdate => JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TwitchEventSubUserUpdateEvent>>(ref reader),
                 _ => throw new NotImplementedException()
             };
         }
