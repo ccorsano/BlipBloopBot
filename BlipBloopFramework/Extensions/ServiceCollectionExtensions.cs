@@ -1,4 +1,6 @@
 ﻿using BlipBloopBot.Commands;
+using BlipBloopBot.Model.EventSub;
+using BlipBloopBot.Twitch.EventSub;
 using BlipBloopBot.Twitch.IRC;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -28,6 +30,20 @@ namespace BlipBloopBot.Extensions
                 Processor = () => provider.GetRequiredService<TMessageProcessor>()
             });
 
+            return services;
+        }
+
+        public static IServiceCollection AddEventSub(this IServiceCollection services)
+        {
+            services.AddSingleton<EventSubHandler>();
+            return services;
+        }
+
+        public static IServiceCollection AddEventSubHandler<TEventSubType>(this IServiceCollection services, Func<EventSubContext, TEventSubType, Task> handler) where TEventSubType : TwitchEventSubEvent
+        {
+            services.AddSingleton<IHandlerRegistration, HandlerRegistration<TEventSubType>>(
+                services => new HandlerRegistration<TEventSubType>(handler)
+            );
             return services;
         }
     }

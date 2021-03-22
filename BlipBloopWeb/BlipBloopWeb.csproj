@@ -13,7 +13,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Controllers\" />
     <Folder Include="Model\" />
+    <Folder Include="Options\" />
   </ItemGroup>
 
   <ItemGroup>
