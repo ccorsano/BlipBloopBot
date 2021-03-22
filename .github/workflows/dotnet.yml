@@ -32,16 +32,17 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Restore dependencies
+      working-directory: ./BlipBloopBot
       run: dotnet restore
     - name: Build
+      working-directory: ./BlipBloopBot
       run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
     - name: Publish
+      working-directory: ./BlipBloopBot
       run: dotnet publish --self-contained true -r win10-x64 -o publish
     - name: Upload build artifacts
       uses: actions/upload-artifact@v2
       with:
         name: published-app
         path: |
-          publish
+          ./BlipBloopBot/publish
