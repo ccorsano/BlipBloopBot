@@ -31,8 +31,11 @@ namespace BlipBloopWeb
             });
             services.AddApplicationInsightsTelemetry();
 
+            // Load config, mainly the EventSub secret used for registration
             services.Configure<EventSubOptions>(Configuration.GetSection("Twitch:EventSub"));
+            // Add the EventSub handler instance to DI
             services.AddEventSub();
+            // Register an EventSub event Handler for channel.update events
             services.AddEventSubHandler<TwitchEventSubChannelUpdateEvent>((context, eventSub) =>
             {
                 context.Logger.LogInformation("Received a channel update for {channelName}, streaming {category} - {text}", eventSub.BroadcasterUserName, eventSub.CategoryName, eventSub.Title);
@@ -56,6 +59,7 @@ namespace BlipBloopWeb
 
             app.UseAuthorization();
 
+            // Map the EventSub handler to a specific URL (this is the default value BTW)
             app.UseTwitchEventSub("/webhooks/eventsub");
 
             app.UseEndpoints(endpoints =>

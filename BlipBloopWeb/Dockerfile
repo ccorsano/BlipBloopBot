@@ -19,4 +19,8 @@ RUN dotnet publish "BlipBloopWeb.csproj" -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+
+# WebHook secret used for Twitch EventSub webhook registration & security
+ENV Twitch__EventSub__WebHookSecret=""
+
 ENTRYPOINT ["dotnet", "BlipBloopWeb.dll"]

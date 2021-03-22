@@ -31,6 +31,9 @@
       "commandName": "Docker",
       "launchBrowser": true,
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/swagger",
+      "environmentVariables": {
+        "Twitch__EventSub__WebHookSecret": "test"
+      },
       "publishAllPorts": true,
       "useSSL": true
     }
