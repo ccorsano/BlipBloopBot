@@ -26,6 +26,11 @@ namespace BlipBloopBot.Twitch.EventSub
         {
             _handlers = handlers;
             _options = options.Value;
+
+            if (string.IsNullOrEmpty(_options.WebHookSecret))
+            {
+                throw new ArgumentException("Missing WebHookSecret");
+            }
             _logger = logger;
         }
 
