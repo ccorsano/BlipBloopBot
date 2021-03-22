@@ -12,6 +12,7 @@ using BlipBloopBot.Commands;
 using BlipBloopBot.Extensions;
 using BlipBloopBot.Twitch;
 using BlipBloopBot.Storage;
+using BlipBloopCommands.Commands.GameSynopsis;
 
 namespace BlipBloopBot
 {
@@ -50,6 +51,7 @@ namespace BlipBloopBot
                     services.AddSingleton<IMemoryCache, MemoryCache>();
                     services.AddSingleton<SteamStoreClient>();
                     services.AddSingleton<IGameLocalizationStore, EmbeddedGameLocalizationDb>();
+                    services.AddTransient<ITwitchCategoryProvider, PollingTwitchCategoryProvider>();
 
                     // Configure commands
                     services.AddCommand<GameSynopsisCommand>("GameSynopsis");
