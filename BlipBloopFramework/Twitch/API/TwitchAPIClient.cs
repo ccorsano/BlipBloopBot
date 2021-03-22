@@ -38,6 +38,11 @@ namespace BlipBloopBot.Twitch.API
 
         public async Task AuthenticateAsync(string clientId, string clientSecret)
         {
+            if ((_clientId == clientId || _clientSecret == clientSecret) && _oauthTokenExpiration > DateTime.UtcNow)
+            {
+                return;
+            }
+
             _clientId = clientId;
             _clientSecret = clientSecret;
 
