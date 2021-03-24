@@ -6,6 +6,7 @@ namespace BlipBloopBot.Twitch.IRC
 {
     public ref struct ParsedIRCMessage
     {
+        public ReadOnlySpan<char> Tags { get; internal set; }
         public ReadOnlySpan<char> Prefix { get; internal set; }
         public ReadOnlySpan<char> Command { get; internal set; }
         public ReadOnlySpan<char> Param1 { get; internal set; }
