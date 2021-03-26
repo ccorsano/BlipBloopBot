@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BlipBloopBot.Twitch.API
@@ -27,16 +28,20 @@ namespace BlipBloopBot.Twitch.API
             _logger = logger;
         }
 
-        public async Task<string> AuthenticateAsync()
+        public Task<string> AuthenticateAsync() => AuthenticateAsync(CancellationToken.None);
+
+        public async Task<string> AuthenticateAsync(CancellationToken cancellationToken)
         {
             if (DateTime.UtcNow > _oauthTokenExpiration)
             {
-                await AuthenticateAsync(_clientId, _clientSecret);
+                await AuthenticateAsync(_clientId, _clientSecret, cancellationToken);
             }
             return _oauthToken;
         }
 
-        public async Task AuthenticateAsync(string clientId, string clientSecret)
+        public Task AuthenticateAsync(string clientId, string clientSecret) => AuthenticateAsync(clientId, clientSecret, CancellationToken.None);
+
+        public async Task AuthenticateAsync(string clientId, string clientSecret, CancellationToken cancellationToken)
         {
             if ((_clientId == clientId || _clientSecret == clientSecret) && _oauthTokenExpiration > DateTime.UtcNow)
             {
@@ -55,7 +60,7 @@ namespace BlipBloopBot.Twitch.API
             };
             var reqContent = new FormUrlEncodedContent(param);
 
-            var result = await _httpClient.PostAsync(uriBuilder.Uri, reqContent);
+            var result = await _httpClient.PostAsync(uriBuilder.Uri, reqContent, cancellationToken);
 
             _tokenResponse = await JsonSerializer.DeserializeAsync<TwitchOAuthTokenResponse>(await result.Content.ReadAsStreamAsync());
             _oauthToken = _tokenResponse.AccessToken;
