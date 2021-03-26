@@ -1,4 +1,5 @@
 ﻿using BlibBloopBot.IGDB.Generated;
+using BlipBloopBot.Twitch.Authentication;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -26,26 +27,17 @@ namespace BlipBloopBot.Twitch.API
     public class IGDBClient : IDisposable
     {
         private readonly HttpClient _httpClient;
-        private readonly TwitchAPIClient _twitchAPIClient;
+        private readonly IAuthenticated _authenticated;
         private readonly IMemoryCache _cache;
         private readonly ILogger _logger;
-        private string _clientId;
-        private string _clientSecret;
 
-        public IGDBClient(IHttpClientFactory httpClientFactory, IMemoryCache memoryCache, TwitchAPIClient twitchAPIClient, ILogger<IGDBClient> logger)
+        public IGDBClient(IAuthenticated authenticated, IHttpClientFactory httpClientFactory, IMemoryCache memoryCache, TwitchAPIClient twitchAPIClient, ILogger<IGDBClient> logger)
         {
             _httpClient = httpClientFactory.CreateClient();
             _httpClient.BaseAddress = new Uri("https://api.igdb.com/");
-            _twitchAPIClient = twitchAPIClient;
+            _authenticated = authenticated;
             _cache = memoryCache;
             _logger = logger;
-        }
-
-        public async Task AuthenticateAsync(string clientId, string clientSecret)
-        {
-            _clientId = clientId;
-            _clientSecret = clientSecret;
-            await _twitchAPIClient.AuthenticateAsync(clientId, clientSecret);
         }
 
         public async Task<Game> GetGameByIdAsync(ulong gameId)
@@ -54,17 +46,10 @@ namespace BlipBloopBot.Twitch.API
 
             if (!_cache.TryGetValue(cacheKey, out Game result))
             {
-                var authToken = await _twitchAPIClient.AuthenticateAsync();
-
-                if (authToken == null)
-                {
-                    throw new InvalidOperationException("Please authenticate first");
-                }
-
                 var message = new HttpRequestMessage(HttpMethod.Post, $"v4/games.pb");
-                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
-                message.Headers.Add("Client-ID", _clientId);
                 message.Content = new StringContent($"fields *; where id = {gameId};");
+
+                await _authenticated.AuthenticateMessageAsync(message);
 
                 var response = await _httpClient.SendAsync(message);
                 response.EnsureSuccessStatusCode();
@@ -85,17 +70,10 @@ namespace BlipBloopBot.Twitch.API
 
             if (!_cache.TryGetValue(cacheKey, out ExternalGame[] result))
             {
-                var authToken = await _twitchAPIClient.AuthenticateAsync();
-
-                if (authToken == null)
-                {
-                    throw new InvalidOperationException("Please authenticate first");
-                }
-
                 var message = new HttpRequestMessage(HttpMethod.Post, $"v4/external_games.pb");
-                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
-                message.Headers.Add("Client-ID", _clientId);
                 message.Content = new StringContent($"fields *; where {fieldName} = {fieldValue} & category = {(uint) category};");
+
+                await _authenticated.AuthenticateMessageAsync(message);
 
                 var response = await _httpClient.SendAsync(message);
                 response.EnsureSuccessStatusCode();
@@ -112,8 +90,6 @@ namespace BlipBloopBot.Twitch.API
 
         public async IAsyncEnumerable<Platform> EnumeratePlatforms()
         {
-            var authToken = await _twitchAPIClient.AuthenticateAsync();
-
             List<Platform> response = null;
             uint page = 0;
             int totalItems = 0;
@@ -122,10 +98,9 @@ namespace BlipBloopBot.Twitch.API
             {
                 var message = new HttpRequestMessage(HttpMethod.Post, $"v4/platforms.pb");
                 _logger.LogDebug("Fetching platforms from IGDB API, {offset}-{nextOffset}, total items {totalItems}", (page * limit) + 1, (page+1) * limit, totalItems);
-
-                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
-                message.Headers.Add("Client-ID", _clientId);
                 message.Content = new StringContent($"fields *; limit {limit}; offset {page * limit};");
+
+                await _authenticated.AuthenticateMessageAsync(message);
 
                 var result = await _httpClient.SendAsync(message);
                 var platformResult = Serializer.Deserialize<PlatformResult>(await result.Content.ReadAsStreamAsync());

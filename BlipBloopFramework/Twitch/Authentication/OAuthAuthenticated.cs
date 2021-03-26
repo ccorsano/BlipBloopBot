@@ -22,31 +22,22 @@ namespace BlipBloopBot.Twitch.Authentication
             _tokenExpirationTime = DateTimeOffset.MinValue;
         }
 
+        public TwitchConstants.TwitchOAuthScopes[] Scopes => _scopes;
+
+        public string Token => _oauthToken;
+
         public DateTimeOffset ExpiresAt => _tokenExpirationTime;
 
         public bool AutoRenew => false;
 
-        public TwitchConstants.TwitchOAuthScopes[] Scopes => _scopes;
-
-        public Task<bool> Authenticate()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task AuthenticateAsync()
-        {
-            throw new NotImplementedException();
-        }
+        public Task AuthenticateAsync() => AuthenticateAsync(CancellationToken.None);
 
         public Task AuthenticateAsync(CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
-        public Task AuthenticateMessageAsync(HttpRequestMessage message)
-        {
-            throw new NotImplementedException();
-        }
+        public Task AuthenticateMessageAsync(HttpRequestMessage message) => AuthenticateMessageAsync(message, CancellationToken.None);
 
         public Task AuthenticateMessageAsync(HttpRequestMessage message, CancellationToken cancellationToken)
         {

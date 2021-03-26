@@ -69,7 +69,6 @@ namespace BlipBloopCommands.Commands.GameSynopsis
 
             try
             {
-                await _twitchAPIClient.AuthenticateAsync(_twitchOptions.ClientId, _twitchOptions.ClientSecret);
                 var results = await _twitchAPIClient.SearchChannelsAsync(broadcasterId);
                 var newResults = results.First(c => c.BroadcasterLogin == broadcasterId);
 

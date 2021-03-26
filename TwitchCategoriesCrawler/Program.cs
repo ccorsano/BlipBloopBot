@@ -1,10 +1,12 @@
 ﻿using BlipBloopBot.Twitch;
 using BlipBloopBot.Twitch.API;
+using BlipBloopBot.Twitch.Authentication;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -37,6 +39,13 @@ namespace TwitchCategoriesCrawler
                     services.AddTransient<IGDBClient>();
                     services.AddSingleton<IMemoryCache, MemoryCache>();
                     services.AddSingleton<SteamStoreClient>();
+                    services.AddSingleton<IAuthenticated>(s =>
+                        Twitch.Authenticate()
+                            .FromAppCredentials(
+                                s.GetService<IOptions<TwitchApplicationOptions>>().Value.ClientId,
+                                s.GetService<IOptions<TwitchApplicationOptions>>().Value.ClientSecret)
+                            .Build()
+                    );
 
                     services.AddHostedService<TwitchCategoriesCrawlerService>();
                 })

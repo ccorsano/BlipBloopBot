@@ -11,6 +11,7 @@ namespace BlipBloopBot.Twitch.Authentication
 {
     public interface IAuthenticated
     {
+        internal string Token { get; }
         public DateTimeOffset ExpiresAt { get; }
         public bool AutoRenew { get; }
         public TwitchOAuthScopes[] Scopes { get; }
