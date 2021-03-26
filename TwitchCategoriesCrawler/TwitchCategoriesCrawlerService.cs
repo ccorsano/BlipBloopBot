@@ -50,8 +50,6 @@ namespace TwitchCategoriesCrawler
             IDictionary<ulong, Platform> platformDb = new Dictionary<ulong, Platform>();
             IDictionary<(string, string), GameInfo> gameDb = new Dictionary<(string, string), GameInfo>();
 
-            await _igdbClient.AuthenticateAsync(_options.ClientId, _options.ClientSecret);
-
             // Load IGDB platforms
             //await foreach(var platform in _igdbClient.EnumeratePlatforms())
             //{
