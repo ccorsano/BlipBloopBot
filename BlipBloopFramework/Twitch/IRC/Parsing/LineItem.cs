@@ -9,7 +9,9 @@ namespace BlipBloopBot.Twitch.IRC.Parsing
 
         public LineItem(ReadOnlySpan<char> line)
         {
-            ReadOnlySpan<char> prefix = default,
+            ReadOnlySpan<char> 
+                tags = default,
+                prefix = default,
                 command = default,
                 param1 = default,
                 param2 = default,
@@ -19,6 +21,11 @@ namespace BlipBloopBot.Twitch.IRC.Parsing
                 trailing = default;
 
             _line = line;
+
+            if (_line[0] == '@')
+            {
+                ParseTags(ref _line, out tags);
+            }
 
             if (_line[0] == ':')
             {
@@ -57,6 +64,7 @@ namespace BlipBloopBot.Twitch.IRC.Parsing
 
             Message = new ParsedIRCMessage
             {
+                Tags = tags,
                 Prefix = prefix,
                 Command = command,
                 Param1 = param1,
@@ -77,6 +85,18 @@ namespace BlipBloopBot.Twitch.IRC.Parsing
                 }
                 target = line.Slice(0, endOfCommandIndex);
                 line = line.Slice(endOfCommandIndex + 1);
+            }
+
+            void ParseTags(ref ReadOnlySpan<char> line, out ReadOnlySpan<char> tags)
+            {
+                var endOfTagsIndex = line.IndexOf(' ');
+                if (endOfTagsIndex == -1)
+                {
+                    tags = ReadOnlySpan<char>.Empty;
+                    return;
+                }
+                tags = line.Slice(1, endOfTagsIndex - 1);
+                line = line.Slice(endOfTagsIndex + 1);
             }
         }
 
