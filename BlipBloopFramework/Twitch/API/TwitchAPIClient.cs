@@ -26,6 +26,10 @@ namespace BlipBloopBot.Twitch.API
             _logger = logger;
         }
 
+        public Task AuthenticateAsync(string clientId, string clientSecret) => AuthenticateAsync(clientId, clientSecret, CancellationToken.None);
+
+        public Task<string> AuthenticateAsync() => AuthenticateAsync(CancellationToken.None);
+
         public async Task<HelixChannelSearchResult[]> SearchChannelsAsync(string channelQuery)
         {
             var httpMessage = new HttpRequestMessage
