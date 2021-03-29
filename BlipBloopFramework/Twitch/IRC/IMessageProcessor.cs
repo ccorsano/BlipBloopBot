@@ -8,6 +8,6 @@ namespace BlipBloopBot.Twitch.IRC
     public interface IMessageProcessor
     {
         Task Init(string channelName);
-        void OnMessage(ParsedIRCMessage message, Action<string> sendResponse);
+        void OnMessage(ParsedIRCMessage message, Action<OutgoingMessage> sendResponse);
     }
 }

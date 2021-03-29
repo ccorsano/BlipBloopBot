@@ -41,5 +41,10 @@ namespace BlipBloopBot.Twitch.IRC
         {
             return new BotCommandEnumerator(message, commandSymbol);
         }
+
+        public static TagsEnumerator ParseIRCTags(this ParsedIRCMessage message)
+        {
+            return new TagsEnumerator(message.Tags);
+        }
     }
 }

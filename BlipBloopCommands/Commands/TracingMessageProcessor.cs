@@ -23,7 +23,7 @@ namespace BlipBloopBot.Commands
             return Task.CompletedTask;
         }
 
-        public void OnMessage(ParsedIRCMessage message, Action<string> _)
+        public void OnMessage(ParsedIRCMessage message, Action<OutgoingMessage> _)
         {
             _logger.LogInformation(":{prefix} {command} : {message}", new string(message.Prefix), new string(message.Command), new string(message.Trailing));
 

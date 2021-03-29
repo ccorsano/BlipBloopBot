@@ -26,13 +26,13 @@ namespace BlipBloopBot.Twitch.IRC
         private string _joinedChannel;
         private bool _receivedPing;
 
-        private ConcurrentQueue<string> _outMessageQueue = new ConcurrentQueue<string>();
+        private ConcurrentQueue<OutgoingMessage> _outMessageQueue = new ConcurrentQueue<OutgoingMessage>();
 
         public TwitchChatClient(IEnumerable<IMessageProcessor> processors, IOptions<TwitchChatClientOptions> options, ILogger<TwitchChatClient> logger)
         {
             _options = options.Value;
             _webSocket = new ClientWebSocket();
-            _inBuffer = new byte[1024];
+            _inBuffer = new byte[8703]; // IRCv3 8191B Tags + 512B message
             _outBuffer = new byte[1024];
             _processors = processors.ToList();
             _logger = logger;
@@ -45,6 +45,8 @@ namespace BlipBloopBot.Twitch.IRC
 
             await SendCommandAsync("PASS", $"oauth:{_options.OAuthToken}", cancellationToken);
             await SendCommandAsync("NICK", _options.UserName, cancellationToken);
+            // Request IRCv3 Tags capability
+            await SendCommandAsync("CAP REQ", ":twitch.tv/tags", cancellationToken);
             await ReceiveIRCMessage(new List<(string, IMessageProcessor)>(), cancellationToken);
         }
 
@@ -64,14 +66,15 @@ namespace BlipBloopBot.Twitch.IRC
             await _webSocket.SendAsync(_outBuffer.AsMemory().Slice(0, length), WebSocketMessageType.Text, true, cancellationToken);
         }
 
-        public async Task SendMessageAsync(string message, CancellationToken cancellationToken)
+        public async Task SendMessageAsync(OutgoingMessage message, CancellationToken cancellationToken)
         {
             if (_joinedChannel == null)
             {
                 throw new InvalidOperationException("No active channel");
             }
 
-            var sendText = $"PRIVMSG #{_joinedChannel} :{message}";
+            var replyTag = message.ReplyParentMessage == null ? "" : $"@reply-parent-msg-id={message.ReplyParentMessage} ";
+            var sendText = $"{replyTag}PRIVMSG #{_joinedChannel} :{message.Message}";
             var length = Encoding.UTF8.GetBytes(sendText.AsSpan(), _outBuffer.AsSpan());
 
             await _webSocket.SendAsync(_outBuffer.AsMemory().Slice(0, length), WebSocketMessageType.Text, true, cancellationToken);

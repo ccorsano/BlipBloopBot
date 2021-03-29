@@ -49,9 +49,23 @@ namespace BlipBloopCommands.Commands.GameSynopsis
             };
         }
 
-        public void OnMessage(ParsedIRCMessage message, Action<string> sendResponse)
+        public void OnMessage(ParsedIRCMessage message, Action<OutgoingMessage> sendResponse)
         {
-            sendResponse(_gameInfo?.Summary ?? "Not playing, we are just chilling at the moment !");
+            string msgId = null;
+            foreach (var tag in message.ParseIRCTags())
+            {
+                if (tag.Key.SequenceEqual("id"))
+                {
+                    msgId = new string(tag.Value);
+                    break;
+                }
+            }
+            var reply = new OutgoingMessage
+            {
+                ReplyParentMessage = msgId,
+                Message = _gameInfo?.Summary ?? "Not playing, we are just chilling at the moment !"
+            };
+            sendResponse(reply);
         }
     }
 }
