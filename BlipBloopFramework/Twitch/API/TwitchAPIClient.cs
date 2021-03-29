@@ -138,29 +138,34 @@ namespace BlipBloopBot.Twitch.API
 
         public async Task<HelixEventSubSubscriptionData> CreateEventSubSubscription(HelixEventSubSubscriptionCreateRequest request, CancellationToken cancellationToken)
         {
-            await AuthenticateAsync();
-
             var uri = "https://api.twitch.tv/helix/eventsub/subscriptions";
-            var result = await _httpClient.PostAsJsonAsync(uri, request, cancellationToken);
+            var jsonContent = JsonContent.Create(request);
+            var jsonMessage = new HttpRequestMessage(HttpMethod.Post, uri)
+            {
+                Content = jsonContent
+            };
+            await _authenticated.AuthenticateMessageAsync(jsonMessage, cancellationToken);
+
+            var result = await _httpClient.SendAsync(jsonMessage, cancellationToken);
             var response = await JsonSerializer.DeserializeAsync<HelixEventSubSubscriptionsListReponse>(await result.Content.ReadAsStreamAsync());
             return response.Data[0];
         }
 
         public async Task DeleteEventSubSubscription(string subscriptionId, CancellationToken cancellationToken)
         {
-            await AuthenticateAsync();
-
             var uri = "https://api.twitch.tv/helix/eventsub/subscriptions";
             uri = QueryHelpers.AddQueryString(uri, "id", subscriptionId);
-            var result = await _httpClient.DeleteAsync(uri, cancellationToken);
+
+            var deleteMessage = new HttpRequestMessage(HttpMethod.Delete, uri);
+            await _authenticated.AuthenticateMessageAsync(deleteMessage, cancellationToken);
+
+            var result = await _httpClient.SendAsync(deleteMessage, cancellationToken);
 
             result.EnsureSuccessStatusCode();
         }
 
         public async IAsyncEnumerable<HelixEventSubSubscriptionData> EnumerateEventSubSubscriptions(EventSubStatus? status = null)
         {
-            await AuthenticateAsync();
-
             HelixEventSubSubscriptionsListReponse response = null;
             uint paginationRound = 1;
             int totalItems = 0;
@@ -176,7 +181,11 @@ namespace BlipBloopBot.Twitch.API
                 {
                     uri = QueryHelpers.AddQueryString(uri, "after", response.Pagination.Cursor);
                 }
-                var result = await _httpClient.GetAsync(uri);
+
+                var message = new HttpRequestMessage(HttpMethod.Get, uri);
+                await _authenticated.AuthenticateMessageAsync(message);
+
+                var result = await _httpClient.SendAsync(message);
                 response = await JsonSerializer.DeserializeAsync<HelixEventSubSubscriptionsListReponse>(await result.Content.ReadAsStreamAsync());
 
                 _logger.LogDebug("Received response from Twitch API, items {responseItems}, pagination cursor {paginationCursor}", response?.Data?.Length, response?.Pagination?.Cursor ?? "not set");

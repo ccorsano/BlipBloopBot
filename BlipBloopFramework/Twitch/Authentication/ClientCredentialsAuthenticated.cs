@@ -40,7 +40,7 @@ namespace BlipBloopBot.Twitch.Authentication
             _scopes = scopes.ToArray();
         }
 
-        internal string Token => _tokenResponse?.AccessToken;
+        public string Token => _tokenResponse?.AccessToken;
 
         public DateTimeOffset ExpiresAt => _tokenExpiration;
 
