@@ -203,10 +203,6 @@ namespace BlipBloopBot.Constants
 
         public const string SCOPE_ANALYTICS_READ_EXTENSIONS = "analytics:read:extensions";
 
-        public static class LanguageCodes
-        {
-        }
-
         public static HashSet<string> SupportedLanguages = new HashSet<string>
         {
             LanguageCodes.ENGLISH,
