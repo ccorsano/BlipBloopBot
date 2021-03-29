@@ -32,7 +32,7 @@ namespace BlipBloopBot.Twitch.IRC
         {
             _options = options.Value;
             _webSocket = new ClientWebSocket();
-            _inBuffer = new byte[8703]; // IRCv3 8191 Tags + 512 message
+            _inBuffer = new byte[8703]; // IRCv3 8191B Tags + 512B message
             _outBuffer = new byte[1024];
             _processors = processors.ToList();
             _logger = logger;
