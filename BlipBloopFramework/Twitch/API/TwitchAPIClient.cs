@@ -1,82 +1,108 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
+﻿using BlipBloopBot.Twitch.Authentication;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
+using static BlipBloopBot.Constants.TwitchConstants;
 
 namespace BlipBloopBot.Twitch.API
 {
     public class TwitchAPIClient : IDisposable
     {
+        private readonly IAuthenticated _authenticated;
         private readonly HttpClient _httpClient;
         private readonly ILogger _logger;
 
-        private string _clientId;
-        private string _clientSecret;
-
-        private TwitchOAuthTokenResponse _tokenResponse;
-        private string _oauthToken = null;
-        private DateTime _oauthTokenExpiration = DateTime.MinValue;
-
-        public TwitchAPIClient(IHttpClientFactory factory, ILogger<TwitchAPIClient> logger)
+        public TwitchAPIClient(IAuthenticated authenticated, IHttpClientFactory factory, ILogger<TwitchAPIClient> logger)
         {
+            _authenticated = authenticated;
             _httpClient = factory.CreateClient();
             _logger = logger;
         }
 
-        public async Task<string> AuthenticateAsync()
+        public async Task<HelixEventSubSubscriptionData> CreateEventSubSubscription(HelixEventSubSubscriptionCreateRequest request, CancellationToken cancellationToken)
         {
-            if (DateTime.UtcNow > _oauthTokenExpiration)
+            var uri = "https://api.twitch.tv/helix/eventsub/subscriptions";
+            var jsonContent = JsonContent.Create(request);
+            var jsonMessage = new HttpRequestMessage(HttpMethod.Post, uri)
             {
-                await AuthenticateAsync(_clientId, _clientSecret);
-            }
-            return _oauthToken;
+                Content = jsonContent
+            };
+            await _authenticated.AuthenticateMessageAsync(jsonMessage, cancellationToken);
+
+            var result = await _httpClient.SendAsync(jsonMessage, cancellationToken);
+            var response = await JsonSerializer.DeserializeAsync<HelixEventSubSubscriptionsListReponse>(await result.Content.ReadAsStreamAsync());
+            return response.Data[0];
         }
 
-        public async Task AuthenticateAsync(string clientId, string clientSecret)
+        public async Task DeleteEventSubSubscription(string subscriptionId, CancellationToken cancellationToken)
         {
-            if ((_clientId == clientId || _clientSecret == clientSecret) && _oauthTokenExpiration > DateTime.UtcNow)
+            var uri = "https://api.twitch.tv/helix/eventsub/subscriptions";
+            uri = QueryHelpers.AddQueryString(uri, "id", subscriptionId);
+
+            var deleteMessage = new HttpRequestMessage(HttpMethod.Delete, uri);
+            await _authenticated.AuthenticateMessageAsync(deleteMessage, cancellationToken);
+
+            var result = await _httpClient.SendAsync(deleteMessage, cancellationToken);
+
+            result.EnsureSuccessStatusCode();
+        }
+
+        public async IAsyncEnumerable<HelixEventSubSubscriptionData> EnumerateEventSubSubscriptions(EventSubStatus? status = null)
+        {
+            HelixEventSubSubscriptionsListReponse response = null;
+            uint paginationRound = 1;
+            int totalItems = 0;
+            do
             {
-                return;
-            }
-
-            _clientId = clientId;
-            _clientSecret = clientSecret;
-
-            var uriBuilder = new UriBuilder("https://id.twitch.tv/oauth2/token");
-            var param = new Dictionary<string, string>()
-            {
-                { "client_id", _clientId },
-                { "client_secret", _clientSecret },
-                { "grant_type", "client_credentials" },
-            };
-            var reqContent = new FormUrlEncodedContent(param);
-
-            var result = await _httpClient.PostAsync(uriBuilder.Uri, reqContent);
-
-            _tokenResponse = await JsonSerializer.DeserializeAsync<TwitchOAuthTokenResponse>(await result.Content.ReadAsStreamAsync());
-            _oauthToken = _tokenResponse.AccessToken;
-            _oauthTokenExpiration = DateTime.UtcNow.AddSeconds(_tokenResponse.ExpiresIn);
-
-            lock (_httpClient)
-            {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _oauthToken);
-                if (!_httpClient.DefaultRequestHeaders.Contains("client-id"))
+                var uri = "https://api.twitch.tv/helix/eventsub/subscriptions";
+                _logger.LogDebug("Fetching EventSub subscriptions from Twitch API, pagination {paginationCursor}, round {paginationRound}, total items {totalItems}", response?.Pagination?.Cursor, paginationRound, totalItems);
+                if (status.HasValue)
                 {
-                    _httpClient.DefaultRequestHeaders.Add("client-id", _clientId);
+                    uri = QueryHelpers.AddQueryString(uri, "status", GetEventSubStatusString(status.Value));
                 }
-            }
+                if (response?.Pagination?.Cursor != null)
+                {
+                    uri = QueryHelpers.AddQueryString(uri, "after", response.Pagination.Cursor);
+                }
+
+                var message = new HttpRequestMessage(HttpMethod.Get, uri);
+                await _authenticated.AuthenticateMessageAsync(message);
+
+                var result = await _httpClient.SendAsync(message);
+                response = await JsonSerializer.DeserializeAsync<HelixEventSubSubscriptionsListReponse>(await result.Content.ReadAsStreamAsync());
+
+                _logger.LogDebug("Received response from Twitch API, items {responseItems}, pagination cursor {paginationCursor}", response?.Data?.Length, response?.Pagination?.Cursor ?? "not set");
+                if (response.Data != null)
+                {
+                    foreach (var category in response.Data)
+                    {
+                        yield return category;
+                    }
+
+                    totalItems += response.Data.Length;
+                }
+
+                ++paginationRound;
+            } while (response.Pagination.Cursor != null);
         }
 
         public async Task<HelixChannelSearchResult[]> SearchChannelsAsync(string channelQuery)
         {
-            await AuthenticateAsync();
+            var httpMessage = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri($"https://api.twitch.tv/helix/search/channels?query={channelQuery}")
+            };
+            await _authenticated.AuthenticateMessageAsync(httpMessage);
 
-            var uri = new Uri($"https://api.twitch.tv/helix/search/channels?query={channelQuery}");
-            var result = await _httpClient.GetAsync(uri);
+            var result = await _httpClient.SendAsync(httpMessage);
             if (result.IsSuccessStatusCode)
             {
                 var response = await JsonSerializer.DeserializeAsync<HelixChannelsSearchResponse>(await result.Content.ReadAsStreamAsync());
@@ -93,10 +119,13 @@ namespace BlipBloopBot.Twitch.API
 
         public async Task<HelixChannelInfo> GetChannelInfoAsync(string broadcasterId)
         {
-            await AuthenticateAsync();
-
-            var uri = new Uri($"https://api.twitch.tv/helix/channels?broadcaster_id={broadcasterId}");
-            var result = await _httpClient.GetAsync(uri);
+            var httpMessage = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri($"https://api.twitch.tv/helix/channels?broadcaster_id={broadcasterId}")
+            };
+            await _authenticated.AuthenticateMessageAsync(httpMessage);
+            var result = await _httpClient.SendAsync(httpMessage);
             if (result.IsSuccessStatusCode)
             {
                 var response = await JsonSerializer.DeserializeAsync<HelixGetChannelInfoResponse>(await result.Content.ReadAsStreamAsync());
@@ -113,8 +142,6 @@ namespace BlipBloopBot.Twitch.API
 
         public async IAsyncEnumerable<HelixCategoriesSearchEntry> EnumerateTwitchCategoriesAsync()
         {
-            await AuthenticateAsync();
-
             HelixCategoriesSearchResponse response = null;
             uint paginationRound = 1;
             int totalItems = 0;
@@ -128,7 +155,13 @@ namespace BlipBloopBot.Twitch.API
                 {
                     uri = QueryHelpers.AddQueryString(uri, "after", response.Pagination.Cursor);
                 }
-                var result = await _httpClient.GetAsync(uri);
+                var httpMessage = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(uri)
+                };
+                await _authenticated.AuthenticateMessageAsync(httpMessage);
+                var result = await _httpClient.SendAsync(httpMessage);
                 response = await JsonSerializer.DeserializeAsync<HelixCategoriesSearchResponse>(await result.Content.ReadAsStreamAsync());
 
                 _logger.LogDebug("Received response from Twitch API, items {responseItems}, pagination cursor {paginationCursor}", response?.Data?.Length, response?.Pagination?.Cursor ?? "not set");
@@ -145,6 +178,33 @@ namespace BlipBloopBot.Twitch.API
                 ++paginationRound;
             } while (response.Pagination.Cursor != null);
         }
+
+        // TODO: this is going to be a large region, take it out when refactoring the API
+        #region EventSub
+
+        public Task CreateEventSubChannelUpdateSubscription(string broadcasterId, Uri callback, string secret, CancellationToken? cancellationToken = null)
+        {
+            var request = new HelixEventSubSubscriptionCreateRequest
+            {
+                Type = EventSubTypes.ChannelUpdate,
+                Condition = new Dictionary<string, string>
+                {
+                    { "broadcaster_id", broadcasterId }
+                },
+                Transport = new HelixEventSubTransport
+                {
+                    Method = "webhook",
+                    Callback = callback,
+                    Secret = secret,
+                },
+                Version = "1",
+            };
+
+            return CreateEventSubSubscription(request, cancellationToken ?? CancellationToken.None);
+        }
+
+
+        #endregion
 
         public void Dispose()
         {
