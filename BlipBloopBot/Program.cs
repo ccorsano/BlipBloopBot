@@ -31,6 +31,10 @@ namespace BlipBloopBot
                 .ConfigureAppConfiguration(configure =>
                 {
                     configure.AddUserSecrets<Program>();
+                    configure.AddJsonFile("appsettings.json", true);
+#if DEBUG
+                    configure.AddJsonFile("appsettings.Debug.json", true);
+#endif
                     configure.AddEnvironmentVariables();
                     configuration = configure.Build();
                 })

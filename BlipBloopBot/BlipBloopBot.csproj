@@ -14,6 +14,15 @@
     <ProjectReference Include="..\BlipBloopCommands\BlipBloopCommands.csproj" />
     <ProjectReference Include="..\BlipBloopFramework\BlipBloopFramework.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.Debug.json" Condition="'$(Configuration)' == 'Debug'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <None Update="channels.json">
