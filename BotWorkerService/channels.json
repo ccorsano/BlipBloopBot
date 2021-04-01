@@ -6,19 +6,6 @@
         "jeu": {
           "Type": "GameSynopsis"
         },
-        "game": {
-          "Type": "GameSynopsis"
-        }
-      }
-    }
-  ],
-  "nope-channels": [
-    {
-      "BroadcasterLogin": "miekyld",
-      "Commands": {
-        "jeu": {
-          "Type": "GameSynopsis"
-        },
         "*": {
           "Type": "MessageTracer"
         }
@@ -27,8 +14,8 @@
     {
       "BroadcasterLogin": "nuja",
       "Commands": {
-        "jeu": {
-          "Type": "GameSynopsis"
+        "*": {
+          "Type": "MessageTracer"
         }
       }
     },
@@ -36,7 +23,7 @@
       "BroadcasterLogin": "Colas_Bim",
       "Commands": {
         "*": {
-          "Type": "GameSynopsis"
+          "Type": "MessageTracer"
         }
       }
     }

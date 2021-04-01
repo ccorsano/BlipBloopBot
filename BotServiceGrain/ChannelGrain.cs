@@ -17,11 +17,13 @@ namespace BotServiceGrainInterface
 
         public override Task OnActivateAsync()
         {
+            _logger.LogInformation("Activating channel grain {channelId}", this.GetGrainIdentity().PrimaryKeyString);
             return base.OnActivateAsync();
         }
 
         public override Task OnDeactivateAsync()
         {
+            _logger.LogInformation("Deactivating channel grain {channelId}", this.GetGrainIdentity().PrimaryKeyString);
             return base.OnDeactivateAsync();
         }
 
