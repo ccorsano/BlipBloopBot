@@ -1,6 +1,8 @@
 using BlipBloopBot.Extensions;
 using BlipBloopBot.Model.EventSub;
 using BlipBloopBot.Options;
+using BotServiceGrain;
+using BotServiceGrainInterface;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -8,6 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Orleans;
+using Orleans.Configuration;
 using System.Threading.Tasks;
 
 namespace BlipBloopWeb
@@ -30,6 +34,17 @@ namespace BlipBloopWeb
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "BlipBloopWeb", Version = "v1" });
             });
             services.AddApplicationInsightsTelemetry();
+
+            services.AddTransient<IClientBuilder>(services => new ClientBuilder()
+                // Clustering information
+                .Configure<ClusterOptions>(options =>
+                {
+                    options.ClusterId = "dev";
+                    options.ServiceId = "TwitchServices";
+                })
+                .UseRedisClustering(Configuration.GetValue<string>("REDIS_URL"))
+                .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(IChannelGrain).Assembly)));
+            services.AddSingleton<IClientProvider, GrainClientProvider>();
 
             // Load config, mainly the EventSub secret used for registration
             services.Configure<EventSubOptions>(Configuration.GetSection("Twitch:EventSub"));

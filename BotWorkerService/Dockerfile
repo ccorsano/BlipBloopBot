@@ -2,28 +2,27 @@
 
 FROM mcr.microsoft.com/dotnet/aspnet:5.0-alpine AS base
 WORKDIR /app
-EXPOSE 80
-EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
-COPY ["BlipBloopWeb/BlipBloopWeb.csproj", "BlipBloopWeb/"]
+COPY ["BotWorkerService/BotWorkerService.csproj", "BotWorkerService/"]
+COPY ["BotServiceGrain/BotServiceGrain.csproj", "BotServiceGrain/"]
 COPY ["BotServiceGrainInterface/BotServiceGrainInterface.csproj", "BotServiceGrainInterface/"]
 COPY ["BlipBloopFramework/BlipBloopFramework.csproj", "BlipBloopFramework/"]
-RUN dotnet restore "BlipBloopWeb/BlipBloopWeb.csproj"
+COPY ["BlipBloopCommands/BlipBloopCommands.csproj", "BlipBloopCommands/"]
+RUN dotnet restore "BotWorkerService/BotWorkerService.csproj"
 COPY . .
-WORKDIR "/src/BlipBloopWeb"
-RUN dotnet build "BlipBloopWeb.csproj" -c Release -o /app/build
+WORKDIR "/src/BotWorkerService"
+RUN dotnet build "BotWorkerService.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "BlipBloopWeb.csproj" -c Release -o /app/publish
+RUN dotnet publish "BotWorkerService.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-
-# WebHook secret used for Twitch EventSub webhook registration & security
-ENV Twitch__EventSub__WebHookSecret=""
-# Redis endpoint for clustering
+ENV HOSTNAME "localhost"
 ENV REDIS_URL "redis://redis:6379"
-ENTRYPOINT ["dotnet", "BlipBloopWeb.dll"]
+EXPOSE 11111
+EXPOSE 30000
+ENTRYPOINT ["dotnet", "BotWorkerService.dll"]
