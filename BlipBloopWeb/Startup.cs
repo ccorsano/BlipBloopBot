@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Orleans;
 using Orleans.Configuration;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace BlipBloopWeb
@@ -65,7 +66,7 @@ namespace BlipBloopWeb
             services
                 .AddAuthentication(options =>
                 {
-                    options.DefaultAuthenticateScheme = "cookie";
+                    options.DefaultScheme = "cookie";
                     options.DefaultChallengeScheme = "twitch";
                 })
                 .AddCookie("cookie")
@@ -77,6 +78,18 @@ namespace BlipBloopWeb
                     options.ClientSecret = twitchOptions.ClientSecret;
                     options.ResponseType = "token id_token";
                     options.ResponseMode = "form_post";
+                    options.Events.OnRedirectToIdentityProvider = (context) =>
+                    {
+                        context.ProtocolMessage.RedirectUri = context.ProtocolMessage.RedirectUri + "-fragment";
+                        return Task.CompletedTask;
+                    };
+                    options.Events.OnTokenValidated = (context) =>
+                    {
+                        ClaimsIdentity identity = context.Principal.Identity as ClaimsIdentity;
+                        identity.AddClaim(new Claim("access_token", context.ProtocolMessage.AccessToken));
+                        identity.AddClaim(new Claim("id_token", context.ProtocolMessage.IdToken));
+                        return Task.CompletedTask;
+                    };
                     options.Scope.Remove("profile");
                     options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChannelReadEditors]);
                     options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChannelReadHypeTrain]);
@@ -88,6 +101,8 @@ namespace BlipBloopWeb
                     options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.UserReadSubscriptions]);
                     options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChatRead]);
                 });
+
+            services.AddMvc();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
