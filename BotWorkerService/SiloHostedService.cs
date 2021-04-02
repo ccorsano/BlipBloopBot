@@ -60,6 +60,9 @@ namespace BotWorkerService
                .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(ChannelGrain).Assembly).WithReferences())
                // Configure connectivity
                .ConfigureEndpoints(hostname: hostname, siloPort: 11111, gatewayPort: 30000);
+
+            builder.AddMemoryGrainStorage("profileStore");
+
             builder.ConfigureServices((context, services) =>
             {
                 // Load channels and command configuration from static json file, and inject
@@ -85,8 +88,6 @@ namespace BotWorkerService
                             s.GetService<IOptions<TwitchApplicationOptions>>().Value.ClientSecret)
                         .Build()
                 );
-
-                services.AddHostedService<SiloHostedService>();
 
                 // Configure commands
                 services.AddCommand<GameSynopsisCommand>("GameSynopsis");
