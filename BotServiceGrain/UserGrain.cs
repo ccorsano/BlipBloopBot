@@ -32,7 +32,7 @@ namespace BotServiceGrain
             _logger = logger;
         }
 
-        public async Task<bool> SetOAuthToken(string oauthToken)
+        async Task<bool> IUserGrain.SetOAuthToken(string oauthToken)
         {
             _profile.State.OAuthToken = oauthToken;
 
