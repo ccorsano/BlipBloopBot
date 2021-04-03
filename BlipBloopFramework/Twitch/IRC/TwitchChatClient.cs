@@ -16,7 +16,7 @@ namespace BlipBloopBot.Twitch.IRC
     /// A small Twitch IRC over WebSocket client.
     /// Aimed to be low-allocation, low-overhead and extensible.
     /// </summary>
-    public class TwitchChatClient : IDisposable
+    public class TwitchChatClient : ITwitchChatClient
     {
         private readonly IAuthenticated _authenticated;
         private readonly Uri _endpoint;

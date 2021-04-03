@@ -44,7 +44,7 @@ namespace BlipBloopBot.Twitch.IRC
             return this;
         }
 
-        TwitchChatClient ITwitchChatClientBuilder.Build()
+        ITwitchChatClient ITwitchChatClientBuilder.Build()
         {
             return new TwitchChatClient(_authenticated, _endpoint, _loggerFactory.CreateLogger<TwitchChatClient>());
         }

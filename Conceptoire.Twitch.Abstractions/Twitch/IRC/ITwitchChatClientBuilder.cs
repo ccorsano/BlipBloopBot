@@ -10,6 +10,6 @@ namespace BlipBloopBot.Twitch.IRC
         public ITwitchChatClientBuilder WithEndpoint(Uri websocketUri);
         public ITwitchChatClientBuilder WithAuthenticatedUser(IAuthenticated authenticated);
         public ITwitchChatClientBuilder WithOAuthToken(string oAuthToken);
-        public TwitchChatClient Build();
+        public ITwitchChatClient Build();
     }
 }
