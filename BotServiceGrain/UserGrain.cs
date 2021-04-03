@@ -1,10 +1,14 @@
-﻿using BotServiceGrainInterface;
+﻿using BlipBloopBot.Twitch.API;
+using BlipBloopBot.Twitch.Authentication;
+using BotServiceGrainInterface;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,18 +17,37 @@ namespace BotServiceGrain
     public class UserGrain : Grain, IUserGrain
     {
         private readonly IPersistentState<ProfileState> _profile;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger _logger;
 
-        public UserGrain([PersistentState("profile", "profileStore")] IPersistentState<ProfileState> profile, ILogger<UserGrain> logger)
+        private TwitchAPIClient _twitchAPIClient;
+
+        public UserGrain(
+            [PersistentState("profile", "profileStore")] IPersistentState<ProfileState> profile,
+            IHttpClientFactory httpClientFactory,
+            ILogger<UserGrain> logger)
         {
             _profile = profile;
+            _httpClientFactory = httpClientFactory;
             _logger = logger;
         }
 
-        public Task SetOAuthToken(string oauthToken)
+        public async Task<bool> SetOAuthToken(string oauthToken)
         {
             _profile.State.OAuthToken = oauthToken;
-            return _profile.WriteStateAsync();
+
+            var authenticated = new AuthenticationBuilder()
+                .FromOAuthToken(oauthToken)
+                .Build();
+            _twitchAPIClient = new TwitchAPIClient(authenticated, _httpClientFactory, ServiceProvider.GetRequiredService<ILogger<TwitchAPIClient>>());
+            var validated = await _twitchAPIClient.ValidateToken();
+
+            if (validated != null)
+            {
+                await _profile.WriteStateAsync();
+            }
+
+            return validated != null;
         }
     }
 }

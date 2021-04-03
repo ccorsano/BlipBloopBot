@@ -3,3 +3,27 @@
 *@
 @{
 }
+<html>
+<head>
+    <title>Twitch Services Portal</title>
+</head>
+<body>
+    <h1>Twitch Services</h1>
+
+    @if (ViewBag.IsAuthenticated)
+    {
+        <div>
+            User: @(User.FindFirst("preferred_username")?.Value ?? "Unknown")
+        </div>
+        <div>
+            @Html.ActionLink("Logout", "Logout")
+        </div>
+    }
+    else
+    {
+    <div>
+        @Html.ActionLink("Connect with Twitch", "Login")
+    </div>
+    }
+</body>
+</html>

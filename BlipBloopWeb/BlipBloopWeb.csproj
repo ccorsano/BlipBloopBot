@@ -29,4 +29,8 @@
     <ProjectReference Include="..\BotServiceGrainInterface\BotServiceGrainInterface.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Views\_Layout\" />
+  </ItemGroup>
+
 </Project>

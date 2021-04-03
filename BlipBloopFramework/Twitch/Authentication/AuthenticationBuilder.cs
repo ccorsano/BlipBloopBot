@@ -38,13 +38,40 @@ namespace BlipBloopBot.Twitch.Authentication
             switch (SelectedAuthType)
             {
                 case AuthType.OAuthToken:
-                    return new OAuthAuthenticated(OAuthToken, ConfiguredScopes);
+                    return CreateOAuthTokenAuthenticated();
                 case AuthType.AppCredentials:
                     return CreateClientCredentialsAuthenticated();
                 case AuthType.None:
                 default:
                     throw new InvalidOperationException("No authentication type selected");
             }
+        }
+
+        public OAuthAuthenticated CreateOAuthTokenAuthenticated()
+        {
+            HttpClient client = HttpClient;
+
+            if (client == null)
+            {
+                if (HttpClientFactory != null)
+                {
+                    client = HttpClientFactory.CreateClient();
+                }
+                else if (HttpMessageHandler != null)
+                {
+                    client = new HttpClient(HttpMessageHandler);
+                }
+                else if (HttpMessageHandlerFactory != null)
+                {
+                    client = new HttpClient(HttpMessageHandlerFactory.CreateHandler());
+                }
+                else
+                {
+                    client = new HttpClient();
+                }
+            }
+
+            return new OAuthAuthenticated(client, OAuthToken, ConfiguredScopes);
         }
 
         public ClientCredentialsAuthenticated CreateClientCredentialsAuthenticated()

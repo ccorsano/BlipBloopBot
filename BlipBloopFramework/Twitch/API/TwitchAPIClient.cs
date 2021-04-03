@@ -41,6 +41,16 @@ namespace BlipBloopBot.Twitch.API
             return response.Data[0];
         }
 
+        public async Task<HelixValidateTokenResponse> ValidateToken(CancellationToken cancellationToken = default)
+        {
+            var uri = "https://api.twitch.tv/helix/validate";
+            var message = new HttpRequestMessage(HttpMethod.Get, uri);
+            await _authenticated.AuthenticateMessageAsync(message, cancellationToken);
+
+            var result = await _httpClient.SendAsync(message, cancellationToken);
+            return await JsonSerializer.DeserializeAsync<HelixValidateTokenResponse>(await result.Content.ReadAsStreamAsync());
+        }
+
         public async Task DeleteEventSubSubscription(string subscriptionId, CancellationToken cancellationToken)
         {
             var uri = "https://api.twitch.tv/helix/eventsub/subscriptions";
