@@ -1,15 +1,12 @@
-﻿using BlipBloopBot.Commands;
-using BlipBloopBot.Model.EventSub;
-using BlipBloopBot.Twitch.EventSub;
-using BlipBloopBot.Twitch.IRC;
+﻿using Conceptoire.Twitch.IRC;
+using Conceptoire.Twitch.Model.EventSub;
+using Conceptoire.Twitch.EventSub;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Conceptoire.Twitch.Commands;
 
-namespace BlipBloopBot.Extensions
+namespace Conceptoire.Twitch.Extensions
 {
     public static class ServiceCollectionExtensions
     {

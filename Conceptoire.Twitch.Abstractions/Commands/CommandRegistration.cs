@@ -1,11 +1,7 @@
-﻿using BlipBloopBot.Twitch.IRC;
+﻿using Conceptoire.Twitch.IRC;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace BlipBloopBot.Commands
+namespace Conceptoire.Twitch.Commands
 {
     public class CommandRegistration
     {

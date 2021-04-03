@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace BlipBloopBot.Model.EventSub
+namespace Conceptoire.Twitch.Model.EventSub
 {
     public class TwitchEventSubUserUpdateEvent : TwitchEventSubEvent
     {

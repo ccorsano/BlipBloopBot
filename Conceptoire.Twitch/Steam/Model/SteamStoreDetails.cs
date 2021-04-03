@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 
-namespace BlipBloopBot.Steam.Model
+namespace Conceptoire.Twitch.Steam.Model
 {
     public class Demo
     {

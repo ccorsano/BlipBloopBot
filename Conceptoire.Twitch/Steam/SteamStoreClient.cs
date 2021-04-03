@@ -1,16 +1,13 @@
-﻿using BlipBloopBot.Steam.Model;
+﻿using Conceptoire.Twitch.Steam.Model;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Polly;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace BlipBloopBot.Twitch.API
+namespace Conceptoire.Twitch.Steam
 {
     public class SteamStoreClient : IDisposable
     {
@@ -33,7 +30,8 @@ namespace BlipBloopBot.Twitch.API
                 .WaitAndRetryAsync(
                     retryCount: 5,
                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(5, retryAttempt)),
-                    (exception, timeSpan) => {
+                    (exception, timeSpan) =>
+                    {
                         _logger.LogError("Call to steam throttled, executing exponential backoff {backoff}", timeSpan);
                     });
         }
@@ -46,7 +44,8 @@ namespace BlipBloopBot.Twitch.API
 
             if (!_cache.TryGetValue(cacheKey, out SteamStoreDetails result))
             {
-                var response = await RetryPolicy.ExecuteAsync(() => {
+                var response = await RetryPolicy.ExecuteAsync(() =>
+                {
                     var message = new HttpRequestMessage(HttpMethod.Get, $"api/appdetails/?appids={appId}");
                     message.Headers.AcceptLanguage.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue(language));
                     if (!string.IsNullOrEmpty(WebAPIKey))

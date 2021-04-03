@@ -1,4 +1,4 @@
-﻿using BlipBloopBot.Twitch.EventSub;
+﻿using Conceptoire.Twitch.EventSub;
 using Microsoft.AspNetCore.Builder;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlipBloopBot.Extensions
+namespace Conceptoire.Twitch.Extensions
 {
     public static class ApplicationBuilderExtensions
     {
@@ -14,7 +14,7 @@ namespace BlipBloopBot.Extensions
         {
             return builder.Map(path, builder =>
             {
-                var handler = (EventSubHandler) builder.ApplicationServices.GetService(typeof(EventSubHandler));
+                var handler = (EventSubHandler)builder.ApplicationServices.GetService(typeof(EventSubHandler));
                 builder.Run(handler.HandleRequestAsync);
             });
         }

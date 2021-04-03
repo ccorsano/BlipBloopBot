@@ -1,15 +1,11 @@
-﻿using BlipBloopBot.Twitch.API;
-using BlipBloopBot.Twitch.Authentication;
-using BotServiceGrainInterface;
+﻿using BotServiceGrainInterface;
+using Conceptoire.Twitch.API;
+using Conceptoire.Twitch.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Runtime;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace BotServiceGrain

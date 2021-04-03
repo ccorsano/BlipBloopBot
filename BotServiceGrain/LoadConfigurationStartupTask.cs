@@ -1,6 +1,6 @@
-﻿using BlipBloopBot.Commands;
-using BlipBloopBot.Options;
-using BlipBloopBot.Twitch.API;
+﻿using Conceptoire.Twitch.Commands;
+using Conceptoire.Twitch.Options;
+using Conceptoire.Twitch.API;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Runtime;

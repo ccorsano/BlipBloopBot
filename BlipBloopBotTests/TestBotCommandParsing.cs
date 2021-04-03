@@ -1,4 +1,4 @@
-﻿using BlipBloopBot.Twitch.IRC;
+﻿using Conceptoire.Twitch.IRC;
 using System;
 using System.Collections.Generic;
 using System.Linq;

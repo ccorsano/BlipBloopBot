@@ -1,6 +1,7 @@
-﻿using BlipBloopBot.Twitch;
-using BlipBloopBot.Twitch.API;
-using BlipBloopBot.Twitch.Authentication;
+﻿using Conceptoire.Twitch.Authentication;
+using Conceptoire.Twitch.Steam;
+using Conceptoire.Twitch;
+using Conceptoire.Twitch.API;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

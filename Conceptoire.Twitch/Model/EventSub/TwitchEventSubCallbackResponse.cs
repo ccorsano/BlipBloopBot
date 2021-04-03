@@ -1,4 +1,4 @@
-﻿namespace BlipBloopBot.Model.EventSub
+﻿namespace Conceptoire.Twitch.Model.EventSub
 {
     class TwitchEventSubCallbackResponse
     {

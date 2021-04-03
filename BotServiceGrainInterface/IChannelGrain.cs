@@ -1,4 +1,4 @@
-﻿using BlipBloopBot.Twitch.API;
+﻿using Conceptoire.Twitch.API;
 using Orleans;
 using System;
 using System.Threading.Tasks;

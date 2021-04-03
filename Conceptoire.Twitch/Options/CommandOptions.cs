@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace BlipBloopBot.Options
+namespace Conceptoire.Twitch.Options
 {
     public class CommandOptions
     {

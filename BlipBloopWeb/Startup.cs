@@ -1,10 +1,10 @@
-using BlipBloopBot.Constants;
-using BlipBloopBot.Extensions;
-using BlipBloopBot.Model.EventSub;
-using BlipBloopBot.Options;
-using BlipBloopBot.Twitch;
 using BotServiceGrain;
 using BotServiceGrainInterface;
+using Conceptoire.Twitch.Constants;
+using Conceptoire.Twitch.Extensions;
+using Conceptoire.Twitch.Model.EventSub;
+using Conceptoire.Twitch.Options;
+using Conceptoire.Twitch;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;

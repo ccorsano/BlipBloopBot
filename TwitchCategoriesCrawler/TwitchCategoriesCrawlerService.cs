@@ -1,8 +1,9 @@
 ﻿using BlibBloopBot.IGDB.Generated;
-using BlipBloopBot.Constants;
-using BlipBloopBot.Model;
-using BlipBloopBot.Twitch;
-using BlipBloopBot.Twitch.API;
+using Conceptoire.Twitch.Constants;
+using Conceptoire.Twitch.Model;
+using Conceptoire.Twitch.Steam;
+using Conceptoire.Twitch;
+using Conceptoire.Twitch.API;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Microsoft.Extensions.Hosting;

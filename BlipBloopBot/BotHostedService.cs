@@ -1,15 +1,12 @@
-﻿using BlipBloopBot.Commands;
-using BlipBloopBot.Options;
-using BlipBloopBot.Twitch.API;
-using BlipBloopBot.Twitch.IRC;
+﻿using Conceptoire.Twitch.Commands;
+using Conceptoire.Twitch.IRC;
+using Conceptoire.Twitch.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 

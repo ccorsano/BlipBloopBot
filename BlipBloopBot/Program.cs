@@ -1,20 +1,21 @@
 ﻿using Microsoft.Extensions.Configuration;
-using BlipBloopBot.Twitch.IRC;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using BlipBloopBot.Twitch.API;
 using Microsoft.Extensions.Logging;
-using BlipBloopBot.Options;
 using Microsoft.Extensions.Caching.Memory;
 using BlipBloopBot.Commands;
-using BlipBloopBot.Extensions;
-using BlipBloopBot.Twitch;
 using BlipBloopBot.Storage;
 using BlipBloopCommands.Commands.GameSynopsis;
-using BlipBloopBot.Twitch.Authentication;
 using Microsoft.Extensions.Options;
+using Conceptoire.Twitch.Extensions;
+using Conceptoire.Twitch.Options;
+using Conceptoire.Twitch.Steam;
+using Conceptoire.Twitch;
+using Conceptoire.Twitch.IRC;
+using Conceptoire.Twitch.API;
+using Conceptoire.Twitch.Authentication;
 
 namespace BlipBloopBot
 {
@@ -58,8 +59,8 @@ namespace BlipBloopBot
                     services.AddSingleton<SteamStoreClient>();
                     services.AddSingleton<IGameLocalizationStore, EmbeddedGameLocalizationDb>();
                     services.AddTransient<ITwitchCategoryProvider, PollingTwitchCategoryProvider>();
-                    services.AddSingleton<IAuthenticated>(s => 
-                        Twitch.Twitch.Authenticate()
+                    services.AddSingleton<IAuthenticated>(s =>
+                        Twitch.Authenticate()
                             .FromAppCredentials(
                                 s.GetService<IOptions<TwitchApplicationOptions>>().Value.ClientId,
                                 s.GetService<IOptions<TwitchApplicationOptions>>().Value.ClientSecret)

@@ -1,13 +1,8 @@
-﻿using BlipBloopBot.Model;
-using BlipBloopBot.Storage;
-using BlipBloopBot.Twitch;
-using BlipBloopBot.Twitch.API;
-using BlipBloopBot.Twitch.IRC;
+﻿using Conceptoire.Twitch.IRC;
+using Conceptoire.Twitch.Model;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace BlipBloopCommands.Commands.GameSynopsis

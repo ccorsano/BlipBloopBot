@@ -1,5 +1,5 @@
-﻿using BlipBloopBot.Twitch.API;
-using BotServiceGrain;
+﻿using BotServiceGrain;
+using Conceptoire.Twitch.API;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Runtime;

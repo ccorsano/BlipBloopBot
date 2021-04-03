@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace BlipBloopBot.Constants
+namespace Conceptoire.Twitch.Constants
 {
     public static class TwitchConstants
     {
@@ -43,7 +40,7 @@ namespace BlipBloopBot.Constants
                 _ => throw new NotImplementedException()
             };
 
-    public static class EventSubMessageTypes
+        public static class EventSubMessageTypes
         {
             public const string Notification = "notification";
             public const string WebHookCallbackVerification = "webhook_callback_verification";
@@ -111,9 +108,9 @@ namespace BlipBloopBot.Constants
             public const string CHINESE_HONGKONG = "zh-hk";
             public const string KOREAN = "ko";
         }
-        public const string SCOPE_CHAT_READ                 = "chat:read";
-        public const string SCOPE_WHISPERS_READ             = "whispers:read";
-        public const string SCOPE_WHISPERS_EDIT             = "whispers:edit";
+        public const string SCOPE_CHAT_READ = "chat:read";
+        public const string SCOPE_WHISPERS_READ = "whispers:read";
+        public const string SCOPE_WHISPERS_EDIT = "whispers:edit";
 
         public static readonly Dictionary<TwitchOAuthScopes, string> ScopesValues = new Dictionary<TwitchOAuthScopes, string>
         {
@@ -176,30 +173,30 @@ namespace BlipBloopBot.Constants
             WhispersRead,
             WhispersEdit,
         }
-        public const string SCOPE_CHAT_EDIT                 = "chat:edit";
+        public const string SCOPE_CHAT_EDIT = "chat:edit";
 
-        public const string SCOPE_CHANNEL_MODERATE          = "channel:moderate";
-        public const string SCOPE_USER_READ_SUBSCRIPTIONS   = "user:read:subscriptions";
-        public const string SCOPE_USER_READ_EMAIL           = "user:read:email";
-        public const string SCOPE_USER_READ_BROADCAST       = "user:read:broadcast";
-        public const string SCOPE_USER_MANAGE_BLOCKEDUSERS  = "user:manage:blocked_users";
-        public const string SCOPE_USER_READ_BLOCKEDUSERS    = "user:read:blocked_users";
-        public const string SCOPE_USER_EDIT_FOLLOWS         = "user:edit:follows";
-        public const string SCOPE_USER_EDIT                 = "user:edit";
-        public const string SCOPE_MODERATION_READ           = "moderation:read";
-        public const string SCOPE_CLIPS_EDIT                = "clips:edit";
-        public const string SCOPE_CHANNEL_READ_SUBSCRIPTIONS= "channel:read:subscriptions";
-        public const string SCOPE_CHANNEL_READ_STREAMKEY    = "channel:read:stream_key";
-        public const string SCOPE_CHANNEL_READ_REDEMPTIONS  = "channel:read:redemptions";
-        public const string SCOPE_CHANNEL_READ_HYPETRAIN    = "channel:read:hype_train";
-        public const string SCOPE_CHANNEL_READ_EDITORS      = "channel:read:editors";
-        public const string SCOPE_CHANNEL_MANAGE_VIDEOS     = "channel:manage:videos";
-        public const string SCOPE_CHANNEL_MANAGE_REDEMPTIONS= "channel:manage:redemptions";
+        public const string SCOPE_CHANNEL_MODERATE = "channel:moderate";
+        public const string SCOPE_USER_READ_SUBSCRIPTIONS = "user:read:subscriptions";
+        public const string SCOPE_USER_READ_EMAIL = "user:read:email";
+        public const string SCOPE_USER_READ_BROADCAST = "user:read:broadcast";
+        public const string SCOPE_USER_MANAGE_BLOCKEDUSERS = "user:manage:blocked_users";
+        public const string SCOPE_USER_READ_BLOCKEDUSERS = "user:read:blocked_users";
+        public const string SCOPE_USER_EDIT_FOLLOWS = "user:edit:follows";
+        public const string SCOPE_USER_EDIT = "user:edit";
+        public const string SCOPE_MODERATION_READ = "moderation:read";
+        public const string SCOPE_CLIPS_EDIT = "clips:edit";
+        public const string SCOPE_CHANNEL_READ_SUBSCRIPTIONS = "channel:read:subscriptions";
+        public const string SCOPE_CHANNEL_READ_STREAMKEY = "channel:read:stream_key";
+        public const string SCOPE_CHANNEL_READ_REDEMPTIONS = "channel:read:redemptions";
+        public const string SCOPE_CHANNEL_READ_HYPETRAIN = "channel:read:hype_train";
+        public const string SCOPE_CHANNEL_READ_EDITORS = "channel:read:editors";
+        public const string SCOPE_CHANNEL_MANAGE_VIDEOS = "channel:manage:videos";
+        public const string SCOPE_CHANNEL_MANAGE_REDEMPTIONS = "channel:manage:redemptions";
         public const string SCOPE_CHANNEL_MANAGE_EXTENSIONS = "channel:manage:extensions";
-        public const string SCOPE_CHANNEL_MANAGE_BROADCAST  = "channel:manage:broadcast";
-        public const string SCOPE_CHANNEL_EDIT_COMMERCIAL   = "channel:edit:commercial";
-        public const string SCOPE_BITS_READ                 = "bits:read";
-        public const string SCOPE_ANALYTICS_READ_GAMES      = "analytics:read:games";
+        public const string SCOPE_CHANNEL_MANAGE_BROADCAST = "channel:manage:broadcast";
+        public const string SCOPE_CHANNEL_EDIT_COMMERCIAL = "channel:edit:commercial";
+        public const string SCOPE_BITS_READ = "bits:read";
+        public const string SCOPE_ANALYTICS_READ_GAMES = "analytics:read:games";
 
         public const string SCOPE_ANALYTICS_READ_EXTENSIONS = "analytics:read:extensions";
 
