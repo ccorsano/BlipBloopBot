@@ -61,7 +61,10 @@ namespace BotWorkerService
                // Configure connectivity
                .ConfigureEndpoints(hostname: hostname, siloPort: 11111, gatewayPort: 30000);
 
+            // Temp
             builder.AddMemoryGrainStorage("profileStore");
+            builder.AddMemoryGrainStorage("channelStore");
+            builder.AddMemoryGrainStorage("botSettingsStore");
 
             builder.ConfigureServices((context, services) =>
             {
