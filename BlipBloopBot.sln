@@ -15,11 +15,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlipBloopCommands", "BlipBl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlipBloopWeb", "BlipBloopWeb\BlipBloopWeb.csproj", "{AAA080FD-B95E-48A8-BECA-BE4EC1697986}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BotWorkerService", "BotWorkerService\BotWorkerService.csproj", "{264CC3DF-91BC-4A75-B46C-602ADE3DEB4D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BotWorkerService", "BotWorkerService\BotWorkerService.csproj", "{264CC3DF-91BC-4A75-B46C-602ADE3DEB4D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BotServiceGrain", "BotServiceGrain\BotServiceGrain.csproj", "{7E7BFD35-1EED-45C5-8801-FE6F603EF6C7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BotServiceGrain", "BotServiceGrain\BotServiceGrain.csproj", "{7E7BFD35-1EED-45C5-8801-FE6F603EF6C7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BotServiceGrainInterface", "BotServiceGrainInterface\BotServiceGrainInterface.csproj", "{EA4AC967-84ED-46D9-A814-33658FA590FA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BotServiceGrainInterface", "BotServiceGrainInterface\BotServiceGrainInterface.csproj", "{EA4AC967-84ED-46D9-A814-33658FA590FA}"
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{0438BF25-6659-44F2-BB47-546A2B1F3465}"
 EndProject

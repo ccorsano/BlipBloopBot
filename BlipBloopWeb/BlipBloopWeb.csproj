@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.17.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="5.0.4" />
     <PackageReference Include="Microsoft.Orleans.Client" Version="3.4.1" />
     <PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.4.1" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.9" />
@@ -26,6 +27,10 @@
   <ItemGroup>
     <ProjectReference Include="..\BlipBloopFramework\BlipBloopFramework.csproj" />
     <ProjectReference Include="..\BotServiceGrainInterface\BotServiceGrainInterface.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Views\_Layout\" />
   </ItemGroup>
 
 </Project>

@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace BotServiceGrainInterface
 {
-    public interface IUserGrain : IGrainWithGuidKey
+    public interface IUserGrain : IGrainWithStringKey
     {
-        public Task SetOAuthToken(string oauthToken);
+        public Task<bool> SetOAuthToken(string oauthToken);
     }
 }
