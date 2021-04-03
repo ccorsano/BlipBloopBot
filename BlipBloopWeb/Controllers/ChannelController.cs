@@ -1,4 +1,5 @@
-﻿using BotServiceGrain;
+﻿using BlipBloopBot.Twitch.API;
+using BotServiceGrain;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Orleans;
@@ -21,7 +22,7 @@ namespace BlipBloopWeb
         }
 
         [HttpGet]
-        public async Task<string> GetChannelInfo(string channelId)
+        public async Task<HelixChannelInfo> GetChannelInfo(string channelId)
         {
             var clusterClient = await _clientProvider.GetConnectedClient();
             var channelGrain = clusterClient.GetGrain<IChannelGrain>(channelId);

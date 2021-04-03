@@ -9,5 +9,6 @@ namespace BotServiceGrainInterface
     [Serializable]
     public class ChannelBotSettingsState
     {
+        public bool IsActive { get; set; }
     }
 }

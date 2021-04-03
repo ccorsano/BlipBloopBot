@@ -12,4 +12,8 @@
     <PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.4.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\BlipBloopFramework\BlipBloopFramework.csproj" />
+  </ItemGroup>
+
 </Project>
