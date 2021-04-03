@@ -57,7 +57,8 @@ namespace BlipBloopBot
                     await Task.WhenAll(commandProcessors.Select(processor => processor.Processor.Init(options.BroadcasterLogin.ToLowerInvariant())));
                     var channelName = options.BroadcasterLogin.ToLowerInvariant();
 
-                    using (var ircClient = scope.ServiceProvider.GetRequiredService<TwitchChatClient>())
+                    var ircBuilder = scope.ServiceProvider.GetRequiredService<ITwitchChatClientBuilder>();
+                    using (var ircClient = ircBuilder.Build())
                     {
                         await ircClient.ConnectAsync(cancellationToken);
                         await ircClient.JoinAsync(channelName, cancellationToken);

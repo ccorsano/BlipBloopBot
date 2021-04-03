@@ -15,6 +15,7 @@ namespace BlipBloopBot.Twitch.Authentication
         public DateTimeOffset ExpiresAt { get; }
         public bool AutoRenew { get; }
         public TwitchOAuthScopes[] Scopes { get; }
+        public string Login { get; }
         public Task AuthenticateAsync();
         public Task AuthenticateAsync(CancellationToken cancellationToken);
         public Task AuthenticateMessageAsync(HttpRequestMessage message);

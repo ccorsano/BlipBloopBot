@@ -48,6 +48,8 @@ namespace BlipBloopBot.Twitch.Authentication
 
         public TwitchConstants.TwitchOAuthScopes[] Scopes => _scopes;
 
+        public string Login => null;
+
         public Task AuthenticateAsync() => AuthenticateAsync(CancellationToken.None);
 
         public async Task AuthenticateAsync(CancellationToken cancellationToken)

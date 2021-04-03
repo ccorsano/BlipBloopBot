@@ -30,12 +30,12 @@ namespace BlipBloopBot
                 })
                 .ConfigureAppConfiguration(configure =>
                 {
-                    configure.AddUserSecrets<Program>();
                     configure.AddJsonFile("appsettings.json", true);
 #if DEBUG
                     configure.AddJsonFile("appsettings.Debug.json", true);
 #endif
                     configure.AddEnvironmentVariables();
+                    configure.AddUserSecrets<Program>();
                     configuration = configure.Build();
                 })
                 .ConfigureServices((hostContext, services) =>
@@ -64,6 +64,11 @@ namespace BlipBloopBot
                                 s.GetService<IOptions<TwitchApplicationOptions>>().Value.ClientId,
                                 s.GetService<IOptions<TwitchApplicationOptions>>().Value.ClientSecret)
                             .Build()
+                    );
+                    services.AddTransient<ITwitchChatClientBuilder>(s =>
+                        TwitchChatClientBuilder.Create()
+                            .WithOAuthToken(s.GetRequiredService<IOptions<TwitchApplicationOptions>>().Value.IrcOptions.OAuthToken)
+                            .WithLoggerFactory(s.GetRequiredService<ILoggerFactory>())
                     );
 
                     // Configure commands

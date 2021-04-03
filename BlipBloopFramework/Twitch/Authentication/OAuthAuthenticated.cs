@@ -17,6 +17,7 @@ namespace BlipBloopBot.Twitch.Authentication
         private HttpClient _httpClient;
         private string _oauthToken;
         private string _clientId;
+        private string _login;
         private TwitchConstants.TwitchOAuthScopes[] _scopes;
         private DateTimeOffset _tokenExpirationTime;
 
@@ -49,6 +50,8 @@ namespace BlipBloopBot.Twitch.Authentication
 
         public bool AutoRenew => false;
 
+        public string Login => _login;
+
         public Task AuthenticateAsync() => AuthenticateAsync(CancellationToken.None);
 
         public async Task AuthenticateAsync(CancellationToken cancellationToken)
@@ -75,6 +78,7 @@ namespace BlipBloopBot.Twitch.Authentication
             _scopes = response.Scopes
                 .Where(s => TwitchConstants.ScopesValues.ContainsValue(s))
                 .Select(s => TwitchConstants.ScopesValues.First(kvp => kvp.Value == s).Key).ToArray();
+            _login = response.Login;
         }
 
         public Task AuthenticateMessageAsync(HttpRequestMessage message) => AuthenticateMessageAsync(message, CancellationToken.None);

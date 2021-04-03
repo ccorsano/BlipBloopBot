@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using BlipBloopBot.Twitch.Authentication;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Concurrent;
@@ -17,42 +18,53 @@ namespace BlipBloopBot.Twitch.IRC
     /// </summary>
     public class TwitchChatClient : IDisposable
     {
-        private readonly TwitchChatClientOptions _options;
+        private readonly IAuthenticated _authenticated;
+        private readonly Uri _endpoint;
         private readonly ClientWebSocket _webSocket;
         private readonly byte[] _outBuffer;
         private readonly byte[] _inBuffer;
-        private readonly List<IMessageProcessor> _processors;
         private readonly ILogger _logger;
         private string _joinedChannel;
         private bool _receivedPing;
 
         private ConcurrentQueue<OutgoingMessage> _outMessageQueue = new ConcurrentQueue<OutgoingMessage>();
 
-        public TwitchChatClient(IEnumerable<IMessageProcessor> processors, IOptions<TwitchChatClientOptions> options, ILogger<TwitchChatClient> logger)
+        internal TwitchChatClient(IAuthenticated authenticated, Uri endpoint, ILogger<TwitchChatClient> logger)
         {
-            _options = options.Value;
+            _authenticated = authenticated;
+            _endpoint = endpoint;
+            _logger = logger;
             _webSocket = new ClientWebSocket();
             _inBuffer = new byte[8703]; // IRCv3 8191B Tags + 512B message
             _outBuffer = new byte[1024];
-            _processors = processors.ToList();
-            _logger = logger;
         }
+
+        public TwitchChatClient(IAuthenticated authenticated, IOptions<TwitchChatClientOptions> options, ILogger<TwitchChatClient> logger)
+            : this(authenticated, new Uri(options.Value.Endpoint), logger) { }
 
         public async Task ConnectAsync(CancellationToken cancellationToken)
         {
-            var wsUri = new Uri(_options.Endpoint);
+            await _authenticated.AuthenticateAsync();
+
+            _logger.LogInformation("Connecting to WebSocket IRC endpoint through user {login}", _authenticated.Login);
+
+            var wsUri = _endpoint;
             await _webSocket.ConnectAsync(wsUri, cancellationToken);
 
-            await SendCommandAsync("PASS", $"oauth:{_options.OAuthToken}", cancellationToken);
-            await SendCommandAsync("NICK", _options.UserName, cancellationToken);
+            await SendCommandAsync("PASS", $"oauth:{_authenticated.Token}", cancellationToken);
+            await SendCommandAsync("NICK", _authenticated.Login, cancellationToken);
             // Request IRCv3 Tags capability
             await SendCommandAsync("CAP REQ", ":twitch.tv/tags", cancellationToken);
             await ReceiveIRCMessage(new List<(string, IMessageProcessor)>(), cancellationToken);
+
+            _logger.LogInformation("Connected");
         }
 
         public async Task JoinAsync(string channelName, CancellationToken cancellationToken)
         {
-            var botUserName = _options.UserName.ToLowerInvariant();
+            _logger.LogInformation("Joining channel {channelName}", channelName);
+
+            var botUserName = _authenticated.Login.ToLowerInvariant();
             await SendCommandAsync("JOIN", $"#{channelName}", cancellationToken);
             await SendCommandAsync($":{botUserName}!{botUserName}@{botUserName}.tmi.twitch.tv JOIN", $"#{channelName}", cancellationToken);
             _joinedChannel = channelName;

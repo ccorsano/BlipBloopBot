@@ -239,5 +239,7 @@ namespace BlipBloopBot.Constants
             LanguageCodes.CHINESE_HONGKONG,
             LanguageCodes.KOREAN,
         };
+
+        public const string IRCWebSocketUri = "wss://irc-ws.chat.twitch.tv:443";
     }
 }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace BlipBloopBot.Twitch.IRC
+﻿namespace BlipBloopBot.Twitch.IRC
 {
     public class TwitchChatClientOptions
     {
