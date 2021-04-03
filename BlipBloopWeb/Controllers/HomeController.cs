@@ -13,6 +13,7 @@ namespace BlipBloopWeb.Controllers
 {
     [Route("/")]
     [Controller]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public class HomeController : Controller
     {
         private readonly IClientProvider _clientProvider;
