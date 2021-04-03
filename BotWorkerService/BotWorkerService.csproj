@@ -19,8 +19,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BlipBloopCommands\BlipBloopCommands.csproj" />
-    <ProjectReference Include="..\BlipBloopFramework\BlipBloopFramework.csproj" />
     <ProjectReference Include="..\BotServiceGrain\BotServiceGrain.csproj" />
+    <ProjectReference Include="..\Conceptoire.Twitch\Conceptoire.Twitch.csproj" />
   </ItemGroup>
 
   <ItemGroup>

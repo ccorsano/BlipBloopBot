@@ -30,5 +30,21 @@ namespace BlipBloopWeb
 
             return channelInfo;
         }
+
+        [HttpGet("startbot")]
+        public async Task<bool> StartBot(string channelId)
+        {
+            var clusterClient = await _clientProvider.GetConnectedClient();
+            var channelGrain = clusterClient.GetGrain<IChannelGrain>(channelId);
+            return await channelGrain.SetBotActivation(true);
+        }
+
+        [HttpGet("stopbot")]
+        public async Task<bool> StopBot(string channelId)
+        {
+            var clusterClient = await _clientProvider.GetConnectedClient();
+            var channelGrain = clusterClient.GetGrain<IChannelGrain>(channelId);
+            return await channelGrain.SetBotActivation(false);
+        }
     }
 }

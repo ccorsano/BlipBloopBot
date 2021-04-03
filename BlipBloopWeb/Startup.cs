@@ -16,6 +16,7 @@ using Orleans;
 using Orleans.Configuration;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Conceptoire.Twitch.API;
 
 namespace BlipBloopWeb
 {
@@ -54,10 +55,22 @@ namespace BlipBloopWeb
             // Add the EventSub handler instance to DI
             services.AddEventSub();
             // Register an EventSub event Handler for channel.update events
-            services.AddEventSubHandler<TwitchEventSubChannelUpdateEvent>((context, eventSub) =>
+            services.AddEventSubHandler<TwitchEventSubChannelUpdateEvent>(async (context, eventSub) =>
             {
                 context.Logger.LogInformation("Received a channel update for {channelName}, streaming {category} - {text}", eventSub.BroadcasterUserName, eventSub.CategoryName, eventSub.Title);
-                return Task.CompletedTask;
+
+                var grainClient = context.Services.GetRequiredService<IClusterClient>();
+                var helixInfo = new HelixChannelInfo
+                {
+                    BroadcasterId = eventSub.BroadcasterUserId,
+                    BroadcasterName = eventSub.BroadcasterUserName,
+                    BroadcasterLanguage = eventSub.Language,
+                    GameId = eventSub.CategoryId,
+                    GameName = eventSub.CategoryName,
+                    Title = eventSub.Title,
+                };
+                var channelGrain = grainClient.GetGrain<IChannelGrain>(helixInfo.BroadcasterId);
+                await channelGrain.OnChannelUpdate(helixInfo);
             });
 
             var twitchOptions = Configuration.GetSection("twitch").Get<TwitchApplicationOptions>();

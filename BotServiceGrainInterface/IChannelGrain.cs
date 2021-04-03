@@ -7,6 +7,7 @@ namespace BotServiceGrain
 {
     public interface IChannelGrain : IGrainWithStringKey
     {
+        public Task OnChannelUpdate(HelixChannelInfo info);
         public Task<HelixChannelInfo> GetChannelInfo();
         public Task HandleBotCommand();
         public Task<bool> SetBotActivation(bool isActive);

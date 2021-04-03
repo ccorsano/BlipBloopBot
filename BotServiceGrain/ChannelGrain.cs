@@ -1,9 +1,14 @@
 ﻿using BotServiceGrain;
 using Conceptoire.Twitch.API;
+using Conceptoire.Twitch.Commands;
+using Conceptoire.Twitch.IRC;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Runtime;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,8 +19,12 @@ namespace BotServiceGrainInterface
         private readonly IPersistentState<ChannelState> _channelState;
         private readonly IPersistentState<ChannelBotSettingsState> _channelBotState;
         private readonly TwitchAPIClient _appClient;
+        private readonly TwitchChatClientOptions _options;
+        private readonly Dictionary<string, IMessageProcessor> _commands;
+        private readonly ILoggerFactory _loggerFactory;
         private readonly ILogger _logger;
         private string _channelId;
+        private HelixChannelInfo _channelInfo;
 
         private Task _botTask;
         private CancellationTokenSource _botCancellationSource;
@@ -24,19 +33,41 @@ namespace BotServiceGrainInterface
             [PersistentState("channel", "channelStore")] IPersistentState<ChannelState> channelState,
             [PersistentState("botsettings", "botSettingsStore")] IPersistentState<ChannelBotSettingsState> botSettingsState,
             TwitchAPIClient appClient,
+            IOptions<TwitchChatClientOptions> botOptions,
+            IEnumerable<CommandRegistration> commands,
+            ILoggerFactory loggerFactory,
             ILogger<ChannelGrain> logger)
         {
             _channelState = channelState;
             _channelBotState = botSettingsState;
             _appClient = appClient;
+            _options = botOptions.Value;
+            _commands = commands.ToDictionary(c => c.Name, c => c.Processor());
+            _loggerFactory = loggerFactory;
             _logger = logger;
         }
 
-        public override Task OnActivateAsync()
+        public override async Task OnActivateAsync()
         {
             _channelId = this.GetPrimaryKeyString();
             _logger.LogInformation("Activating channel grain {channelId}", _channelId);
-            return base.OnActivateAsync();
+
+            if (!_channelBotState.RecordExists)
+            {
+                _channelBotState.State.Commands = new Dictionary<string, Conceptoire.Twitch.Options.CommandOptions>
+                {
+                    { "*", new Conceptoire.Twitch.Options.CommandOptions
+                        {
+                            Type = "MessageTracer"
+                        }
+                    }
+                };
+            }
+
+            await base.OnActivateAsync();
+
+            _channelInfo = await _appClient.GetChannelInfoAsync(_channelId);
+            await OnChannelUpdate(_channelInfo);
         }
 
         public override Task OnDeactivateAsync()
@@ -51,7 +82,7 @@ namespace BotServiceGrainInterface
             {
                 if (isActive)
                 {
-                    await StartBot();
+                    await StartBot(_options.OAuthToken);
                 }
                 else
                 {
@@ -65,10 +96,9 @@ namespace BotServiceGrainInterface
             return false;
         }
 
-        async Task<HelixChannelInfo> IChannelGrain.GetChannelInfo()
+        Task<HelixChannelInfo> IChannelGrain.GetChannelInfo()
         {
-            var channelInfo = await _appClient.GetChannelInfoAsync(_channelId);
-            return channelInfo;
+            return Task.FromResult(_channelInfo);
         }
 
         Task IChannelGrain.HandleBotCommand()
@@ -76,14 +106,54 @@ namespace BotServiceGrainInterface
             throw new NotImplementedException();
         }
 
-        private Task StartBot()
+        private async Task StartBot(string oauthToken)
         {
-            return Task.CompletedTask;
+            var botChatClientBuilder = TwitchChatClientBuilder.Create()
+                .WithOAuthToken(oauthToken)
+                .WithLoggerFactory(_loggerFactory);
+            var orleansTaskScheduler = TaskScheduler.Current;
+
+            _botCancellationSource = new CancellationTokenSource();
+            var cancellationToken = _botCancellationSource.Token;
+            var commandProcessors = _channelBotState.State.Commands.Select(c => (Command: c.Key, Processor: _commands[c.Value.Type])).ToArray();
+            await Task.WhenAll(commandProcessors.Select(processor => processor.Processor.Init(_channelInfo.BroadcasterName)));
+
+            _botTask = Task.Run(async () =>
+            {
+                try
+                {
+                    var channelName = _channelInfo.BroadcasterName;
+
+                    using (var ircClient = botChatClientBuilder.Build())
+                    {
+                        await ircClient.ConnectAsync(cancellationToken);
+                        await ircClient.JoinAsync(channelName, cancellationToken);
+                        while (!cancellationToken.IsCancellationRequested)
+                        {
+                            await ircClient.ReceiveIRCMessage(commandProcessors, cancellationToken);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error in channel listener");
+                }
+            });
         }
 
         private Task StopBot()
         {
+            _botCancellationSource.Cancel();
             return Task.CompletedTask;
+        }
+
+        public async Task OnChannelUpdate(HelixChannelInfo info)
+        {
+            _channelState.State.LastCategoryId = info.GameId;
+            _channelState.State.LastCategoryName = info.GameName;
+            _channelState.State.LastLanguage = info.BroadcasterLanguage;
+            _channelState.State.LastTitle = info.Title;
+            await _channelState.WriteStateAsync();
         }
     }
 }

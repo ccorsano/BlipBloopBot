@@ -6,6 +6,7 @@ namespace Conceptoire.Twitch.IRC.Parsing
     {
         private ReadOnlySpan<char> _line;
         public ParsedIRCMessage Message { get; }
+        public ReadOnlySpan<char> Line => _line;
 
         public LineItem(ReadOnlySpan<char> line)
         {
