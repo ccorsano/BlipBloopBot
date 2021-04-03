@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BlipBloopFramework\BlipBloopFramework.csproj" />
+    <ProjectReference Include="..\Conceptoire.Twitch\Conceptoire.Twitch.csproj" />
   </ItemGroup>
 
 </Project>
