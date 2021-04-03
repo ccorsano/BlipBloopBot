@@ -122,7 +122,7 @@ namespace BotServiceGrainInterface
             {
                 try
                 {
-                    var channelName = _channelInfo.BroadcasterName;
+                    var channelName = _channelInfo.BroadcasterName.ToLowerInvariant();
 
                     using (var ircClient = botChatClientBuilder.Build())
                     {
