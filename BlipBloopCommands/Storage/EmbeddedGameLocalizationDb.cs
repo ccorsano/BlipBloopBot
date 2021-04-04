@@ -1,4 +1,4 @@
-﻿using BlipBloopBot.Model;
+﻿using Conceptoire.Twitch.Model;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Microsoft.Extensions.Logging;

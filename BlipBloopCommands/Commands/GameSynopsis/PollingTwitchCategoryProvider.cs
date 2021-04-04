@@ -1,7 +1,7 @@
-﻿using BlipBloopBot.Model;
-using BlipBloopBot.Storage;
-using BlipBloopBot.Twitch;
-using BlipBloopBot.Twitch.API;
+﻿using BlipBloopBot.Storage;
+using Conceptoire.Twitch.Model;
+using Conceptoire.Twitch;
+using Conceptoire.Twitch.API;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;

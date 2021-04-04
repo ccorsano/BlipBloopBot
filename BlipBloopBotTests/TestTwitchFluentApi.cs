@@ -1,5 +1,5 @@
-﻿using BlipBloopBot.Constants;
-using BlipBloopBot.Twitch;
+﻿using Conceptoire.Twitch.Constants;
+using Conceptoire.Twitch;
 using Moq;
 using Moq.Protected;
 using System.Net;

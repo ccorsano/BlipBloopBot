@@ -1,7 +1,7 @@
-﻿using BlipBloopBot.Constants;
-using BlipBloopBot.Model.EventSub;
-using BlipBloopBot.Options;
-using BlipBloopBot.Twitch.EventSub;
+﻿using Conceptoire.Twitch.Constants;
+using Conceptoire.Twitch.Model.EventSub;
+using Conceptoire.Twitch.Options;
+using Conceptoire.Twitch.EventSub;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

@@ -1,0 +1,31 @@
+﻿{
+  "channels": [
+    {
+      "BroadcasterLogin": "miekyld",
+      "Commands": {
+        "jeu": {
+          "Type": "GameSynopsis"
+        },
+        "*": {
+          "Type": "MessageTracer"
+        }
+      }
+    },
+    {
+      "BroadcasterLogin": "nuja",
+      "Commands": {
+        "*": {
+          "Type": "MessageTracer"
+        }
+      }
+    },
+    {
+      "BroadcasterLogin": "Colas_Bim",
+      "Commands": {
+        "*": {
+          "Type": "MessageTracer"
+        }
+      }
+    }
+  ]
+}

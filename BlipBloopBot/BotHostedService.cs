@@ -1,15 +1,12 @@
-﻿using BlipBloopBot.Commands;
-using BlipBloopBot.Options;
-using BlipBloopBot.Twitch.API;
-using BlipBloopBot.Twitch.IRC;
+﻿using Conceptoire.Twitch.Commands;
+using Conceptoire.Twitch.IRC;
+using Conceptoire.Twitch.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -57,7 +54,8 @@ namespace BlipBloopBot
                     await Task.WhenAll(commandProcessors.Select(processor => processor.Processor.Init(options.BroadcasterLogin.ToLowerInvariant())));
                     var channelName = options.BroadcasterLogin.ToLowerInvariant();
 
-                    using (var ircClient = scope.ServiceProvider.GetRequiredService<TwitchChatClient>())
+                    var ircBuilder = scope.ServiceProvider.GetRequiredService<ITwitchChatClientBuilder>();
+                    using (var ircClient = ircBuilder.Build())
                     {
                         await ircClient.ConnectAsync(cancellationToken);
                         await ircClient.JoinAsync(channelName, cancellationToken);

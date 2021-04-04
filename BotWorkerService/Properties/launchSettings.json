@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "BotWorkerService": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
