@@ -1,5 +1,5 @@
-﻿using BlibBloopBot.IGDB.Generated;
-using Conceptoire.Twitch.Authentication;
+﻿using Conceptoire.Twitch.Authentication;
+using Conceptoire.Twitch.IGDB.Generated;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using ProtoBuf;
