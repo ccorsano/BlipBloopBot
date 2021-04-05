@@ -9,9 +9,13 @@
 
   <ItemGroup>
     <Compile Remove="Options\**" />
+    <Compile Remove="Views\_Layout\**" />
     <Content Remove="Options\**" />
+    <Content Remove="Views\_Layout\**" />
     <EmbeddedResource Remove="Options\**" />
+    <EmbeddedResource Remove="Views\_Layout\**" />
     <None Remove="Options\**" />
+    <None Remove="Views\_Layout\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,10 +31,6 @@
   <ItemGroup>
     <ProjectReference Include="..\BotServiceGrainInterface\BotServiceGrainInterface.csproj" />
     <ProjectReference Include="..\Conceptoire.Twitch\Conceptoire.Twitch.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Views\_Layout\" />
   </ItemGroup>
 
 </Project>

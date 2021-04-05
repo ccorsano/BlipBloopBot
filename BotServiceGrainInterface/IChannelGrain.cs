@@ -11,6 +11,7 @@ namespace BotServiceGrain
         public Task OnChannelUpdate(HelixChannelInfo info);
         public Task<HelixChannelInfo> GetChannelInfo();
         public Task HandleBotCommand();
+        public Task<bool> IsBotActive();
         public Task<bool> SetBotActivation(bool isActive);
     }
 }

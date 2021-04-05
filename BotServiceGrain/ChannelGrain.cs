@@ -107,6 +107,11 @@ namespace BotServiceGrainInterface
             _channelInfo = await channelInfoTask;
         }
 
+        Task<bool> IChannelGrain.IsBotActive()
+        {
+            return Task.FromResult(_channelBotState.State.IsActive);
+        }
+
         async Task<bool> IChannelGrain.SetBotActivation(bool isActive)
         {
             if (isActive ^ _channelBotState.State.IsActive)

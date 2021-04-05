@@ -17,6 +17,7 @@ using Orleans.Configuration;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Conceptoire.Twitch.API;
+using Microsoft.AspNetCore.Http;
 
 namespace BlipBloopWeb
 {
@@ -83,7 +84,22 @@ namespace BlipBloopWeb
                     options.DefaultScheme = "cookie";
                     options.DefaultChallengeScheme = "twitch";
                 })
-                .AddCookie("cookie")
+                .AddCookie("cookie", options =>
+                {
+                    options.Events.OnRedirectToLogin = context =>
+                    {
+                        if (context.Request.Path.StartsWithSegments("/api"))
+                        {
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        }
+                        else
+                        {
+                            context.Response.Redirect(context.RedirectUri);
+                        }
+
+                        return Task.CompletedTask;
+                    };
+                })
                 .AddOpenIdConnect("twitch", "Twitch", options =>
                 {
                     options.Authority = "https://id.twitch.tv/oauth2";
