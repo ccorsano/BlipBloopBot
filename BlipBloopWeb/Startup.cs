@@ -59,7 +59,8 @@ namespace BlipBloopWeb
             {
                 context.Logger.LogInformation("Received a channel update for {channelName}, streaming {category} - {text}", eventSub.BroadcasterUserName, eventSub.CategoryName, eventSub.Title);
 
-                var grainClient = context.Services.GetRequiredService<IClusterClient>();
+                var grainClientProvider = context.Services.GetRequiredService<IClientProvider>();
+                var grainClient = await grainClientProvider.GetConnectedClient();
                 var helixInfo = new HelixChannelInfo
                 {
                     BroadcasterId = eventSub.BroadcasterUserId,
