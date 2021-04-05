@@ -10,5 +10,7 @@ namespace BotServiceGrainInterface
     public interface IUserGrain : IGrainWithStringKey
     {
         public Task<bool> SetOAuthToken(string oauthToken);
+
+        public Task ActivateChannel();
     }
 }

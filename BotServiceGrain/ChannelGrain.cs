@@ -24,6 +24,7 @@ namespace BotServiceGrainInterface
         private readonly ILoggerFactory _loggerFactory;
         private readonly ILogger _logger;
         private string _channelId;
+        private TwitchAPIClient _userClient;
         private HelixChannelInfo _channelInfo;
 
         private Task _botTask;
@@ -74,6 +75,29 @@ namespace BotServiceGrainInterface
         {
             _logger.LogInformation("Deactivating channel grain {channelId}", _channelId);
             return base.OnDeactivateAsync();
+        }
+
+        async Task IChannelGrain.Activate(string userToken)
+        {
+            var userAuthenticated = Conceptoire.Twitch.Twitch.Authenticate()
+                .FromOAuthToken(userToken)
+                .Build();
+            var userClient = TwitchAPIClient.CreateFromBase(_appClient, userAuthenticated);
+            var validated = await userClient.ValidateToken();
+            if (validated == null || validated.UserId != _channelId || validated.ExpiresIn == 0)
+            {
+                throw new ArgumentException("Could not validate token");
+            }
+            _userClient = userClient;
+
+            List<HelixChannelModerator> moderators = new List<HelixChannelModerator>();
+            var editorsTask = _userClient.GetHelixChannelEditorsAsync(_channelId);
+            await foreach(var moderator in _userClient.EnumerateChannelModeratorsAsync(_channelId))
+            {
+                moderators.Add(moderator);
+            }
+            _channelState.State.Editors = (await editorsTask).ToArray();
+            _channelState.State.Moderators = moderators.ToArray();
         }
 
         async Task<bool> IChannelGrain.SetBotActivation(bool isActive)

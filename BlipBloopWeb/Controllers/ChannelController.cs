@@ -1,4 +1,5 @@
 ﻿using BotServiceGrain;
+using BotServiceGrainInterface;
 using Conceptoire.Twitch.API;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -29,6 +30,15 @@ namespace BlipBloopWeb
             var channelInfo = await channelGrain.GetChannelInfo();
 
             return channelInfo;
+        }
+
+        [HttpGet("activate")]
+        public async Task Activate(string channelId)
+        {
+            // TODO: once authentication is enabled, remove channelId parameter and use User context
+            var clusterClient = await _clientProvider.GetConnectedClient();
+            var userGrain = clusterClient.GetGrain<IUserGrain>(channelId);
+            await userGrain.ActivateChannel();
         }
 
         [HttpGet("startbot")]
