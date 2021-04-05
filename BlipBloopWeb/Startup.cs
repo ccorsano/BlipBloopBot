@@ -114,6 +114,7 @@ namespace BlipBloopWeb
                     options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.UserReadBroadcast]);
                     options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.UserReadSubscriptions]);
                     options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChatRead]);
+                    options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChatEdit]);
                 });
 
             services.AddMvc();

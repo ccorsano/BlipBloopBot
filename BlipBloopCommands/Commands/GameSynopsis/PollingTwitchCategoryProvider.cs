@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Conceptoire.Twitch.Options;
 
 namespace BlipBloopCommands.Commands.GameSynopsis
 {
@@ -21,12 +22,13 @@ namespace BlipBloopCommands.Commands.GameSynopsis
         private readonly ILogger _logger;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
-        private string _channelId;
+        private string _broacasterLogin;
         private HelixChannelSearchResult _lastResult;
         private HelixChannelInfo _lastInfo;
         private GameInfo _gameInfo;
 
         private DateTime _lastCheck;
+        private TaskCompletionSource _broadcasterLoginSet = new TaskCompletionSource();
 
         public event EventHandler<GameInfo> OnUpdate;
 
@@ -43,20 +45,22 @@ namespace BlipBloopCommands.Commands.GameSynopsis
 
             var unawaited = Task.Run(async () =>
             {
-                while(!_cancellationTokenSource.Token.IsCancellationRequested)
+                await _broadcasterLoginSet.Task;
+                while (!_cancellationTokenSource.Token.IsCancellationRequested)
                 {
-                    await RefreshCategory(_channelId);
+                    await RefreshCategory(_broacasterLogin);
                     await Task.Delay(TimeSpan.FromMinutes(1));
                 }
             });
         }
 
-        public bool CheckAndSchedule(string channelId)
+        public bool CheckAndSchedule(string broacasterLogin)
         {
-            if (channelId != _channelId)
+            if (broacasterLogin != _broacasterLogin)
             {
                 _lastCheck = DateTime.MinValue;
-                _channelId = channelId;
+                _broacasterLogin = broacasterLogin;
+                _broadcasterLoginSet.TrySetResult();
                 return false;
             }
 
@@ -84,7 +88,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
                 }
 
                 _lastResult = newResults;
-                _channelId = broadcasterId;
+                _broacasterLogin = broadcasterId;
                 _lastCheck = DateTime.UtcNow;
             }
             catch(Exception ex)
@@ -95,9 +99,13 @@ namespace BlipBloopCommands.Commands.GameSynopsis
             return _gameInfo;
         }
 
-        Task<GameInfo> ITwitchCategoryProvider.FetchChannelInfo(string channelId)
+        async Task<GameInfo> ITwitchCategoryProvider.FetchChannelInfo(string categoryId, string language)
         {
-            return RefreshCategory(channelId);
+            if (_broacasterLogin != null && (_gameInfo.Language != language || _gameInfo.TwitchCategoryId != categoryId))
+            {
+                await RefreshCategory(_broacasterLogin);
+            }
+            return await _gameLocalization.ResolveLocalizedGameInfo(language, categoryId);
         }
 
         public void Dispose()
