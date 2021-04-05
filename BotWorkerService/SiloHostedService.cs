@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using BlipBloopBot.Storage;
 
 namespace BotWorkerService
 {
@@ -88,6 +89,8 @@ namespace BotWorkerService
                             s.GetService<IOptions<TwitchApplicationOptions>>().Value.ClientSecret)
                         .Build()
                 );
+                services.AddTransient<ITwitchCategoryProvider, GrainTwitchCategoryProvider>();
+                services.AddSingleton<IGameLocalizationStore, EmbeddedGameLocalizationDb>();
 
                 // Configure commands
                 services.AddCommand<GameSynopsisCommand>("GameSynopsis");

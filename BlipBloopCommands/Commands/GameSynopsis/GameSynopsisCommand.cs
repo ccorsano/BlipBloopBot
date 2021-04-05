@@ -23,19 +23,19 @@ namespace BlipBloopCommands.Commands.GameSynopsis
             _logger = logger;
         }
 
-        public async Task Init(string broadcasterLogin)
+        public async Task OnUpdateContext(IProcessorContext context)
         {
-            _channelId = broadcasterLogin;
+            _channelId = context.ChannelId;
 
-            _gameInfo = await _twitchCategoryProvider.FetchChannelInfo(broadcasterLogin);
+            _gameInfo = await _twitchCategoryProvider.FetchChannelInfo(context.CategoryId, context.Language);
 
             if (_gameInfo == null)
             {
-                _logger.LogWarning($"{broadcasterLogin} is not live");
+                _logger.LogWarning($"{context.ChannelName} is not live");
             }
             else
             {
-                _logger.LogWarning($"Connecting to {broadcasterLogin}, currently live");
+                _logger.LogWarning($"Connecting to {context.ChannelName}, currently live");
             }
 
             _twitchCategoryProvider.OnUpdate += (sender, gameInfo) =>

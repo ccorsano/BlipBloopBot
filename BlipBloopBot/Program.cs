@@ -58,7 +58,8 @@ namespace BlipBloopBot
                     services.AddSingleton<IMemoryCache, MemoryCache>();
                     services.AddSingleton<SteamStoreClient>();
                     services.AddSingleton<IGameLocalizationStore, EmbeddedGameLocalizationDb>();
-                    services.AddTransient<ITwitchCategoryProvider, PollingTwitchCategoryProvider>();
+                    services.AddTransient<ITwitchCategoryProvider>(s => s.GetRequiredService<PollingTwitchCategoryProvider>());
+                    services.AddScoped<PollingTwitchCategoryProvider>();
                     services.AddSingleton<IAuthenticated>(s =>
                         Twitch.Authenticate()
                             .FromAppCredentials(

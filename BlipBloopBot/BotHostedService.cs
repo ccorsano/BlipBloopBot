@@ -1,4 +1,6 @@
-﻿using Conceptoire.Twitch.Commands;
+﻿using BlipBloopCommands.Commands.GameSynopsis;
+using Conceptoire.Twitch.API;
+using Conceptoire.Twitch.Commands;
 using Conceptoire.Twitch.IRC;
 using Conceptoire.Twitch.Options;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,8 +52,45 @@ namespace BlipBloopBot
             {
                 using (var scope = _host.Services.CreateScope())
                 {
+                    var pollingCategoryProvider = scope.ServiceProvider.GetRequiredService<PollingTwitchCategoryProvider>();
+                    pollingCategoryProvider.CheckAndSchedule(options.BroadcasterLogin);
+
                     var commandProcessors = options.Commands.Select(c => (Command: c.Key, Processor: _messageProcessors[c.Value.Type])).ToArray();
-                    await Task.WhenAll(commandProcessors.Select(processor => processor.Processor.Init(options.BroadcasterLogin.ToLowerInvariant())));
+
+                    var twitchInfo = _host.Services.GetRequiredService<TwitchAPIClient>();
+                    var broadcasterLogin = options.BroadcasterLogin.ToLowerInvariant();
+                    var channelSearch = await twitchInfo.SearchChannelsAsync(broadcasterLogin);
+                    var channelInfo = channelSearch.FirstOrDefault(c => c.BroadcasterLogin == broadcasterLogin);
+                    if (channelInfo == null)
+                    {
+                        throw new Exception("Could not resolve broadcasterLogin");
+                    }
+
+                    var botContext = new ProcessorContext
+                    {
+                        ChannelId = channelInfo.Id,
+                        ChannelName = channelInfo.DisplayName,
+                        Language = channelInfo.BroadcasterLanguage,
+                        CategoryId = channelInfo.GameId,
+                    };
+
+                    Func<IProcessorContext, Task> updatePollingContext = async (ctx) =>
+                    {
+                        await Task.WhenAll(commandProcessors.Select(processor => processor.Processor.OnUpdateContext(ctx)));
+                    };
+                    await updatePollingContext(botContext);
+
+                    pollingCategoryProvider.OnUpdate += async (sender, gameInfo) =>
+                    {
+                        await updatePollingContext(new ProcessorContext
+                        {
+                            ChannelId = botContext.ChannelId,
+                            ChannelName = botContext.ChannelName,
+                            Language = string.IsNullOrEmpty(gameInfo.Language) ? botContext.Language : gameInfo.Language,
+                            CategoryId = gameInfo.TwitchCategoryId,
+                        });
+                    };
+
                     var channelName = options.BroadcasterLogin.ToLowerInvariant();
 
                     var ircBuilder = scope.ServiceProvider.GetRequiredService<ITwitchChatClientBuilder>();

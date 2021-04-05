@@ -18,7 +18,7 @@ namespace BlipBloopBot.Commands
             _logger = logger;
         }
 
-        public Task Init(string channelName)
+        public Task OnUpdateContext(IProcessorContext context)
         {
             return Task.CompletedTask;
         }

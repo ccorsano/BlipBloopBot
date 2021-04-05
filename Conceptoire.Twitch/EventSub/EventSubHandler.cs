@@ -39,6 +39,7 @@ namespace Conceptoire.Twitch.EventSub
             var eventSubContext = new EventSubContext
             {
                 Logger = _logger,
+                Services = context.RequestServices,
             };
 
             if (!ParseHeaders(context.Request, eventSubContext))

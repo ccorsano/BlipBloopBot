@@ -1,5 +1,4 @@
-﻿using BlibBloopBot.IGDB.Generated;
-using Conceptoire.Twitch.Constants;
+﻿using Conceptoire.Twitch.Constants;
 using Conceptoire.Twitch.Model;
 using Conceptoire.Twitch.Steam;
 using Conceptoire.Twitch;
@@ -9,15 +8,13 @@ using CsvHelper.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Polly;
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Conceptoire.Twitch.IGDB.Generated;
 
 namespace TwitchCategoriesCrawler
 {
