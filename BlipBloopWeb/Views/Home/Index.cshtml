@@ -8,22 +8,28 @@
     <title>Twitch Services Portal</title>
 </head>
 <body>
-    <h1>Twitch Services</h1>
-
-    @if (ViewBag.IsAuthenticated)
-    {
-        <div>
-            User: @(User.FindFirst("preferred_username")?.Value ?? "Unknown")
-        </div>
-        <div>
-            @Html.ActionLink("Logout", "Logout")
-        </div>
-    }
-    else
-    {
     <div>
-        @Html.ActionLink("Connect with Twitch", "Login")
+        <h1>Twitch Services</h1>
+
+        @if (ViewBag.IsAuthenticated)
+        {
+            <div>
+                User: @(User.FindFirst("preferred_username")?.Value ?? "Unknown")
+            </div>
+            <div>
+                @Html.ActionLink("Logout", "Logout")
+            </div>
+        }
+        else
+        {
+            <a class="command-button primary outline rounded m-1" href="@Url.ActionLink("Login")">
+                <span class="mif-twitch icon"></span>
+                <span class="caption">
+                    Login with Twitch
+                    <small>Link this service with your Twitch Account</small>
+                </span>
+            </a>
+        }
     </div>
-    }
 </body>
 </html>
