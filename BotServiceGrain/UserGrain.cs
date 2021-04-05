@@ -58,6 +58,14 @@ namespace BotServiceGrain
 
             var channelGrain = GrainFactory.GetGrain<IChannelGrain>(UserId);
             await channelGrain.Activate(_profile.State.OAuthToken);
+
+            _profile.State.HasActiveChannel = true;
+            await _profile.WriteStateAsync();
+        }
+
+        public Task<bool> HasActiveChannel()
+        {
+            return Task.FromResult(_profile.State.HasActiveChannel);
         }
     }
 }

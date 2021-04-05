@@ -3,27 +3,108 @@
 *@
 @{
 }
-<html>
-<head>
-    <title>Twitch Services Portal</title>
-</head>
-<body>
-    <h1>Twitch Services</h1>
 
+@section head {
+    <script type="text/javascript">
+
+    function activateChannel(e)
+    {
+        var Http = new XMLHttpRequest();
+        var url = '/api/channel/activate?channelId=@(ViewBag.ChannelId)';
+        Http.open("GET", url);
+        Http.send();
+
+        Http.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200)
+            {
+                location.reload();
+            }
+        }
+    }
+
+    function startBot(e)
+    {
+        var Http = new XMLHttpRequest();
+        var url = '/api/channel/startbot?channelId=@(ViewBag.ChannelId)';
+        Http.open("GET", url);
+        Http.send();
+
+        Http.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200)
+            {
+                location.reload();
+            }
+        }
+    }
+
+    function stopBot(e)
+    {
+        var Http = new XMLHttpRequest();
+        var url = '/api/channel/stopbot?channelId=@(ViewBag.ChannelId)';
+        Http.open("GET", url);
+        Http.send();
+
+        Http.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200)
+            {
+                location.reload();
+            }
+        }
+    }
+    </script>
+}
+
+<div>
     @if (ViewBag.IsAuthenticated)
     {
+        <h1>
+            @(User.FindFirst("preferred_username")?.Value ?? "Unknown")
+        </h1>
         <div>
-            User: @(User.FindFirst("preferred_username")?.Value ?? "Unknown")
+            Twitch channel id: @(ViewBag.ChannelId)
         </div>
         <div>
             @Html.ActionLink("Logout", "Logout")
         </div>
+        <div>
+            <h2>Integration status</h2>
+            @if (ViewBag.HasActiveChannel)
+            {
+                <p>
+                    Channel integration is active.
+                </p>
+            }
+            else
+            {
+                <a class="button primary large" onclick="activateChannel()">Activate channel integration</a>
+            }
+        </div>
+        <div>
+            <h2>Bot service status</h2>
+            @if (!ViewBag.HasActiveChannel)
+            {
+                <p>
+                    You need to activate channel integration first.
+                </p>
+            }
+            else if (!ViewBag.HasActiveBot)
+            {
+                <a class="button primary large rounded" onclick="startBot()">Activate bot service</a>
+            }
+            else
+            {
+                <a class="button primary outline large rounded" onclick="stopBot()">Shutdown bot service</a>
+            }
+        </div>
     }
     else
     {
-    <div>
-        @Html.ActionLink("Connect with Twitch", "Login")
-    </div>
+        <a class="command-button primary outline rounded m-1" href="@Url.ActionLink("Login")">
+            <span class="mif-twitch icon"></span>
+            <span class="caption">
+                Login with Twitch
+                <small>Link this service with your Twitch Account</small>
+            </span>
+        </a>
     }
-</body>
-</html>
+</div>

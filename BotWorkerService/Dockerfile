@@ -6,10 +6,11 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
 COPY ["BotWorkerService/BotWorkerService.csproj", "BotWorkerService/"]
+COPY ["BlipBloopCommands/BlipBloopCommands.csproj", "BlipBloopCommands/"]
 COPY ["BotServiceGrain/BotServiceGrain.csproj", "BotServiceGrain/"]
 COPY ["BotServiceGrainInterface/BotServiceGrainInterface.csproj", "BotServiceGrainInterface/"]
-COPY ["BlipBloopFramework/BlipBloopFramework.csproj", "BlipBloopFramework/"]
-COPY ["BlipBloopCommands/BlipBloopCommands.csproj", "BlipBloopCommands/"]
+COPY ["Conceptoire.Twitch/Conceptoire.Twitch.csproj", "Conceptoire.Twitch/"]
+COPY ["Conceptoire.Twitch.Abstractions/Conceptoire.Twitch.Abstractions.csproj", "Conceptoire.Twitch.Abstractions/"]
 RUN dotnet restore "BotWorkerService/BotWorkerService.csproj"
 COPY . .
 WORKDIR "/src/BotWorkerService"

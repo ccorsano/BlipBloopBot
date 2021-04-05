@@ -1,4 +1,5 @@
-﻿using BotServiceGrainInterface;
+﻿using BotServiceGrain;
+using BotServiceGrainInterface;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -28,13 +29,27 @@ namespace BlipBloopWeb.Controllers
             bool isAuthenticated = User.FindFirst("access_token") != null;
             if (isAuthenticated)
             {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                ViewBag.ChannelId = userId;
+
                 var client = await _clientProvider.GetConnectedClient();
-                var grain = client.GetGrain<IUserGrain>(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                var grain = client.GetGrain<IUserGrain>(userId);
                 if (!await grain.SetOAuthToken(User.FindFirst("access_token").Value))
                 {
                     throw new Exception("Error validating token");
                 }
+                var hasActiveChannel = await grain.HasActiveChannel();
+                if (hasActiveChannel)
+                {
+                    var channelGrain = client.GetGrain<IChannelGrain>(userId);
+                    ViewBag.HasActiveBot = await channelGrain.IsBotActive();
+                }
+                else
+                {
+                    ViewBag.HasActiveBot = false;
+                }
                 ViewBag.UserName = User.FindFirstValue("preferred_username");
+                ViewBag.HasActiveChannel = hasActiveChannel;
             }
             ViewBag.IsAuthenticated = isAuthenticated;
 
