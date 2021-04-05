@@ -9,7 +9,8 @@ FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
 COPY ["BlipBloopWeb/BlipBloopWeb.csproj", "BlipBloopWeb/"]
 COPY ["BotServiceGrainInterface/BotServiceGrainInterface.csproj", "BotServiceGrainInterface/"]
-COPY ["BlipBloopFramework/BlipBloopFramework.csproj", "BlipBloopFramework/"]
+COPY ["Conceptoire.Twitch/Conceptoire.Twitch.csproj", "Conceptoire.Twitch/"]
+COPY ["Conceptoire.Twitch.Abstractions/Conceptoire.Twitch.Abstractions.csproj", "Conceptoire.Twitch.Abstractions/"]
 RUN dotnet restore "BlipBloopWeb/BlipBloopWeb.csproj"
 COPY . .
 WORKDIR "/src/BlipBloopWeb"
