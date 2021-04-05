@@ -17,5 +17,7 @@ namespace Conceptoire.Twitch.Authentication
         public Task AuthenticateAsync(CancellationToken cancellationToken);
         public Task AuthenticateMessageAsync(HttpRequestMessage message);
         public Task AuthenticateMessageAsync(HttpRequestMessage message, CancellationToken cancellationToken);
+        public Task AuthenticateMessageAsync(HttpRequestMessage message, bool setClientIdHeader);
+        public Task AuthenticateMessageAsync(HttpRequestMessage message, bool setClientIdHeader, CancellationToken cancellationToken);
     }
 }

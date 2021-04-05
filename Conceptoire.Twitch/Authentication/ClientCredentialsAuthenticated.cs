@@ -76,14 +76,25 @@ namespace Conceptoire.Twitch.Authentication
             _tokenExpiration = DateTimeOffset.UtcNow.AddSeconds(_tokenResponse.ExpiresIn);
         }
 
-        public Task AuthenticateMessageAsync(HttpRequestMessage message) => AuthenticateMessageAsync(message, CancellationToken.None);
+        public Task AuthenticateMessageAsync(HttpRequestMessage message)
+            => AuthenticateMessageAsync(message, true, CancellationToken.None);
 
-        public async Task AuthenticateMessageAsync(HttpRequestMessage message, CancellationToken cancellationToken)
+        public Task AuthenticateMessageAsync(HttpRequestMessage message, CancellationToken cancellationToken)
+            => AuthenticateMessageAsync(message, true, cancellationToken);
+
+        public Task AuthenticateMessageAsync(HttpRequestMessage message, bool setClientIdHeader)
+            => AuthenticateMessageAsync(message, setClientIdHeader, CancellationToken.None);
+
+        public async Task AuthenticateMessageAsync(HttpRequestMessage message, bool setClientIdHeader, CancellationToken cancellationToken)
         {
             await AuthenticateAsync(cancellationToken);
 
             message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _tokenResponse.AccessToken);
-            message.Headers.Add("client-id", _clientId);
+
+            if (setClientIdHeader)
+            {
+                message.Headers.Add("Client-ID", _clientId);
+            }
         }
     }
 }
