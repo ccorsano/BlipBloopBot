@@ -20,10 +20,18 @@ namespace Conceptoire.Twitch.API
         private readonly ILogger _logger;
 
         public TwitchAPIClient(IAuthenticated authenticated, IHttpClientFactory factory, ILogger<TwitchAPIClient> logger)
+            :this(authenticated, factory.CreateClient(), logger) {}
+
+        internal TwitchAPIClient(IAuthenticated authenticated, HttpClient httpClient, ILogger<TwitchAPIClient> logger)
         {
             _authenticated = authenticated;
-            _httpClient = factory.CreateClient();
+            _httpClient = httpClient;
             _logger = logger;
+        }
+
+        public static TwitchAPIClient CreateFromBase(TwitchAPIClient baseInstance, IAuthenticated authenticated)
+        {
+            return new TwitchAPIClient(authenticated, baseInstance._httpClient, baseInstance._logger as ILogger<TwitchAPIClient>);
         }
 
         public async Task<HelixEventSubSubscriptionData> CreateEventSubSubscription(HelixEventSubSubscriptionCreateRequest request, CancellationToken cancellationToken)
@@ -43,11 +51,15 @@ namespace Conceptoire.Twitch.API
 
         public async Task<HelixValidateTokenResponse> ValidateToken(CancellationToken cancellationToken = default)
         {
-            var uri = "https://api.twitch.tv/helix/validate";
+            var uri = "https://id.twitch.tv/oauth2/validate";
             var message = new HttpRequestMessage(HttpMethod.Get, uri);
             await _authenticated.AuthenticateMessageAsync(message, cancellationToken);
 
             var result = await _httpClient.SendAsync(message, cancellationToken);
+            if (!result.IsSuccessStatusCode)
+            {
+                return null;
+            }
             return await JsonSerializer.DeserializeAsync<HelixValidateTokenResponse>(await result.Content.ReadAsStreamAsync());
         }
 
@@ -64,43 +76,14 @@ namespace Conceptoire.Twitch.API
             result.EnsureSuccessStatusCode();
         }
 
-        public async IAsyncEnumerable<HelixEventSubSubscriptionData> EnumerateEventSubSubscriptions(EventSubStatus? status = null)
+        public IAsyncEnumerable<HelixEventSubSubscriptionData> EnumerateEventSubSubscriptions(EventSubStatus? status = null)
         {
-            HelixEventSubSubscriptionsListReponse response = null;
-            uint paginationRound = 1;
-            int totalItems = 0;
-            do
+            var uri = "https://api.twitch.tv/helix/eventsub/subscriptions";
+            if (status.HasValue)
             {
-                var uri = "https://api.twitch.tv/helix/eventsub/subscriptions";
-                _logger.LogDebug("Fetching EventSub subscriptions from Twitch API, pagination {paginationCursor}, round {paginationRound}, total items {totalItems}", response?.Pagination?.Cursor, paginationRound, totalItems);
-                if (status.HasValue)
-                {
-                    uri = QueryHelpers.AddQueryString(uri, "status", GetEventSubStatusString(status.Value));
-                }
-                if (response?.Pagination?.Cursor != null)
-                {
-                    uri = QueryHelpers.AddQueryString(uri, "after", response.Pagination.Cursor);
-                }
-
-                var message = new HttpRequestMessage(HttpMethod.Get, uri);
-                await _authenticated.AuthenticateMessageAsync(message);
-
-                var result = await _httpClient.SendAsync(message);
-                response = await JsonSerializer.DeserializeAsync<HelixEventSubSubscriptionsListReponse>(await result.Content.ReadAsStreamAsync());
-
-                _logger.LogDebug("Received response from Twitch API, items {responseItems}, pagination cursor {paginationCursor}", response?.Data?.Length, response?.Pagination?.Cursor ?? "not set");
-                if (response.Data != null)
-                {
-                    foreach (var category in response.Data)
-                    {
-                        yield return category;
-                    }
-
-                    totalItems += response.Data.Length;
-                }
-
-                ++paginationRound;
-            } while (response.Pagination.Cursor != null);
+                uri = QueryHelpers.AddQueryString(uri, "status", GetEventSubStatusString(status.Value));
+            }
+            return EnumerateHelixAPIAsync<HelixEventSubSubscriptionsListReponse, HelixEventSubSubscriptionData>(uri);
         }
 
         public async Task<HelixChannelSearchResult[]> SearchChannelsAsync(string channelQuery)
@@ -138,7 +121,7 @@ namespace Conceptoire.Twitch.API
             var result = await _httpClient.SendAsync(httpMessage);
             if (result.IsSuccessStatusCode)
             {
-                var response = await JsonSerializer.DeserializeAsync<HelixGetChannelInfoResponse>(await result.Content.ReadAsStreamAsync());
+                var response = await JsonSerializer.DeserializeAsync<HelixChannelGetInfoResponse>(await result.Content.ReadAsStreamAsync());
                 return response.Data?[0] ?? null;
             }
             else
@@ -150,16 +133,66 @@ namespace Conceptoire.Twitch.API
             return null;
         }
 
-        public async IAsyncEnumerable<HelixCategoriesSearchEntry> EnumerateTwitchCategoriesAsync()
+        public IAsyncEnumerable<HelixCategoriesSearchEntry> EnumerateTwitchCategoriesAsync()
         {
-            HelixCategoriesSearchResponse response = null;
+            var baseUri = "https://api.twitch.tv/helix/search/categories";
+            baseUri = QueryHelpers.AddQueryString(baseUri, "query", "*");
+            return EnumerateHelixAPIAsync<HelixCategoriesSearchEntry>(baseUri);
+        }
+
+        public async Task<HelixChannelEditor[]> GetHelixChannelEditorsAsync(string broadcasterId)
+        {
+            var httpMessage = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri($"https://api.twitch.tv/helix/channels/editors?broadcaster_id={broadcasterId}")
+            };
+            await _authenticated.AuthenticateMessageAsync(httpMessage);
+            var result = await _httpClient.SendAsync(httpMessage);
+            if (result.IsSuccessStatusCode)
+            {
+                var response = await JsonSerializer.DeserializeAsync<HelixChannelGetEditorsResponse>(await result.Content.ReadAsStreamAsync());
+                return response.Data;
+            }
+
+            var errorMessage = await result.Content.ReadAsStringAsync();
+            _logger.LogError(errorMessage);
+            result.EnsureSuccessStatusCode(); // throws
+            throw new Exception("Unexpected error: Unreachable exception.");
+        }
+
+        public IAsyncEnumerable<HelixChannelModerator> EnumerateChannelModeratorsAsync(string broadcasterId)
+        {
+            var baseUri = "https://api.twitch.tv/helix/moderation/moderators";
+            baseUri = QueryHelpers.AddQueryString(baseUri, "broadcaster_id", broadcasterId);
+            return EnumerateHelixAPIAsync<HelixChannelModerator>(baseUri);
+        }
+
+        private IAsyncEnumerable<TEntry> EnumerateHelixAPIAsync<TEntry>(string baseUri)
+            where TEntry:class
+            => EnumerateHelixAPIAsync<HelixPaginatedResponse<TEntry>, TEntry>(baseUri);
+
+        /// <summary>
+        /// Internal generic method to enumerate asynchronously through Twitch Helix responses
+        /// </summary>
+        /// <remarks>
+        /// TODO: Support communicating extra fields in enumeration response to caller
+        /// </remarks>
+        /// <typeparam name="TResponse">Enumeration response type</typeparam>
+        /// <typeparam name="TEntry">Enumeration entry type</typeparam>
+        /// <param name="baseUri">Formatted GET Uri, with base arguments in query string</param>
+        /// <returns>Async enumeration through the HTTP Get response</returns>
+        private async IAsyncEnumerable<TEntry> EnumerateHelixAPIAsync<TResponse, TEntry>(string baseUri)
+            where TEntry:class
+            where TResponse: HelixPaginatedResponse<TEntry>
+        {
+            HelixPaginatedResponse<TEntry> response = null;
             uint paginationRound = 1;
             int totalItems = 0;
             do
             {
-                var uri = "https://api.twitch.tv/helix/search/categories";
-                _logger.LogDebug("Fetching categories from Twitch API, pagination {paginationCursor}, round {paginationRound}, total items {totalItems}", response?.Pagination?.Cursor, paginationRound, totalItems);
-                uri = QueryHelpers.AddQueryString(uri, "query", "*");
+                var uri = baseUri;
+                _logger.LogDebug("Enumerating from Twitch API on URI {baseUri}, pagination {paginationCursor}, round {paginationRound}, total items {totalItems}", baseUri, response?.Pagination?.Cursor, paginationRound, totalItems);
                 uri = QueryHelpers.AddQueryString(uri, "first", "100");
                 if (response?.Pagination?.Cursor != null)
                 {
@@ -172,14 +205,14 @@ namespace Conceptoire.Twitch.API
                 };
                 await _authenticated.AuthenticateMessageAsync(httpMessage);
                 var result = await _httpClient.SendAsync(httpMessage);
-                response = await JsonSerializer.DeserializeAsync<HelixCategoriesSearchResponse>(await result.Content.ReadAsStreamAsync());
+                response = await JsonSerializer.DeserializeAsync<HelixPaginatedResponse<TEntry>>(await result.Content.ReadAsStreamAsync());
 
                 _logger.LogDebug("Received response from Twitch API, items {responseItems}, pagination cursor {paginationCursor}", response?.Data?.Length, response?.Pagination?.Cursor ?? "not set");
                 if (response.Data != null)
                 {
-                    foreach (var category in response.Data)
+                    foreach (var entry in response.Data)
                     {
-                        yield return category;
+                        yield return entry;
                     }
 
                     totalItems += response.Data.Length;

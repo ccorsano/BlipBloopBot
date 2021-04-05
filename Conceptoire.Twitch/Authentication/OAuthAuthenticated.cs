@@ -81,13 +81,25 @@ namespace Conceptoire.Twitch.Authentication
             _login = response.Login;
         }
 
-        public Task AuthenticateMessageAsync(HttpRequestMessage message) => AuthenticateMessageAsync(message, CancellationToken.None);
+        public Task AuthenticateMessageAsync(HttpRequestMessage message)
+            => AuthenticateMessageAsync(message, CancellationToken.None);
 
-        public async Task AuthenticateMessageAsync(HttpRequestMessage message, CancellationToken cancellationToken)
+        public Task AuthenticateMessageAsync(HttpRequestMessage message, CancellationToken cancellationToken)
+            => AuthenticateMessageAsync(message, true, cancellationToken);
+
+        public Task AuthenticateMessageAsync(HttpRequestMessage message, bool setClientIdHeader)
+            => AuthenticateMessageAsync(message, setClientIdHeader, CancellationToken.None);
+
+        public async Task AuthenticateMessageAsync(HttpRequestMessage message, bool setClientIdHeader, CancellationToken cancellationToken)
         {
             await AuthenticateAsync(cancellationToken);
 
             message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _oauthToken);
+            
+            if (setClientIdHeader)
+            {
+                message.Headers.Add("Client-ID", _clientId);
+            }
         }
     }
 }

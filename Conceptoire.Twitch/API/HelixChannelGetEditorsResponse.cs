@@ -2,9 +2,9 @@
 
 namespace Conceptoire.Twitch.API
 {
-    public class HelixGetChannelInfoResponse
+    public class HelixChannelGetEditorsResponse
     {
         [JsonPropertyName("data")]
-        public HelixChannelInfo[] Data { get; set; }
+        public HelixChannelEditor[] Data { get; set; }
     }
 }

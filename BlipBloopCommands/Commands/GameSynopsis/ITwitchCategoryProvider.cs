@@ -9,7 +9,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
 {
     public interface ITwitchCategoryProvider
     {
-        public Task<GameInfo> FetchChannelInfo(string channelId);
+        public Task<GameInfo> FetchChannelInfo(string categoryId, string language);
 
         public event EventHandler<GameInfo> OnUpdate;
     }

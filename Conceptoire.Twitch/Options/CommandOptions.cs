@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Conceptoire.Twitch.Options
 {
+    [Serializable]
     public class CommandOptions
     {
         public string Type { get; set; }

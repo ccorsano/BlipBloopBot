@@ -2,11 +2,8 @@
 
 namespace Conceptoire.Twitch.API
 {
-    public class HelixEventSubSubscriptionsListReponse
+    public class HelixEventSubSubscriptionsListReponse : HelixPaginatedResponse<HelixEventSubSubscriptionData>
     {
-        [JsonPropertyName("data")]
-        public HelixEventSubSubscriptionData[] Data { get; set; }
-
         [JsonPropertyName("total")]
         public int Total { get; set; }
 
@@ -18,8 +15,5 @@ namespace Conceptoire.Twitch.API
 
         [JsonPropertyName("limit")]
         public int Limit { get; set; }
-
-        [JsonPropertyName("pagination")]
-        public HelixResponsePagination Pagination { get; set; }
     }
 }

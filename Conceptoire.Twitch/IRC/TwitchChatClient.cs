@@ -115,6 +115,8 @@ namespace Conceptoire.Twitch.IRC
         {
             foreach (var line in receivedMessage.SplitLines())
             {
+                _logger.LogInformation("> {command} {prefix} {message}", new string(line.Message.Command), new string(line.Message.Prefix) , new string(line.Message.Trailing));
+
                 if (line.Message.Command.CompareTo("PING", StringComparison.Ordinal) == 0)
                 {
                     _receivedPing = true;
