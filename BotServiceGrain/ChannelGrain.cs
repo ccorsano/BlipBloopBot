@@ -61,6 +61,11 @@ namespace BotServiceGrainInterface
                         {
                             Type = "MessageTracer"
                         }
+                    },
+                    { "jeu", new Conceptoire.Twitch.Options.CommandOptions
+                        {
+                            Type = "GameSynopsis"
+                        }
                     }
                 };
             }
@@ -90,6 +95,7 @@ namespace BotServiceGrainInterface
             }
             _userClient = userClient;
 
+            var channelInfoTask = _userClient.GetChannelInfoAsync(_channelId);
             List<HelixChannelModerator> moderators = new List<HelixChannelModerator>();
             var editorsTask = _userClient.GetHelixChannelEditorsAsync(_channelId);
             await foreach(var moderator in _userClient.EnumerateChannelModeratorsAsync(_channelId))
@@ -98,6 +104,7 @@ namespace BotServiceGrainInterface
             }
             _channelState.State.Editors = (await editorsTask).ToArray();
             _channelState.State.Moderators = moderators.ToArray();
+            _channelInfo = await channelInfoTask;
         }
 
         async Task<bool> IChannelGrain.SetBotActivation(bool isActive)
@@ -140,7 +147,16 @@ namespace BotServiceGrainInterface
             _botCancellationSource = new CancellationTokenSource();
             var cancellationToken = _botCancellationSource.Token;
             var commandProcessors = _channelBotState.State.Commands.Select(c => (Command: c.Key, Processor: _commands[c.Value.Type])).ToArray();
-            await Task.WhenAll(commandProcessors.Select(processor => processor.Processor.Init(_channelInfo.BroadcasterName)));
+
+            var botContext = new ProcessorContext
+            {
+                ChannelId = _channelId,
+                ChannelName = _channelInfo.BroadcasterName,
+                Language = _channelInfo.BroadcasterLanguage,
+                CategoryId = _channelInfo.GameId,
+            };
+
+            await Task.WhenAll(commandProcessors.Select(processor => processor.Processor.OnUpdateContext(botContext)));
 
             _botTask = Task.Run(async () =>
             {
@@ -178,6 +194,15 @@ namespace BotServiceGrainInterface
             _channelState.State.LastLanguage = info.BroadcasterLanguage;
             _channelState.State.LastTitle = info.Title;
             await _channelState.WriteStateAsync();
+            var botContext = new ProcessorContext
+            {
+                ChannelId = info.BroadcasterId,
+                ChannelName = info.BroadcasterName,
+                Language = info.BroadcasterLanguage,
+                CategoryId = info.GameId,
+            };
+            var commandsUpdateTasks = _commands.Select(kvp => kvp.Value.OnUpdateContext(botContext));
+            await Task.WhenAll(commandsUpdateTasks);
         }
     }
 }

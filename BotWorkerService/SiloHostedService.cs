@@ -89,7 +89,7 @@ namespace BotWorkerService
                             s.GetService<IOptions<TwitchApplicationOptions>>().Value.ClientSecret)
                         .Build()
                 );
-                services.AddTransient<ITwitchCategoryProvider, PollingTwitchCategoryProvider>();
+                services.AddTransient<ITwitchCategoryProvider, GrainTwitchCategoryProvider>();
                 services.AddSingleton<IGameLocalizationStore, EmbeddedGameLocalizationDb>();
 
                 // Configure commands
