@@ -146,6 +146,7 @@ namespace BlipBloopWeb
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "BlipBloopWeb v1"));
             }
 
+            app.UseForwardedHeaders();
             app.UseHttpsRedirection();
 
             app.UseRouting();
