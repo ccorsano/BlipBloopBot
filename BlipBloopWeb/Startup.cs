@@ -18,6 +18,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Conceptoire.Twitch.API;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace BlipBloopWeb
 {
@@ -146,7 +147,14 @@ namespace BlipBloopWeb
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "BlipBloopWeb v1"));
             }
 
-            app.UseForwardedHeaders();
+            var fordwardedHeaderOptions = new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
+            };
+            fordwardedHeaderOptions.KnownNetworks.Clear();
+            fordwardedHeaderOptions.KnownProxies.Clear();
+
+            app.UseForwardedHeaders(fordwardedHeaderOptions);
             app.UseHttpsRedirection();
 
             app.UseRouting();
