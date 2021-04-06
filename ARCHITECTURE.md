@@ -29,6 +29,23 @@ Working title has been BlibBloopBot just because it was an available username on
 
 ```
 
+## Distributed architecture
+
+The live service deployment leverages Virtual Actors through the [Orleans dotnet Framework](https://github.com/dotnet/orleans).
+
+Orleans actors (Grains) are responsible for managing the state of the system.
+
+Persistent state is loaded exclusively from the Orleans persistent layer, from configured persistent stores (at this moment this is using non-persisted in-memory store).
+
+All accesses to state are protected by Orleans message passing mechanism to ensure no concurrent modification of state.
+
+The Twitch IRC bot instances themselves are run outside of the Orleans Channel grain context, but controlled through that grain exclusively.
+
+Externally the service is exposed through an ASP.Net Core Web Service, currently with a traditional Razor frontend.
+
+
+## Solution content
+
 ### Conceptoire.Twitch.Abstractions
 Mostly interfaces, group the abstractions to work with Twitch.
 
