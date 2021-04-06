@@ -40,6 +40,7 @@ namespace BotWorkerService
 
         void BuildSiloHost()
         {
+            var instrumentationKey = _configuration.GetValue<string>("ApplicationInsights:InstrumentationKey");
             var hostname = _configuration.GetValue<string>("HOSTNAME");
             var builder = new SiloHostBuilder()
                 .ConfigureLogging(loggingBuilder =>
@@ -54,6 +55,7 @@ namespace BotWorkerService
                    options.ClusterId = "dev";
                    options.ServiceId = "TwitchServices";
                })
+               .AddApplicationInsightsTelemetryConsumer(instrumentationKey)
                .AddStartupTask<LoadConfigurationStartupTask>()
                .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(ChannelGrain).Assembly).WithReferences())
                // Configure connectivity
