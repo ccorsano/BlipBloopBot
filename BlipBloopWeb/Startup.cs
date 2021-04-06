@@ -134,7 +134,10 @@ namespace BlipBloopWeb
                     options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChatEdit]);
                 });
 
-            services.AddMvc();
+            //services.AddMvc();
+            services.AddRazorPages();
+            services.AddServerSideBlazor();
+            services.AddAuthorizationCore();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -156,9 +159,8 @@ namespace BlipBloopWeb
 
             app.UseForwardedHeaders(fordwardedHeaderOptions);
             app.UseHttpsRedirection();
-
+            app.UseStaticFiles();
             app.UseRouting();
-
             app.UseAuthentication();
             app.UseAuthorization();
 
@@ -167,7 +169,9 @@ namespace BlipBloopWeb
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+                //endpoints.MapControllers();
+                endpoints.MapBlazorHub();
+                endpoints.MapFallbackToPage("/_Host");
             });
         }
     }

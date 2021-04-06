@@ -1,0 +1,17 @@
+﻿@page "/signin-oidc-fragment"
+@model BlipBloopWeb.Pages.SigninOIDCFragmentModel
+@{
+}
+<script>
+        addEventListener('load', (event) => {
+            var fragmentString = location.hash.substring(1);
+
+            var request = new XMLHttpRequest();
+            request.open("POST", "/signin-oidc");
+            request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            request.onload = (xhrEvtLoad) => {
+                location = request.responseURL;
+            };
+            request.send(fragmentString);
+        });
+</script>
