@@ -1,0 +1,47 @@
+﻿@using BlipBloopWeb
+@using BotServiceGrain
+@inject IClientProvider ClientProvider
+
+<h3>Channel Activation</h3>
+
+<div>
+    <h2>Integration status</h2>
+    @if (_hasActiveChannel)
+    {
+        <p>
+            Channel integration is active.
+        </p>
+    }
+    else
+    {
+        <a class="button primary large" @onclick="ActivateChannelAsync">Activate channel integration</a>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string UserId { get; set; }
+
+    [Parameter]
+    public string OAuthToken { get; set; }
+
+    private bool _hasActiveChannel = false;
+    private IUserGrain _userGrain;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var client = await ClientProvider.GetConnectedClient();
+
+        _userGrain = client.GetGrain<IUserGrain>(UserId);
+        await _userGrain.SetOAuthToken(OAuthToken);
+        _hasActiveChannel = await _userGrain.HasActiveChannel();
+
+        await base.OnParametersSetAsync();
+    }
+
+    protected async Task ActivateChannelAsync()
+    {
+        await _userGrain.ActivateChannel();
+        _hasActiveChannel = await _userGrain.HasActiveChannel();
+    }
+}

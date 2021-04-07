@@ -1,10 +1,9 @@
 ﻿<AuthorizeView>
     <Authorized>
-        <a href="logout">Hello, @context.User.Identity.Name !</a>
+        Hello, @context.User.FindFirst("preferred_username")?.Value !
         <form method="get" action="logout">
             <button type="submit" class="nav-link btn btn-link">
-                Log
-                out
+                Logout
             </button>
         </form>
     </Authorized>

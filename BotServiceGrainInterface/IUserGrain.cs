@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BotServiceGrainInterface
+namespace BotServiceGrain
 {
     public interface IUserGrain : IGrainWithStringKey
     {
