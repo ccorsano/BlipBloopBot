@@ -1,0 +1,43 @@
+﻿@using BotServiceGrain
+@inject IClientProvider ClientProvider
+
+@if (ServiceContext.IsBotRunning)
+{
+    <a class="btn btn-outline-primary btn-lg" @onclick="DeactivateBotAsync">Stop bot service</a>
+}
+else
+{
+    <a class="btn btn-primary btn-lg" @onclick="ActivateBotAsync">Start bot service</a>
+}
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+
+    private IChannelGrain _channelGrain;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        _channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+        ServiceContext.SetBotRunning(await _channelGrain.IsBotActive());
+
+        await base.OnParametersSetAsync();
+    }
+
+    protected async Task ActivateBotAsync()
+    {
+        if (await _channelGrain.SetBotActivation(true))
+        {
+            ServiceContext.SetBotRunning(true);
+        }
+    }
+
+    protected async Task DeactivateBotAsync()
+    {
+        if (await _channelGrain.SetBotActivation(false))
+        {
+            ServiceContext.SetBotRunning(false);
+        }
+    }
+}

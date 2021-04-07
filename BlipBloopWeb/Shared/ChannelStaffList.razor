@@ -1,0 +1,59 @@
+﻿@using BotServiceGrain
+@using Conceptoire.Twitch.API
+@inject IClientProvider ClientProvider
+
+<h3>Staff</h3>
+
+<div class="container container-lg container-fluid">
+    <div class="row">
+        <div class="col">
+            <div class="card" style="width: 18rem;">
+                <div class="card-header">
+                    Editors
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var editor in _channelEditors)
+                    {
+                        <li class="list-group-item"><span class="bi bi-person"></span> @editor.UserName</li>
+                    }
+                </ul>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card" style="width: 18rem;">
+                <div class="card-header">
+                    Moderators
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var moderator in _channelModerators)
+                    {
+                        <li class="list-group-item"><span class="bi bi-person"></span> @moderator.UserName</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string ChannelId { get; set; }
+
+    private List<HelixChannelEditor> _channelEditors = new List<HelixChannelEditor>();
+    private List<HelixChannelModerator> _channelModerators = new List<HelixChannelModerator>();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var channelGrain = client.GetGrain<IChannelGrain>(ChannelId);
+
+        var staff = await channelGrain.GetStaff();
+        _channelEditors.Clear();
+        _channelEditors.AddRange(staff.Editors);
+        _channelModerators.Clear();
+        _channelModerators.AddRange(staff.Moderators);
+
+        await base.OnParametersSetAsync();
+    }
+
+}

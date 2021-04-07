@@ -5,36 +5,52 @@
 <h3>Channel Activation</h3>
 
 <div>
-    <h2>Integration status</h2>
-    @if (_hasActiveChannel)
+    <h4>Integration status</h4>
+
+    @if (_isLoading)
     {
-        <p>
+        <div class="spinner-border m-5" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    }
+    else if (_hasActiveChannel)
+    {
+        <h5>
+            <i class="bi bi-check2-square bi-lg green" style="font-size: 2rem; color: forestgreen;"></i>
             Channel integration is active.
-        </p>
+        </h5>
+
+        <ChannelStaffList ChannelId="@ServiceContext.UserId" />
     }
     else
     {
-        <a class="button primary large" @onclick="ActivateChannelAsync">Activate channel integration</a>
+        <a class="btn btn-primary btn-lg" @onclick="ActivateChannelAsync">Activate channel integration</a>
     }
 </div>
 
 @code {
-    [Parameter]
-    public string UserId { get; set; }
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
 
-    [Parameter]
-    public string OAuthToken { get; set; }
-
+    private bool _isLoading = true;
     private bool _hasActiveChannel = false;
     private IUserGrain _userGrain;
+
+    protected override Task OnInitializedAsync()
+    {
+
+        return base.OnInitializedAsync();
+    }
 
     protected override async Task OnParametersSetAsync()
     {
         var client = await ClientProvider.GetConnectedClient();
 
-        _userGrain = client.GetGrain<IUserGrain>(UserId);
-        await _userGrain.SetOAuthToken(OAuthToken);
+        _userGrain = client.GetGrain<IUserGrain>(ServiceContext.UserId);
+        await _userGrain.SetOAuthToken(ServiceContext.OAuthToken);
         _hasActiveChannel = await _userGrain.HasActiveChannel();
+
+        _isLoading = false;
 
         await base.OnParametersSetAsync();
     }

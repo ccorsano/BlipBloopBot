@@ -1,33 +1,23 @@
 ﻿@using System.Security.Claims
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<h3>@(_userName ?? "Please Login")</h3>
+<h3>@(ServiceContext.UserName ?? "Please Login")</h3>
 
-@if (_isAuthenticated)
+@if (ServiceContext.IsAuthenticated)
 {
-    <p>Twitch id @_userId</p>
-    <ChannelActivation UserId="@_userId" OAuthToken="@_oauthToken" />
+    <p>Twitch id @ServiceContext.UserId</p>
+    <ChannelActivation />
+}
+else
+{
+    <a class="btn btn-primary btn-lg" href="login?redirectUri=/">
+        <i class="bi bi-twitch"></i>
+        Login with Twitch
+    </a>
 }
 
 @code {
-
-    private bool _isAuthenticated = false;
-    private string _userId;
-    private string _userName;
-    private string _oauthToken;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.HasClaim(c => c.Type == ClaimTypes.NameIdentifier))
-        {
-            _userId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            _userName = authState.User.FindFirstValue("preferred_username");
-            _oauthToken = authState.User.FindFirstValue("access_token");
-            _isAuthenticated = true;
-        }
-
-        await base.OnInitializedAsync();
-    }
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
 
 }

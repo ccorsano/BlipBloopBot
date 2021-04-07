@@ -1,13 +1,21 @@
 ﻿<AuthorizeView>
     <Authorized>
-        Hello, @context.User.FindFirst("preferred_username")?.Value !
-        <form method="get" action="logout">
-            <button type="submit" class="nav-link btn btn-link">
-                Logout
-            </button>
-        </form>
+        <div class="btn-group">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+                <i class="bi bi-person-circle"></i>
+                @ServiceContext.UserName
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="logout">Logout</a></li>
+            </ul>
+        </div>
     </Authorized>
     <NotAuthorized>
         <a href="login?redirectUri=/">Log in</a>
     </NotAuthorized>
 </AuthorizeView>
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+}

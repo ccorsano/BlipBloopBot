@@ -41,15 +41,28 @@ namespace BlipBloopWeb
             });
             services.AddApplicationInsightsTelemetry();
 
-            services.AddTransient<IClientBuilder>(services => new ClientBuilder()
-                // Clustering information
-                .Configure<ClusterOptions>(options =>
+            services.AddTransient<IClientBuilder>(services =>
+            {
+                var builder = new ClientBuilder()
+                    // Clustering information
+                    .Configure<ClusterOptions>(options =>
+                    {
+                        options.ClusterId = "dev";
+                        options.ServiceId = "TwitchServices";
+                    })
+                    .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(IChannelGrain).Assembly));
+
+                var redisClusteringUrl = Configuration.GetValue<string>("REDIS_URL");
+                if (! string.IsNullOrEmpty(redisClusteringUrl))
                 {
-                    options.ClusterId = "dev";
-                    options.ServiceId = "TwitchServices";
-                })
-                .UseRedisClustering(Configuration.GetValue<string>("REDIS_URL"))
-                .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(IChannelGrain).Assembly)));
+                    builder.UseRedisClustering(redisClusteringUrl);
+                }
+                else
+                {
+                    builder.UseLocalhostClustering();
+                }
+                return builder;
+            });
             services.AddSingleton<IClientProvider, GrainClientProvider>();
 
             // Load config, mainly the EventSub secret used for registration
@@ -134,7 +147,6 @@ namespace BlipBloopWeb
                     options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChatEdit]);
                 });
 
-            //services.AddMvc();
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddAuthorizationCore();
@@ -169,7 +181,6 @@ namespace BlipBloopWeb
 
             app.UseEndpoints(endpoints =>
             {
-                //endpoints.MapControllers();
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
             });
