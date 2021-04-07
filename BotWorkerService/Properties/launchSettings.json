@@ -1,7 +1,10 @@
 {
   "profiles": {
     "BotWorkerService": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "environmentVariables": {
+        "HOSTNAME": "127.0.0.1"
+      }
     },
     "Docker": {
       "commandName": "Docker"

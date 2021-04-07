@@ -1,0 +1,66 @@
+@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims
+
+<CascadingValue Name="ServiceContext" Value="this">
+
+    <div class="page">
+        <div class="sidebar">
+            <NavMenu />
+        </div>
+
+        <div class="main">
+            <div class="top-row px-4">
+                <TwitchLogin />
+            </div>
+
+            <div class="content px-4">
+                @Body
+            </div>
+        </div>
+    </div>
+
+</CascadingValue>
+
+@code
+{
+    public bool IsAuthenticated { get; private set; }
+    public bool IsChannelIntegrationActive { get; private set; }
+    public bool IsBotRunning { get; private set; }
+    public string UserName { get; private set; }
+    public string UserId { get; private set; }
+    public string OAuthToken { get; private set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.HasClaim(c => c.Type == ClaimTypes.NameIdentifier))
+        {
+            UserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            UserName = authState.User.FindFirstValue("preferred_username");
+            OAuthToken = authState.User.FindFirstValue("access_token");
+            IsAuthenticated = true;
+            StateHasChanged();
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    public void SetAuthenticated(bool value)
+    {
+        IsAuthenticated = value;
+        StateHasChanged();
+    }
+
+    public void SetChannelIntegrationActive(bool value)
+    {
+        IsChannelIntegrationActive = value;
+        StateHasChanged();
+    }
+
+    public void SetBotRunning(bool value)
+    {
+        IsBotRunning = value;
+        StateHasChanged();
+    }
+}

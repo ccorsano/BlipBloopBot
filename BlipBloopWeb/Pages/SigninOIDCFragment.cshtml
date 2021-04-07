@@ -1,15 +1,8 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@page "/signin-oidc-fragment"
+@model BlipBloopWeb.Pages.SigninOIDCFragmentModel
 @{
 }
-
-<html>
-<head>
-    <meta charset="utf-8" />
-</head>
-<body>
-    <script>
+<script>
         addEventListener('load', (event) => {
             var fragmentString = location.hash.substring(1);
 
@@ -21,6 +14,4 @@
             };
             request.send(fragmentString);
         });
-    </script>
-</body>
-</html>
+</script>

@@ -47,8 +47,6 @@ namespace BotWorkerService
                 {
                     loggingBuilder.AddConsole();
                 })
-               // Use localhost clustering for a single local silo
-               .UseRedisClustering(_configuration.GetValue<string>("REDIS_URL"))
                // Configure ClusterId and ServiceId
                .Configure<ClusterOptions>(options =>
                {
@@ -60,6 +58,18 @@ namespace BotWorkerService
                .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(ChannelGrain).Assembly).WithReferences())
                // Configure connectivity
                .ConfigureEndpoints(hostname: hostname, siloPort: 11111, gatewayPort: 30000);
+
+            var redisClusteringUrl = _configuration.GetValue<string>("REDIS_URL");
+            if (!string.IsNullOrEmpty(redisClusteringUrl))
+            {
+                // Use redis clustering when available
+                builder.UseRedisClustering(redisClusteringUrl);
+            }
+            else
+            {
+                // Use localhost clustering for a single local silo
+                builder.UseLocalhostClustering(11111, 30000, null, "TwitchServices", "dev");
+            }
 
             // Temp
             builder.AddMemoryGrainStorage("profileStore");

@@ -1,7 +1,9 @@
 ﻿using BotServiceGrain;
+using BotServiceGrainInterface.Model;
 using Conceptoire.Twitch.API;
 using Conceptoire.Twitch.Commands;
 using Conceptoire.Twitch.IRC;
+using Conceptoire.Twitch.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -208,6 +210,20 @@ namespace BotServiceGrainInterface
             };
             var commandsUpdateTasks = _commands.Select(kvp => kvp.Value.OnUpdateContext(botContext));
             await Task.WhenAll(commandsUpdateTasks);
+        }
+
+        public Task<ChannelStaff> GetStaff()
+        {
+            return Task.FromResult(new ChannelStaff
+            {
+                Editors = _channelState.State.Editors,
+                Moderators = _channelState.State.Moderators,
+            });
+        }
+
+        public Task<Dictionary<string, CommandOptions>> GetBotCommands()
+        {
+            return Task.FromResult(_channelBotState.State.Commands);
         }
     }
 }
