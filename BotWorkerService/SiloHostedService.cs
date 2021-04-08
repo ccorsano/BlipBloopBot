@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BlipBloopBot.Storage;
+using Orleans.Persistence;
 
 namespace BotWorkerService
 {
@@ -42,6 +43,9 @@ namespace BotWorkerService
         {
             var instrumentationKey = _configuration.GetValue<string>("ApplicationInsights:InstrumentationKey");
             var hostname = _configuration.GetValue<string>("HOSTNAME");
+            var azureStorageConnectionString = _configuration.GetValue<string>("Storage:AzureStorageConnectionString");
+            var redisClusteringUrl = _configuration.GetValue<string>("REDIS_URL");
+
             var builder = new SiloHostBuilder()
                 .ConfigureLogging(loggingBuilder =>
                 {
@@ -59,7 +63,55 @@ namespace BotWorkerService
                // Configure connectivity
                .ConfigureEndpoints(hostname: hostname, siloPort: 11111, gatewayPort: 30000);
 
-            var redisClusteringUrl = _configuration.GetValue<string>("REDIS_URL");
+            if (! string.IsNullOrEmpty(azureStorageConnectionString))
+            {
+                builder.AddAzureTableGrainStorage("profileStore", (AzureTableStorageOptions options) =>
+                {
+                    options.ConnectionString = azureStorageConnectionString;
+                    options.TableName = "profiles";
+                    options.UseJson = true;
+                    options.IndentJson = false;
+                });
+                builder.AddAzureTableGrainStorage("channelStore", (AzureTableStorageOptions options) =>
+                {
+                    options.ConnectionString = azureStorageConnectionString;
+                    options.TableName = "channels";
+                    options.UseJson = true;
+                    options.IndentJson = false;
+                });
+                builder.AddAzureTableGrainStorage("botSettingsStore", (AzureTableStorageOptions options) =>
+                {
+                    options.ConnectionString = azureStorageConnectionString;
+                    options.TableName = "botsettings";
+                    options.UseJson = true;
+                    options.IndentJson = false;
+                });
+            }
+            else if(!string.IsNullOrEmpty(redisClusteringUrl))
+            {
+                builder.AddRedisGrainStorage("profileStore", (RedisStorageOptions options) =>
+                {
+                    options.ConnectionString = redisClusteringUrl;
+                    options.UseJson = true;
+                });
+                builder.AddRedisGrainStorage("channelStore", (RedisStorageOptions options) =>
+                {
+                    options.ConnectionString = redisClusteringUrl;
+                    options.UseJson = true;
+                });
+                builder.AddRedisGrainStorage("botSettingsStore", (RedisStorageOptions options) =>
+                {
+                    options.ConnectionString = redisClusteringUrl;
+                    options.UseJson = true;
+                });
+            }
+            else
+            {
+                builder.AddMemoryGrainStorage("profileStore");
+                builder.AddMemoryGrainStorage("channelStore");
+                builder.AddMemoryGrainStorage("botSettingsStore");
+            }
+
             if (!string.IsNullOrEmpty(redisClusteringUrl))
             {
                 // Use redis clustering when available
@@ -72,9 +124,6 @@ namespace BotWorkerService
             }
 
             // Temp
-            builder.AddMemoryGrainStorage("profileStore");
-            builder.AddMemoryGrainStorage("channelStore");
-            builder.AddMemoryGrainStorage("botSettingsStore");
 
             builder.ConfigureServices((context, services) =>
             {

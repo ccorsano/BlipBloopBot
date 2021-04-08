@@ -24,6 +24,7 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 ENV HOSTNAME "localhost"
 ENV REDIS_URL "redis://redis:6379"
+ENV Storage__AzureStorageConnectionString ""
 EXPOSE 11111
 EXPOSE 30000
 ENTRYPOINT ["dotnet", "BotWorkerService.dll"]
