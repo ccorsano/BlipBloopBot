@@ -8,8 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace TwitchCategoriesCrawler
@@ -47,14 +45,10 @@ namespace TwitchCategoriesCrawler
                                 s.GetService<IOptions<TwitchApplicationOptions>>().Value.ClientSecret)
                             .Build()
                     );
-
-                    services.AddHostedService<TwitchCategoriesCrawlerService>();
                 })
                 .UseConsoleLifetime();
 
-            var host = builder.Build();
-
-            await host.RunAsync();
+            await builder.RunCommandLineApplicationAsync<TwitchCategoriesCrawlerCommand>(args);
         }
     }
 }

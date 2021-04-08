@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TwitchCategoriesCrawler": {
+      "commandName": "Project",
+      "commandLineArgs": "-l fr"
+    }
+  }
+}

@@ -15,10 +15,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Conceptoire.Twitch.IGDB.Generated;
+using McMaster.Extensions.CommandLineUtils;
+using System;
 
 namespace TwitchCategoriesCrawler
 {
-    public class TwitchCategoriesCrawlerService : IHostedService
+    [Command(Description = "Crawl Twitch categories and resolve localization from Steam")]
+    [HelpOption]
+    public class TwitchCategoriesCrawlerCommand
     {
         private readonly TwitchAPIClient _twitchAPIClient;
         private readonly IGDBClient _igdbClient;
@@ -26,12 +30,15 @@ namespace TwitchCategoriesCrawler
         private readonly TwitchApplicationOptions _options;
         private readonly ILogger _logger;
 
-        public TwitchCategoriesCrawlerService(
+        [Option("-l", CommandOptionType.SingleValue, Description = "Language to import from Steam")]
+        public string TargetLanguage { get; set; }
+
+        public TwitchCategoriesCrawlerCommand(
             TwitchAPIClient twitchApiClient,
             IGDBClient igdbClient,
             SteamStoreClient steamStoreClient,
             IOptions<TwitchApplicationOptions> options,
-            ILogger<TwitchCategoriesCrawlerService> logger)
+            ILogger<TwitchCategoriesCrawlerCommand> logger)
         {
             _twitchAPIClient = twitchApiClient;
             _igdbClient = igdbClient;
@@ -41,9 +48,14 @@ namespace TwitchCategoriesCrawler
             _logger = logger;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+
+        public async Task OnExecute()
         {
-            var targetLanguage = TwitchConstants.LanguageCodes.GERMAN;
+            if (! SteamConstants.TwitchLanguageMapping.ContainsKey(TargetLanguage))
+            {
+                _logger.LogError("Unrecognised language, should be one of the following: {languages}", string.Join(",", SteamConstants.TwitchLanguageMapping.Keys));
+                throw new ArgumentException($"Unrecognised language, should be one of the following: {string.Join(",", SteamConstants.TwitchLanguageMapping.Keys)}");
+            }
 
             IDictionary<ulong, Platform> platformDb = new Dictionary<ulong, Platform>();
             IDictionary<(string, string), GameInfo> gameDb = new Dictionary<(string, string), GameInfo>();
@@ -86,7 +98,7 @@ namespace TwitchCategoriesCrawler
             using (var textWriter = new StreamWriter("gamedb.csv", true))
             using (var csvWriter = new CsvWriter(textWriter, configuration))
             {
-                var steamLanguage = SteamConstants.TwitchLanguageMapping.First(tlm => tlm.Key == targetLanguage);
+                var steamLanguage = SteamConstants.TwitchLanguageMapping.First(tlm => tlm.Key == TargetLanguage);
                 //foreach (var steamLanguage in SteamConstants.TwitchLanguageMapping)
                 {
                     // Scan all categories
@@ -195,11 +207,6 @@ namespace TwitchCategoriesCrawler
             }
 
             return resultList.ToArray();
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
         }
     }
 }
