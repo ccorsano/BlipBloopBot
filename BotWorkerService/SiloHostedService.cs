@@ -49,6 +49,7 @@ namespace BotWorkerService
             var builder = new SiloHostBuilder()
                 .ConfigureLogging(loggingBuilder =>
                 {
+                    loggingBuilder.AddApplicationInsights(instrumentationKey);
                     loggingBuilder.AddConsole();
                 })
                // Configure ClusterId and ServiceId
