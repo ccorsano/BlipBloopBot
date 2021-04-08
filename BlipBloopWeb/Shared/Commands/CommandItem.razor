@@ -1,0 +1,96 @@
+﻿@using BotServiceGrain
+@using Conceptoire.Twitch.Commands
+@using Conceptoire.Twitch.Options
+@using System.Text.Json
+@using Microsoft.Extensions.DependencyInjection
+@inject IClientProvider ClientProvider
+
+<tr>
+    @if (!_isEditing)
+    {
+        <td>
+            <a class="btn btn-lg" @onclick="@(e => OnEditCommand(e, CommandName))"><i class="bi bi-pencil-square"></i></a>
+        </td>
+        <th>
+            @if (CommandName == "*")
+            {
+                <em>Any message</em>
+            }
+            else
+            {
+                <strong>!@CommandName</strong>
+            }
+        </th>
+        <td>@_commandType</td>
+        <td></td>
+        <td></td>
+    }
+    else
+    {
+        <td>
+            <a class="btn btn-lg btn-primary" @onclick="@(e => OnConfirmCommand(e, CommandName))">Done</a>
+        </td>
+        <td>
+            <input @bind="_commandName" @bind:event="oninput" />
+        </td>
+        <td>
+            <select @bind="_commandType" class="form-select" aria-label="Bot command type selection">
+                @foreach (var commandType in availableCommands)
+                {
+                    <option value="@commandType.Name">@commandType.Name</option>
+                }
+            </select>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+    }
+</tr>
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+
+    [Parameter]
+    public string CommandName { get; set; }
+
+    private string _commandName;
+
+    [Parameter]
+    public string CommandType { get; set; }
+
+    private string _commandType;
+
+    private CommandMetadata[] availableCommands;
+
+    private bool _isEditing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+        availableCommands = (await channelGrain.GetSupportedCommandTypes()).ToArray();
+
+        await base.OnInitializedAsync();
+    }
+
+    protected override void OnParametersSet()
+    {
+        _commandName = CommandName;
+        _commandType = CommandType;
+        base.OnParametersSet();
+    }
+
+    protected void OnEditCommand(MouseEventArgs evt, string key)
+    {
+        _isEditing = true;
+    }
+
+    protected void OnConfirmCommand(MouseEventArgs evt, string key)
+    {
+        CommandName = _commandName;
+        CommandType = _commandType;
+        _isEditing = false;
+    }
+}

@@ -1,8 +1,5 @@
 ﻿@page "/bot"
-@inject IClientProvider ClientProvider
-@using BotServiceGrain
 @using Conceptoire.Twitch.Options
-@using System.Text.Json 
 
 <h1 class="display-1"><i class="bi bi-cpu-fill"></i> Bot</h1>
 
@@ -10,36 +7,7 @@
 
 <div>
     <h4>Commands configuration</h4>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th scope="col">Trigger</th>
-                <th scope="col">Command type</th>
-                <th scope="col">Description</th>
-                <th scope="col">Parameters</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var botCommand in _botCommands)
-            {
-            <tr>
-                <th>
-                    @if (botCommand.Key == "*")
-                    {
-                        <em>Any message</em>
-                    }
-                    else
-                    {
-                        <strong>!@botCommand.Key</strong>
-                    }
-                </th>
-                <td scope="row">@botCommand.Value.Type</td>
-                <td>@(botCommand.Value.Parameters.FirstOrDefault(kvp => kvp.Key == "Description").Value ?? "")</td>
-                <td>@(JsonSerializer.Serialize(botCommand.Value.Parameters))</td>
-            </tr>
-            }
-        </tbody>
-    </table>
+    <BlipBloopWeb.Shared.Commands.CommandGrid />
 </div>
 
 @code {
@@ -47,14 +15,4 @@
     public MainLayout ServiceContext { get; set; }
 
     private Dictionary<string, CommandOptions> _botCommands = new Dictionary<string, CommandOptions>();
-
-    protected override async Task OnParametersSetAsync()
-    {
-        var client = await ClientProvider.GetConnectedClient();
-        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
-
-        _botCommands = await channelGrain.GetBotCommands();
-
-        await base.OnParametersSetAsync();
-    }
 }

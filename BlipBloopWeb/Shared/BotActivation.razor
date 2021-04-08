@@ -20,7 +20,12 @@ else
     {
         var client = await ClientProvider.GetConnectedClient();
         _channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
-        ServiceContext.SetBotRunning(await _channelGrain.IsBotActive());
+
+        bool isBotRunning = await _channelGrain.IsBotActive();
+        if (isBotRunning ^ ServiceContext.IsBotRunning)
+        {
+            ServiceContext.SetBotRunning(isBotRunning);
+        }
 
         await base.OnParametersSetAsync();
     }

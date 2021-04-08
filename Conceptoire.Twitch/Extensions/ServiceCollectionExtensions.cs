@@ -15,15 +15,27 @@ namespace Conceptoire.Twitch.Extensions
         /// </summary>
         /// <typeparam name="TMessageProcessor">IMessageProcessor type to register</typeparam>
         /// <param name="services">Builder instance</param>
-        /// <param name="processorName">Name to assign the message processor to</param>
+        /// <param name="name">Name of the command</param>
         /// <returns></returns>
-        public static IServiceCollection AddCommand<TMessageProcessor>(this IServiceCollection services, string processorName) where TMessageProcessor : class, IMessageProcessor
+        public static IServiceCollection AddCommand<TMessageProcessor>(this IServiceCollection services, string name)
+            where TMessageProcessor : class, IMessageProcessor
+            => AddCommand<TMessageProcessor>(services, new CommandMetadata { Name = name });
+
+        /// <summary>
+        /// Register a command to be instanciated through configuration
+        /// </summary>
+        /// <typeparam name="TMessageProcessor">IMessageProcessor type to register</typeparam>
+        /// <param name="services">Builder instance</param>
+        /// <param name="metadata">Name and description of the command</param>
+        /// <returns></returns>
+        public static IServiceCollection AddCommand<TMessageProcessor>(this IServiceCollection services, CommandMetadata metadata)
+            where TMessageProcessor : class, IMessageProcessor
         {
             services.AddSingleton<TMessageProcessor>();
             services.AddSingleton<IMessageProcessor, TMessageProcessor>(services => services.GetRequiredService<TMessageProcessor>());
             services.AddTransient(provider => new CommandRegistration
             {
-                Name = processorName,
+                Metadata = metadata,
                 Processor = () => provider.GetRequiredService<TMessageProcessor>()
             });
 

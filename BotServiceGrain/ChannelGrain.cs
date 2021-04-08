@@ -22,6 +22,7 @@ namespace BotServiceGrainInterface
         private readonly IPersistentState<ChannelBotSettingsState> _channelBotState;
         private readonly TwitchAPIClient _appClient;
         private readonly TwitchChatClientOptions _options;
+        private readonly Dictionary<string, CommandRegistration> _registeredCommands;
         private readonly Dictionary<string, IMessageProcessor> _commands;
         private readonly ILoggerFactory _loggerFactory;
         private readonly ILogger _logger;
@@ -45,6 +46,7 @@ namespace BotServiceGrainInterface
             _channelBotState = botSettingsState;
             _appClient = appClient;
             _options = botOptions.Value;
+            _registeredCommands = commands.ToDictionary(c => c.Name, c => c);
             _commands = commands.ToDictionary(c => c.Name, c => c.Processor());
             _loggerFactory = loggerFactory;
             _logger = logger;
@@ -224,6 +226,11 @@ namespace BotServiceGrainInterface
         public Task<Dictionary<string, CommandOptions>> GetBotCommands()
         {
             return Task.FromResult(_channelBotState.State.Commands);
+        }
+
+        public Task<CommandMetadata[]> GetSupportedCommandTypes()
+        {
+            return Task.FromResult(_registeredCommands.Values.Select(v => v.Metadata).ToArray());
         }
     }
 }

@@ -3,9 +3,13 @@ using System;
 
 namespace Conceptoire.Twitch.Commands
 {
+    [Serializable]
     public class CommandRegistration
     {
-        public string Name { get; set; }
+        public string Name => Metadata.Name;
+
+        public CommandMetadata Metadata { get; set; }
+
         public Func<IMessageProcessor> Processor { get; set; }
     }
 }

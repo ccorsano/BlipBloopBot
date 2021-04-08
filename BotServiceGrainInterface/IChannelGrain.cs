@@ -1,5 +1,6 @@
 ﻿using BotServiceGrainInterface.Model;
 using Conceptoire.Twitch.API;
+using Conceptoire.Twitch.Commands;
 using Conceptoire.Twitch.Options;
 using Orleans;
 using System;
@@ -18,5 +19,6 @@ namespace BotServiceGrain
         public Task<bool> SetBotActivation(bool isActive);
         public Task<ChannelStaff> GetStaff();
         public Task<Dictionary<string, CommandOptions>> GetBotCommands();
+        public Task<CommandMetadata[]> GetSupportedCommandTypes();
     }
 }

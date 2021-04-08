@@ -1,0 +1,53 @@
+﻿@using BotServiceGrain
+@using Conceptoire.Twitch.Commands
+@using Conceptoire.Twitch.Options
+@using Microsoft.Extensions.DependencyInjection
+@inject IClientProvider ClientProvider
+
+<table class="table table-bordered ">
+    <thead>
+        <tr>
+            <th scope="col"></th>
+            <th scope="col">Trigger</th>
+            <th scope="col">Command type</th>
+            <th scope="col">Description</th>
+            <th scope="col">Parameters</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Commands != null)
+        {
+            @foreach ((var command, var options) in Commands)
+            {
+                <CommandItem CommandName="@command" CommandType="@options.Type" />
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="5">
+                    <div class="spinner-border m-5" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+
+    public Dictionary<string, CommandOptions> Commands { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+
+        Commands = await channelGrain.GetBotCommands();
+
+        await base.OnParametersSetAsync();
+    }
+}
