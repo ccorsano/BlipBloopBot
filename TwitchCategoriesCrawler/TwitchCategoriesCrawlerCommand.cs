@@ -17,6 +17,8 @@ using System.Threading.Tasks;
 using Conceptoire.Twitch.IGDB.Generated;
 using McMaster.Extensions.CommandLineUtils;
 using System;
+using BlipBloopCommands.Storage;
+using BlipBloopBot.Storage;
 
 namespace TwitchCategoriesCrawler
 {
@@ -28,6 +30,7 @@ namespace TwitchCategoriesCrawler
         private readonly IGDBClient _igdbClient;
         private readonly SteamStoreClient _steamStoreClient;
         private readonly TwitchApplicationOptions _options;
+        private readonly IGameLocalizationStore _gameLocalization;
         private readonly ILogger _logger;
 
         [Option("-l", CommandOptionType.SingleValue, Description = "Language to import from Steam")]
@@ -38,12 +41,14 @@ namespace TwitchCategoriesCrawler
             IGDBClient igdbClient,
             SteamStoreClient steamStoreClient,
             IOptions<TwitchApplicationOptions> options,
+            IGameLocalizationStore gameLocalizationStore,
             ILogger<TwitchCategoriesCrawlerCommand> logger)
         {
             _twitchAPIClient = twitchApiClient;
             _igdbClient = igdbClient;
             _steamStoreClient = steamStoreClient;
             _steamStoreClient.WebAPIKey = options.Value.SteamApiKey;
+            _gameLocalization = gameLocalizationStore;
             _options = options.Value;
             _logger = logger;
         }
@@ -105,6 +110,16 @@ namespace TwitchCategoriesCrawler
                     await foreach (var category in _twitchAPIClient.EnumerateTwitchCategoriesAsync())
                     {
                         GameInfo gameInfo;
+
+                        if (_gameLocalization != null)
+                        {
+                            var existingLog = await _gameLocalization.ResolveLocalizedGameInfo(TargetLanguage, category.Id);
+                            if (existingLog != null)
+                            {
+                                _logger.LogWarning("Found existing persisted entry, skipping");
+                                continue;
+                            }
+                        }
 
                         if (gameDb.TryGetValue((category.Id, steamLanguage.Key), out gameInfo))
                         {
@@ -199,6 +214,11 @@ namespace TwitchCategoriesCrawler
                     };
 
                     resultList.Add(localizedGameInfo);
+
+                    if (_gameLocalization != null)
+                    {
+                        await _gameLocalization.SaveGameInfo(localizedGameInfo);
+                    }
                 }
             }
             else

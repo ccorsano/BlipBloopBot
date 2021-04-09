@@ -9,6 +9,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
+using BlipBloopCommands.Storage;
+using BlipBloopBot.Storage;
 
 namespace TwitchCategoriesCrawler
 {
@@ -34,6 +36,7 @@ namespace TwitchCategoriesCrawler
                     // Configure services
                     services.AddHttpClient();
                     services.Configure<TwitchApplicationOptions>(configuration.GetSection("twitch"));
+                    services.Configure<AzureGameLocalizationStoreOptions>(configuration.GetSection("loc:azure"));
                     services.AddTransient<TwitchAPIClient>();
                     services.AddTransient<IGDBClient>();
                     services.AddSingleton<IMemoryCache, MemoryCache>();
@@ -45,6 +48,16 @@ namespace TwitchCategoriesCrawler
                                 s.GetService<IOptions<TwitchApplicationOptions>>().Value.ClientSecret)
                             .Build()
                     );
+                    services.AddTransient<IGameLocalizationStore>(services =>
+                    {
+                        var options = services.GetRequiredService<IOptions<AzureGameLocalizationStoreOptions>>();
+                        if (string.IsNullOrEmpty(options.Value.StorageConnectionString) || string.IsNullOrEmpty(options.Value.TableName))
+                        {
+                            return null;
+                        }
+                        return services.GetRequiredService<AzureStorageGameLocalizationStore>();
+                    });
+                    services.AddSingleton<AzureStorageGameLocalizationStore>();
                 })
                 .UseConsoleLifetime();
 

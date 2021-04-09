@@ -61,5 +61,10 @@ namespace BlipBloopBot.Storage
 
             return null;
         }
+
+        public Task SaveGameInfo(GameInfo gameInfo)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
