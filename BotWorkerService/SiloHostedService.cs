@@ -49,7 +49,10 @@ namespace BotWorkerService
             var builder = new SiloHostBuilder()
                 .ConfigureLogging(loggingBuilder =>
                 {
-                    loggingBuilder.AddApplicationInsights(instrumentationKey);
+                    if (! string.IsNullOrEmpty(instrumentationKey))
+                    {
+                        loggingBuilder.AddApplicationInsights(instrumentationKey);
+                    }
                     loggingBuilder.AddConsole();
                 })
                // Configure ClusterId and ServiceId
@@ -58,7 +61,6 @@ namespace BotWorkerService
                    options.ClusterId = "dev";
                    options.ServiceId = "TwitchServices";
                })
-               .AddApplicationInsightsTelemetryConsumer(instrumentationKey)
                .AddStartupTask<LoadConfigurationStartupTask>()
                .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(ChannelGrain).Assembly).WithReferences())
                // Configure connectivity
@@ -86,24 +88,6 @@ namespace BotWorkerService
                     options.TableName = "botsettings";
                     options.UseJson = true;
                     options.IndentJson = false;
-                });
-            }
-            else if(!string.IsNullOrEmpty(redisClusteringUrl))
-            {
-                builder.AddRedisGrainStorage("profileStore", (RedisStorageOptions options) =>
-                {
-                    options.ConnectionString = redisClusteringUrl;
-                    options.UseJson = true;
-                });
-                builder.AddRedisGrainStorage("channelStore", (RedisStorageOptions options) =>
-                {
-                    options.ConnectionString = redisClusteringUrl;
-                    options.UseJson = true;
-                });
-                builder.AddRedisGrainStorage("botSettingsStore", (RedisStorageOptions options) =>
-                {
-                    options.ConnectionString = redisClusteringUrl;
-                    options.UseJson = true;
                 });
             }
             else
