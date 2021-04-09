@@ -25,6 +25,8 @@ namespace BlipBloopCommands.Commands.GameSynopsis
 
         public async Task OnUpdateContext(IProcessorContext context)
         {
+            _logger.LogWarning("Received channel update for {channelId}: Category={categoryId} Lang={language}", context.ChannelId, context.CategoryId, context.Language);
+
             _channelId = context.ChannelId;
 
             _gameInfo = await _twitchCategoryProvider.FetchChannelInfo(context.CategoryId, context.Language);
