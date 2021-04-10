@@ -93,6 +93,45 @@ namespace Conceptoire.Twitch.API
             return EnumerateHelixAPIAsync<HelixEventSubSubscriptionsListReponse, HelixEventSubSubscriptionData>(uri);
         }
 
+        public Task<HelixUsersGetResult[]> GetUsersByLoginAsync(IEnumerable<string> logins)
+            => GetUsersAsync(new string[0], logins);
+
+        public Task<HelixUsersGetResult[]> GetUsersByIdAsync(IEnumerable<string> ids)
+            => GetUsersAsync(ids, new string[0]);
+
+        public async Task<HelixUsersGetResult[]> GetUsersAsync(IEnumerable<string> ids, IEnumerable<string> logins)
+        {
+            var uri = "https://api.twitch.tv/helix/users";
+            foreach(var id in ids)
+            {
+                uri = QueryHelpers.AddQueryString(uri, "id", id);
+            }
+            foreach (var login in logins)
+            {
+                uri = QueryHelpers.AddQueryString(uri, "login", login);
+            }
+            var httpMessage = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(uri)
+            };
+            await _authenticated.AuthenticateMessageAsync(httpMessage);
+
+            var result = await _httpClient.SendAsync(httpMessage);
+            if (result.IsSuccessStatusCode)
+            {
+                var response = await JsonSerializer.DeserializeAsync<HelixUsersGetResponse>(await result.Content.ReadAsStreamAsync());
+                return response.Data;
+            }
+            else
+            {
+                var response = await result.Content.ReadAsStringAsync();
+                _logger.LogError(response);
+            }
+
+            return null;
+        }
+
         public async Task<HelixChannelSearchResult[]> SearchChannelsAsync(string channelQuery)
         {
             var httpMessage = new HttpRequestMessage
