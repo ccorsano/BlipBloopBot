@@ -1,7 +1,9 @@
-﻿using Conceptoire.Twitch.IRC;
+﻿using Conceptoire.Twitch.Extensions;
+using Conceptoire.Twitch.IRC;
 using Conceptoire.Twitch.Model;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -12,6 +14,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
         private readonly ITwitchCategoryProvider _twitchCategoryProvider;
         private readonly ILogger _logger;
 
+        private bool _asReply;
         private string _channelId;
         private GameInfo _gameInfo;
 
@@ -44,19 +47,13 @@ namespace BlipBloopCommands.Commands.GameSynopsis
             {
                 _gameInfo = gameInfo;
             };
+
+            _asReply = bool.Parse(context.CommandOptions.Parameters.GetValueOrDefault("reply") ?? bool.FalseString);
         }
 
         public void OnMessage(ParsedIRCMessage message, Action<OutgoingMessage> sendResponse)
         {
-            string msgId = null;
-            foreach (var tag in message.ParseIRCTags())
-            {
-                if (tag.Key.SequenceEqual("id"))
-                {
-                    msgId = new string(tag.Value);
-                    break;
-                }
-            }
+            string msgId = _asReply ? message.GetMessageIdTag() : null;
             var reply = new OutgoingMessage
             {
                 ReplyParentMessage = msgId,
