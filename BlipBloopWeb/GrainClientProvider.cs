@@ -1,4 +1,5 @@
 ﻿using BlipBloopWeb;
+using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using System;
 using System.Collections.Generic;
@@ -10,23 +11,26 @@ namespace BotServiceGrainInterface
 {
     public class GrainClientProvider : IClientProvider, IDisposable
     {
-        private readonly IClientBuilder _clientBuilder;
+        private readonly IServiceProvider _serviceProvider;
         private Lazy<Task<IClusterClient>> _lazyClient;
 
-        public GrainClientProvider(IClientBuilder clientBuilder)
+        public GrainClientProvider(IServiceProvider serviceProvider)
         {
-            _clientBuilder = clientBuilder;
-            _lazyClient = new Lazy<Task<IClusterClient>>(async () =>
-            {
-                var client = _clientBuilder.Build();
-                await client.Connect();
-                return client;
-            });
+            _serviceProvider = serviceProvider;
+            _lazyClient = new Lazy<Task<IClusterClient>>(ConnectClient);
+        }
+
+        private async Task<IClusterClient> ConnectClient()
+        {
+            var clientBuilder = _serviceProvider.GetRequiredService<IClientBuilder>();
+            var client = clientBuilder.Build();
+            await client.Connect();
+            return client;
         }
 
         public void Dispose()
         {
-            if (_lazyClient.IsValueCreated && _lazyClient.Value.IsCompleted)
+            if (_lazyClient.IsValueCreated && _lazyClient.Value.IsCompletedSuccessfully)
             {
                 _lazyClient.Value.Result.Close();
             }
@@ -34,6 +38,11 @@ namespace BotServiceGrainInterface
 
         public Task<IClusterClient> GetConnectedClient()
         {
+            if (_lazyClient.IsValueCreated && _lazyClient.Value.IsFaulted)
+            {
+                
+                _lazyClient = new Lazy<Task<IClusterClient>>(ConnectClient);
+            }
             return _lazyClient.Value;
         }
     }
