@@ -70,6 +70,70 @@ namespace Conceptoire.Twitch.Constants
             LanguageCodes.VIETNAMESE,
         };
 
+        public static class APILanguageCodes
+        {
+            public static readonly string ARABIC = "arabic";
+            public static readonly string BULGARIAN = "bulgarian";
+            public static readonly string CHINESE_SIMPLIFIED = "schinese";
+            public static readonly string CHINESE_TRADITIONAL = "tchinese";
+            public static readonly string CZECH = "czech";
+            public static readonly string DANISH = "danish";
+            public static readonly string DUTCH = "dutch";
+            public static readonly string ENGLISH = "english";
+            public static readonly string FINNISH = "finnish";
+            public static readonly string FRENCH = "french";
+            public static readonly string GERMAN = "german";
+            public static readonly string GREEK = "greek";
+            public static readonly string HUNGARIAN = "hungarian";
+            public static readonly string ITALIAN = "italian";
+            public static readonly string JAPANESE = "japanese";
+            public static readonly string KOREAN = "koreana";
+            public static readonly string NORWEGIAN = "norwegian";
+            public static readonly string POLISH = "polish";
+            public static readonly string PORTUGUESE = "portuguese";
+            public static readonly string PORTUGUESE_BRAZIL = "brazilian";
+            public static readonly string ROMANIAN = "romanian";
+            public static readonly string RUSSIAN = "russian";
+            public static readonly string SPANISH_SPAIN = "spanish";
+            public static readonly string SPANISH_LATINAMERICA = "latam";
+            public static readonly string SWEDISH = "swedish";
+            public static readonly string THAI = "thai";
+            public static readonly string TURKISH = "turkish";
+            public static readonly string UKRAINIAN = "ukrainian";
+            public static readonly string VIETNAMESE = "vietnames";
+        }
+
+        public static readonly Dictionary<string, string> SteamLanguageCodeToAPILanguageCode = new Dictionary<string, string>
+        {
+            { LanguageCodes.ENGLISH, APILanguageCodes.ENGLISH },
+            { LanguageCodes.FRENCH, APILanguageCodes.FRENCH},
+            { LanguageCodes.ITALIAN, APILanguageCodes.ITALIAN},
+            { LanguageCodes.GERMAN, APILanguageCodes.GERMAN},
+            { LanguageCodes.SPANISH_SPAIN, APILanguageCodes.SPANISH_SPAIN},
+            { LanguageCodes.DANISH, APILanguageCodes.DANISH},
+            { LanguageCodes.HUNGARIAN, APILanguageCodes.HUNGARIAN},
+            { LanguageCodes.DUTCH, APILanguageCodes.DUTCH},
+            { LanguageCodes.NORWEGIAN, APILanguageCodes.NORWEGIAN},
+            { LanguageCodes.POLISH, APILanguageCodes.POLISH},
+            { LanguageCodes.PORTUGUESE, APILanguageCodes.PORTUGUESE},
+            { LanguageCodes.ROMANIAN, APILanguageCodes.ROMANIAN},
+            { LanguageCodes.FINNISH, APILanguageCodes.FINNISH},
+            { LanguageCodes.SWEDISH, APILanguageCodes.SWEDISH},
+            { LanguageCodes.VIETNAMESE, APILanguageCodes.VIETNAMESE},
+            { LanguageCodes.TURKISH, APILanguageCodes.TURKISH},
+            { LanguageCodes.CZECH, APILanguageCodes.CZECH},
+            { LanguageCodes.GREEK, APILanguageCodes.GREEK},
+            { LanguageCodes.BULGARIAN, APILanguageCodes.BULGARIAN},
+            { LanguageCodes.RUSSIAN, APILanguageCodes.RUSSIAN},
+            { LanguageCodes.UKRAINIAN, APILanguageCodes.UKRAINIAN},
+            { LanguageCodes.ARABIC, APILanguageCodes.ARABIC},
+            { LanguageCodes.THAI, APILanguageCodes.THAI},
+            { LanguageCodes.CHINESE_SIMPLIFIED, APILanguageCodes.CHINESE_SIMPLIFIED},
+            { LanguageCodes.JAPANESE, APILanguageCodes.JAPANESE},
+            { LanguageCodes.CHINESE_TRADITIONAL, APILanguageCodes.CHINESE_TRADITIONAL},
+            { LanguageCodes.KOREAN, APILanguageCodes.KOREAN},
+        };
+
         public static readonly Dictionary<string, string> TwitchLanguageMapping = new Dictionary<string, string>
         {
             { TwitchConstants.LanguageCodes.ENGLISH, LanguageCodes.ENGLISH },

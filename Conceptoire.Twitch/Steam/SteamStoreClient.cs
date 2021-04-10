@@ -1,4 +1,5 @@
-﻿using Conceptoire.Twitch.Steam.Model;
+﻿using Conceptoire.Twitch.Constants;
+using Conceptoire.Twitch.Steam.Model;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Polly;
@@ -40,14 +41,18 @@ namespace Conceptoire.Twitch.Steam
 
         public async Task<SteamStoreDetails> GetStoreDetails(string appId, string language = "en-US")
         {
-            var cacheKey = $"steam:store:{appId}:{language}";
+            var apiLanguageCode = SteamConstants.SteamLanguageCodeToAPILanguageCode[language];
+
+            var cacheKey = $"steam:store:{appId}:{apiLanguageCode}";
+
 
             if (!_cache.TryGetValue(cacheKey, out SteamStoreDetails result))
             {
                 var response = await RetryPolicy.ExecuteAsync(() =>
                 {
-                    var message = new HttpRequestMessage(HttpMethod.Get, $"api/appdetails/?appids={appId}");
-                    message.Headers.AcceptLanguage.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue(language));
+                    var message = new HttpRequestMessage(HttpMethod.Get, $"api/appdetails/?appids={appId}&l={apiLanguageCode}");
+                    message.Headers.CacheControl = new System.Net.Http.Headers.CacheControlHeaderValue();
+                    //message.Headers.CacheControl.NoCache = true;
                     if (!string.IsNullOrEmpty(WebAPIKey))
                     {
                         message.Headers.Add("x-webapi-key", WebAPIKey);
