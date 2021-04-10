@@ -48,19 +48,28 @@
 
     public void SetAuthenticated(bool value)
     {
-        IsAuthenticated = value;
-        StateHasChanged();
+        if (IsAuthenticated ^ value)
+        {
+            IsAuthenticated = value;
+            StateHasChanged();
+        }
     }
 
     public void SetChannelIntegrationActive(bool value)
     {
-        IsChannelIntegrationActive = value;
-        StateHasChanged();
+        if (IsChannelIntegrationActive ^ value)
+        {
+            IsChannelIntegrationActive = value;
+            StateHasChanged();
+        }
     }
 
     public void SetBotRunning(bool value)
     {
-        IsBotRunning = value;
-        StateHasChanged();
+        if (IsBotRunning ^ value)
+        {
+            IsBotRunning = value;
+            StateHasChanged();
+        }
     }
 }

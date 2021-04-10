@@ -2,38 +2,42 @@
 @using BotServiceGrain
 @inject IClientProvider ClientProvider
 
-<h3>Channel Activation</h3>
-
-<div>
-    <h4>Integration status</h4>
-
-    @if (_isLoading)
-    {
-        <div class="spinner-border m-5" role="status">
-            <span class="visually-hidden">Loading...</span>
+    <div class="card">
+        <div class="card-header">
+            Channel Activation
         </div>
-    }
-    else if (_hasActiveChannel)
-    {
-        <h5>
-            <i class="bi bi-check2-square bi-lg green" style="font-size: 2rem; color: forestgreen;"></i>
-            Channel integration is active.
-        </h5>
+        <div class="card-body">
+            @if (_isLoading)
+            {
+                <div class="spinner-border m-5" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            }
+            else if (ServiceContext.IsChannelIntegrationActive)
+            {
+                <h5>
+                    <i class="bi bi-check2-square bi-lg green" style="font-size: 2rem; color: forestgreen;"></i>
+                    Channel integration is active.
+                </h5>
 
-        <ChannelStaffList ChannelId="@ServiceContext.UserId" />
-    }
-    else
-    {
-        <a class="btn btn-primary btn-lg" @onclick="ActivateChannelAsync">Activate channel integration</a>
-    }
-</div>
+                <ChannelStaffList ChannelId="@ServiceContext.UserId" />
+            }
+            else
+            {
+                <h5>
+                    <i class="bi bi-x-square bi-lg" style="font-size: 2rem; color: black;"></i>
+                    Channel integration is inactive.
+                </h5>
+                <a class="btn btn-primary btn-lg" @onclick="ActivateChannelAsync">Activate channel integration</a>
+            }
+        </div>
+    </div>
 
 @code {
     [CascadingParameter(Name = "ServiceContext")]
     public MainLayout ServiceContext { get; set; }
 
     private bool _isLoading = true;
-    private bool _hasActiveChannel = false;
     private IUserGrain _userGrain;
 
     protected override Task OnInitializedAsync()
@@ -48,7 +52,7 @@
 
         _userGrain = client.GetGrain<IUserGrain>(ServiceContext.UserId);
         await _userGrain.SetOAuthToken(ServiceContext.OAuthToken);
-        _hasActiveChannel = await _userGrain.HasActiveChannel();
+        ServiceContext.SetChannelIntegrationActive(await _userGrain.HasActiveChannel());
 
         _isLoading = false;
 
@@ -58,6 +62,6 @@
     protected async Task ActivateChannelAsync()
     {
         await _userGrain.ActivateChannel();
-        _hasActiveChannel = await _userGrain.HasActiveChannel();
+        ServiceContext.SetChannelIntegrationActive(await _userGrain.HasActiveChannel());
     }
 }

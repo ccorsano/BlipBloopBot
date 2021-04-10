@@ -3,63 +3,83 @@
 @inject TwitchAPIClient twitchApiClient
 @inject IClientProvider ClientProvider
 
-<div>
-    <h3>Enable as Bot account</h3>
-
-    <p>
-        You can allow specific channels to use this account as a bot.
-        <br />
-        In that case, this account login information will be used to read and post from the enabled chat, if the broadcaster selects this account as bot.
-    </p>
-
-    <h4>Currently allowed channels</h4>
-
-    @if (!_allowedChannels.Any())
-    {
-        <div class="alert alert-secondary" role="alert">
-            No channels are allowed to use your account as a bot.
-        </div>
-    }
-    else
-    {
-        <ul class="list-group">
-            @foreach (var channel in _allowedChannels)
-            {
-                <li class="list-group-item"><a href="#" @onclick="(_) =>RevokeChannel(channel)" class="bi bi-trash-fill">&nbsp;</a> @channel.BroadcasterName</li>
-            }
-        </ul>
-    }
-    <label for="channelSearch" class="form-label">Search channel to allow</label>
-    <div class="input-group mb-3">
-        <span class="input-group-text" id="basic-addon3">Twitch channel</span>
-        <input type="text" class="form-control" @bind="_channelSearch" @oninput="SearchChannel" id="channelSearch" aria-describedby="basic-addon3" />
+<div class="card">
+    <div class="card-header">
+        Bot Account management
     </div>
+    <div class="card-body">
+        <h5 class="card-title">Enable as Bot account</h5>
+        <p>
+            You can allow specific channels to use this account as a bot.
+            <br />
+            In that case, this account login information will be used to read and post from the enabled chat, if the broadcaster selects this account as bot.
+        </p>
+        <h6>Currently allowed channels</h6>
 
-    @if (_searchResults != null)
-    {
-        <div>
-            @foreach (var user in _searchResults)
-            {
-                <div class="card" style="width: 18rem;">
-                    <img src="@user.ProfileImageUrl" class="card-img-top" alt="@user.DisplayName">
-                    <div class="card-body">
-                        <h5 class="card-title">@user.DisplayName</h5>
-                        <p class="card-text">@user.Description</p>
-                        <a href="#" @onclick="(_) => SelectChannel(user)" class="btn btn-primary">Allow</a>
+        @if (_isLoadingAllowList)
+        {
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        }
+        else if (!_allowedChannels.Any())
+        {
+            <div class="alert alert-secondary" role="alert">
+                No channels are allowed to use your account as a bot.
+            </div>
+        }
+        else
+        {
+            <div class="row row-cols-8 row-cols-md-6 g-4">
+                @foreach (var channel in _allowedChannels)
+                {
+                    <div class="col">
+                        <div class="card h-100">
+                            <img src="@channel.ProfileImageUrl" class="card-img-top" alt="@channel.DisplayName">
+                            <div class="card-body">
+                                <h5 class="card-title">@channel.DisplayName</h5>
+                                <p class="card-text">@channel.Description</p>
+                                <a href="#" @onclick="(_) =>RevokeChannel(channel.Id)" class="btn btn-primary bi bi-trash-fill">Revoke</a>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            }
+                }
+            </div>
+        }
+        <label for="channelSearch" class="form-label">Search channel to allow</label>
+        <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon3">Twitch channel</span>
+            <input type="text" class="form-control" @bind="_channelSearch" @oninput="SearchChannel" id="channelSearch" aria-describedby="basic-addon3" />
         </div>
-    }
 
+        @if (_searchResults != null)
+        {
+            <div class="row row-cols-8 row-cols-md-6 g-4">
+                @foreach (var user in _searchResults)
+                {
+                    <div class="col">
+                        <div class="card" style="width: 18rem;">
+                            <img src="@user.ProfileImageUrl" class="card-img-top" alt="@user.DisplayName">
+                            <div class="card-body">
+                                <h5 class="card-title">@user.DisplayName</h5>
+                                <p class="card-text">@user.Description</p>
+                                <a href="#" @onclick="(_) => SelectChannel(user)" class="btn btn-primary">Allow</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
 </div>
 
 @code{
     [CascadingParameter(Name = "ServiceContext")]
     public MainLayout ServiceContext { get; set; }
 
-    private HelixChannelInfo[] _allowedChannels = new HelixChannelInfo[0];
+    private HelixUsersGetResult[] _allowedChannels = new HelixUsersGetResult[0];
 
+    private bool _isLoadingAllowList = true;
     private string _channelSearch;
     private HelixUsersGetResult[] _searchResults;
 
@@ -67,9 +87,25 @@
     {
         var client = await ClientProvider.GetConnectedClient();
         var grain = client.GetGrain<IUserGrain>(ServiceContext.UserId);
-        _allowedChannels = await grain.GetChannelBotAllowList();
-
+        await RefreshChannels(grain);
         await base.OnParametersSetAsync();
+    }
+
+    private async Task RefreshChannels(IUserGrain grain)
+    {
+        _isLoadingAllowList = true;
+        var allowedChannels = await grain.GetChannelBotAllowList();
+
+        if (allowedChannels.Length == 0)
+        {
+            _allowedChannels = new HelixUsersGetResult[0];
+        }
+        else
+        { 
+            _allowedChannels = await twitchApiClient.GetUsersByIdAsync(allowedChannels.Select(c => c.BroadcasterId));
+        }
+
+        _isLoadingAllowList = false;
     }
 
     private async Task SearchChannel(ChangeEventArgs evt)
@@ -91,17 +127,15 @@
         var client = await ClientProvider.GetConnectedClient();
         var grain = client.GetGrain<IUserGrain>(ServiceContext.UserId);
         await grain.AllowAsBot(channel.Id);
-
-        _allowedChannels = await grain.GetChannelBotAllowList();
+        await RefreshChannels(grain);
     }
 
-    private async Task RevokeChannel(HelixChannelInfo channel)
+    private async Task RevokeChannel(string channelId)
     {
         var client = await ClientProvider.GetConnectedClient();
         var grain = client.GetGrain<IUserGrain>(ServiceContext.UserId);
-        await grain.RevokeAsBot(channel.BroadcasterId);
-
-        _allowedChannels = await grain.GetChannelBotAllowList();
+        await grain.RevokeAsBot(channelId);
+        await RefreshChannels(grain);
     }
 
 }

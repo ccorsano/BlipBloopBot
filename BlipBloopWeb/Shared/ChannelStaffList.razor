@@ -4,33 +4,32 @@
 
 <h3>Staff</h3>
 
-<div class="container container-lg container-fluid">
-    <div class="row">
-        <div class="col">
-            <div class="card" style="width: 18rem;">
-                <div class="card-header">
-                    Editors
-                </div>
-                <ul class="list-group list-group-flush">
-                    @foreach (var editor in _channelEditors)
-                    {
-                        <li class="list-group-item"><span class="bi bi-person"></span> @editor.UserName</li>
-                    }
-                </ul>
+
+<div class="row col-sm" style="width: 40rem;">
+    <div class="col">
+        <div class="card" style="width: 18rem;">
+            <div class="card-header">
+                Editors
             </div>
+            <ul class="list-group list-group-flush">
+                @foreach (var editor in _channelEditors)
+                {
+                    <li class="list-group-item"><span class="bi bi-person"></span> @editor.UserName</li>
+                }
+            </ul>
         </div>
-        <div class="col">
-            <div class="card" style="width: 18rem;">
-                <div class="card-header">
-                    Moderators
-                </div>
-                <ul class="list-group list-group-flush">
-                    @foreach (var moderator in _channelModerators)
-                    {
-                        <li class="list-group-item"><span class="bi bi-person"></span> @moderator.UserName</li>
-                    }
-                </ul>
+    </div>
+    <div class="col">
+        <div class="card" style="width: 18rem;">
+            <div class="card-header">
+                Moderators
             </div>
+            <ul class="list-group list-group-flush">
+                @foreach (var moderator in _channelModerators)
+                {
+                    <li class="list-group-item"><span class="bi bi-person"></span> @moderator.UserName</li>
+                }
+            </ul>
         </div>
     </div>
 </div>
