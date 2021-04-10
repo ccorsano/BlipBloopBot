@@ -12,22 +12,42 @@
         In that case, this account login information will be used to read and post from the enabled chat, if the broadcaster selects this account as bot.
     </p>
 
-    <h4>Current allowed channels</h4>
-    <div class="list-group">
-        @foreach (var channel in _allowedChannels)
-        {
-            <li class="list-group-item"><a href="#" @onclick="(_) =>RevokeChannel(channel)" class="bi bi-trash-fill">&nbsp;</a> @channel.BroadcasterName</li>
-        }
-    </div>
+    <h4>Currently allowed channels</h4>
 
-    <input @bind="_channelSearch" @oninput="SearchChannel" />
+    @if (!_allowedChannels.Any())
+    {
+        <div class="alert alert-secondary" role="alert">
+            No channels are allowed to use your account as a bot.
+        </div>
+    }
+    else
+    {
+        <ul class="list-group">
+            @foreach (var channel in _allowedChannels)
+            {
+                <li class="list-group-item"><a href="#" @onclick="(_) =>RevokeChannel(channel)" class="bi bi-trash-fill">&nbsp;</a> @channel.BroadcasterName</li>
+            }
+        </ul>
+    }
+    <label for="channelSearch" class="form-label">Search channel to allow</label>
+    <div class="input-group mb-3">
+        <span class="input-group-text" id="basic-addon3">Twitch channel</span>
+        <input type="text" class="form-control" @bind="_channelSearch" @oninput="SearchChannel" id="channelSearch" aria-describedby="basic-addon3" />
+    </div>
 
     @if (_searchResults != null)
     {
-        <div class="list-group">
-            @foreach (var channel in _searchResults)
+        <div>
+            @foreach (var user in _searchResults)
             {
-                <a href="#" @onclick="(_) => SelectChannel(channel)" class="list-group-item list-group-item-action">@channel.DisplayName</a>
+                <div class="card" style="width: 18rem;">
+                    <img src="@user.ProfileImageUrl" class="card-img-top" alt="@user.DisplayName">
+                    <div class="card-body">
+                        <h5 class="card-title">@user.DisplayName</h5>
+                        <p class="card-text">@user.Description</p>
+                        <a href="#" @onclick="(_) => SelectChannel(user)" class="btn btn-primary">Allow</a>
+                    </div>
+                </div>
             }
         </div>
     }
@@ -41,7 +61,7 @@
     private HelixChannelInfo[] _allowedChannels = new HelixChannelInfo[0];
 
     private string _channelSearch;
-    private HelixChannelSearchResult[] _searchResults;
+    private HelixUsersGetResult[] _searchResults;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -57,15 +77,16 @@
         _channelSearch = evt.Value as string;
         if (_channelSearch.Length < 3)
         {
-            _searchResults = new HelixChannelSearchResult[0];
+            _searchResults = new HelixUsersGetResult[0];
             return;
         }
-        _searchResults = await twitchApiClient.SearchChannelsAsync(_channelSearch);
+        _searchResults = await twitchApiClient.GetUsersByLoginAsync(new string[] { _channelSearch });
     }
 
-    private async Task SelectChannel(HelixChannelSearchResult channel)
+    private async Task SelectChannel(HelixUsersGetResult channel)
     {
         _searchResults = null;
+        _channelSearch = "";
 
         var client = await ClientProvider.GetConnectedClient();
         var grain = client.GetGrain<IUserGrain>(ServiceContext.UserId);
