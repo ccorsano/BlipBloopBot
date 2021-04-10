@@ -14,8 +14,8 @@ namespace BotServiceGrainInterface
         public string LastCategoryId { get; set; }
         public string LastCategoryName { get; set; }
 
-        public HelixChannelModerator[] Moderators { get; set; }
+        public List<HelixChannelModerator> Moderators { get; set; }
 
-        public HelixChannelEditor[] Editors { get; set; }
+        public List<HelixChannelEditor> Editors { get; set; }
     }
 }

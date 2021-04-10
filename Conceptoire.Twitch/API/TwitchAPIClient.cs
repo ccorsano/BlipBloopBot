@@ -29,6 +29,13 @@ namespace Conceptoire.Twitch.API
             _logger = logger;
         }
 
+        public static TwitchAPIClient Create(IAuthenticated authenticated)
+        {
+            var loggerFactory = new LoggerFactory();
+            var httpClient = new HttpClient();
+            return new TwitchAPIClient(authenticated, httpClient, loggerFactory.CreateLogger<TwitchAPIClient>());
+        }
+
         public static TwitchAPIClient CreateFromBase(TwitchAPIClient baseInstance, IAuthenticated authenticated)
         {
             return new TwitchAPIClient(authenticated, baseInstance._httpClient, baseInstance._logger as ILogger<TwitchAPIClient>);

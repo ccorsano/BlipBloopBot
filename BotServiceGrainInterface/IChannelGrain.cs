@@ -20,5 +20,9 @@ namespace BotServiceGrain
         public Task<ChannelStaff> GetStaff();
         public Task<Dictionary<string, CommandOptions>> GetBotCommands();
         public Task<CommandMetadata[]> GetSupportedCommandTypes();
+        public Task SetActiveBotAccount(string userId);
+        public Task AllowBotAccount(BotAccountInfo accountInfo);
+        public Task DisallowBotAccount(string userId);
+        public Task<BotAccountInfo[]> GetAllowedBotAccounts();
     }
 }

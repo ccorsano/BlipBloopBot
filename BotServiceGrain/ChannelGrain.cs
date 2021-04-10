@@ -59,14 +59,20 @@ namespace BotServiceGrainInterface
 
             if (!_channelBotState.RecordExists)
             {
+                var defaultBotInfo = new BotAccountInfo
+                {
+                    UserId = _options.TokenInfo.UserId,
+                    UserLogin = _options.TokenInfo.Login,
+                };
+                _channelBotState.State.AllowedBotAccounts.Add(defaultBotInfo);
                 _channelBotState.State.Commands = new Dictionary<string, Conceptoire.Twitch.Options.CommandOptions>
                 {
-                    { "*", new Conceptoire.Twitch.Options.CommandOptions
+                    { "*", new CommandOptions
                         {
                             Type = "MessageTracer"
                         }
                     },
-                    { "jeu", new Conceptoire.Twitch.Options.CommandOptions
+                    { "jeu", new CommandOptions
                         {
                             Type = "GameSynopsis"
                         }
@@ -102,12 +108,12 @@ namespace BotServiceGrainInterface
             var channelInfoTask = _userClient.GetChannelInfoAsync(_channelId);
             List<HelixChannelModerator> moderators = new List<HelixChannelModerator>();
             var editorsTask = _userClient.GetHelixChannelEditorsAsync(_channelId);
-            await foreach(var moderator in _userClient.EnumerateChannelModeratorsAsync(_channelId))
+            await foreach (var moderator in _userClient.EnumerateChannelModeratorsAsync(_channelId))
             {
                 moderators.Add(moderator);
             }
-            _channelState.State.Editors = (await editorsTask).ToArray();
-            _channelState.State.Moderators = moderators.ToArray();
+            _channelState.State.Editors = (await editorsTask).ToList();
+            _channelState.State.Moderators = moderators.ToList();
             _channelInfo = await channelInfoTask;
         }
 
@@ -116,13 +122,24 @@ namespace BotServiceGrainInterface
             return Task.FromResult(_channelBotState.State.IsActive);
         }
 
+        private async Task<string> GetBotOAuthToken()
+        {
+            var activeBotInfo = _channelBotState.State.AllowedBotAccounts.FirstOrDefault(b => b.IsActive);
+            if (activeBotInfo == null)
+            {
+                return _options.OAuthToken;
+            }
+            var botGrain = GrainFactory.GetGrain<IUserGrain>(activeBotInfo.UserId);
+            return await botGrain.GetOAuthToken();
+        }
+
         async Task<bool> IChannelGrain.SetBotActivation(bool isActive)
         {
             if (isActive ^ _channelBotState.State.IsActive)
             {
                 if (isActive)
                 {
-                    await StartBot(_options.OAuthToken);
+                    await StartBot(await GetBotOAuthToken());
                 }
                 else
                 {
@@ -218,8 +235,8 @@ namespace BotServiceGrainInterface
         {
             return Task.FromResult(new ChannelStaff
             {
-                Editors = _channelState.State.Editors,
-                Moderators = _channelState.State.Moderators,
+                Editors = _channelState.State.Editors?.ToArray() ?? new HelixChannelEditor[0],
+                Moderators = _channelState.State.Moderators?.ToArray() ?? new HelixChannelModerator[0],
             });
         }
 
@@ -231,6 +248,39 @@ namespace BotServiceGrainInterface
         public Task<CommandMetadata[]> GetSupportedCommandTypes()
         {
             return Task.FromResult(_registeredCommands.Values.Select(v => v.Metadata).ToArray());
+        }
+
+        Task IChannelGrain.SetActiveBotAccount(string userId)
+        {
+            var accountInfo = _channelBotState.State.AllowedBotAccounts.FirstOrDefault(u => u.UserId == userId);
+            if (accountInfo == null)
+            {
+                _logger.LogError("Trying to set a bot account not allowed on the channel {userId}", userId);
+                throw new InvalidOperationException("Trying to set a bot account not allowed on the channel");
+            }
+            _logger.LogInformation("Setting {botAccountName}({botAccountId}) as active bot on channel {channelName}", accountInfo.UserLogin, accountInfo.UserId, _channelInfo.BroadcasterName);
+            foreach (var bot in _channelBotState.State.AllowedBotAccounts)
+            {
+                bot.IsActive = bot.UserId == userId;
+            }
+            return Task.CompletedTask;
+        }
+
+        async Task IChannelGrain.AllowBotAccount(BotAccountInfo botAccount)
+        {
+            _channelBotState.State.AllowedBotAccounts.Add(botAccount);
+            await _channelBotState.WriteStateAsync();
+        }
+
+        async Task IChannelGrain.DisallowBotAccount(string userId)
+        {
+            _channelBotState.State.AllowedBotAccounts.RemoveAll(bot => bot.UserId == userId);
+            await _channelBotState.WriteStateAsync();
+        }
+
+        Task<BotAccountInfo[]> IChannelGrain.GetAllowedBotAccounts()
+        {
+            return Task.FromResult(_channelBotState.State.AllowedBotAccounts.ToArray());
         }
     }
 }

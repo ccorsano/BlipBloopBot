@@ -1,4 +1,5 @@
-﻿using Conceptoire.Twitch.Options;
+﻿using BotServiceGrainInterface.Model;
+using Conceptoire.Twitch.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,7 @@ namespace BotServiceGrainInterface
     public class ChannelBotSettingsState
     {
         public bool IsActive { get; set; }
+        public List<BotAccountInfo> AllowedBotAccounts { get; set; } = new List<BotAccountInfo>();
         public Dictionary<string, CommandOptions> Commands { get; set; }
     }
 }

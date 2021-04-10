@@ -24,6 +24,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using BlipBloopBot.Storage;
 using Orleans.Persistence;
+using BlipBloopCommands.Storage;
+using System.Net.Http;
 
 namespace BotWorkerService
 {
@@ -122,6 +124,7 @@ namespace BotWorkerService
                 services.AddHttpClient();
                 services.Configure<TwitchApplicationOptions>(_configuration.GetSection("twitch"));
                 services.Configure<TwitchChatClientOptions>(_configuration.GetSection("twitch").GetSection("IrcOptions"));
+                services.Configure<AzureGameLocalizationStoreOptions>(_configuration.GetSection("loc:azure"));
                 services.AddSingleton<IMessageProcessor, TracingMessageProcessor>();
                 services.AddTransient<TwitchChatClient>();
                 services.AddTransient<TwitchAPIClient>();
@@ -136,7 +139,19 @@ namespace BotWorkerService
                         .Build()
                 );
                 services.AddTransient<ITwitchCategoryProvider, GrainTwitchCategoryProvider>();
-                services.AddSingleton<IGameLocalizationStore, EmbeddedGameLocalizationDb>();
+                services.AddSingleton<IGameLocalizationStore, AzureStorageGameLocalizationStore>();
+                services.PostConfigure<TwitchChatClientOptions>(options =>
+                {
+                    var oauth = Twitch.Authenticate()
+                        .FromOAuthToken(options.OAuthToken)
+                        .Build();
+                    var loggerFactory = new LoggerFactory();
+                    using(var httpClient = new HttpClient())
+                    using(var apiClient = TwitchAPIClient.Create(oauth))
+                    {
+                        options.TokenInfo = apiClient.ValidateToken().Result;
+                    }
+                });
 
                 // Configure commands
                 services.AddCommand<GameSynopsisCommand>("GameSynopsis");

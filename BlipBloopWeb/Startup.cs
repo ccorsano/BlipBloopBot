@@ -19,6 +19,8 @@ using System.Threading.Tasks;
 using Conceptoire.Twitch.API;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
+using Conceptoire.Twitch.Authentication;
+using Microsoft.Extensions.Options;
 
 namespace BlipBloopWeb
 {
@@ -90,6 +92,13 @@ namespace BlipBloopWeb
             });
 
             var twitchOptions = Configuration.GetSection("twitch").Get<TwitchApplicationOptions>();
+
+            services.AddTransient<IAuthenticated>(services =>
+                Twitch.Authenticate()
+                    .FromAppCredentials(twitchOptions.ClientId, twitchOptions.ClientSecret)
+                    .Build());
+            services.AddSingleton<TwitchAPIClient>();
+            services.AddHttpClient();
 
             // Identity
             services

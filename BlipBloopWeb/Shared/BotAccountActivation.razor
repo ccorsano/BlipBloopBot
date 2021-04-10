@@ -1,0 +1,86 @@
+﻿@using BotServiceGrain
+@using Conceptoire.Twitch.API
+@inject TwitchAPIClient twitchApiClient
+@inject IClientProvider ClientProvider
+
+<div>
+    <h3>Enable as Bot account</h3>
+
+    <p>
+        You can allow specific channels to use this account as a bot.
+        <br />
+        In that case, this account login information will be used to read and post from the enabled chat, if the broadcaster selects this account as bot.
+    </p>
+
+    <h4>Current allowed channels</h4>
+    <div class="list-group">
+        @foreach (var channel in _allowedChannels)
+        {
+            <li class="list-group-item"><a href="#" @onclick="(_) =>RevokeChannel(channel)" class="bi bi-trash-fill">&nbsp;</a> @channel.BroadcasterName</li>
+        }
+    </div>
+
+    <input @bind="_channelSearch" @oninput="SearchChannel" />
+
+    @if (_searchResults != null)
+    {
+        <div class="list-group">
+            @foreach (var channel in _searchResults)
+            {
+                <a href="#" @onclick="(_) => SelectChannel(channel)" class="list-group-item list-group-item-action">@channel.DisplayName</a>
+            }
+        </div>
+    }
+
+</div>
+
+@code{
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+
+    private HelixChannelInfo[] _allowedChannels = new HelixChannelInfo[0];
+
+    private string _channelSearch;
+    private HelixChannelSearchResult[] _searchResults;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var grain = client.GetGrain<IUserGrain>(ServiceContext.UserId);
+        _allowedChannels = await grain.GetChannelBotAllowList();
+
+        await base.OnParametersSetAsync();
+    }
+
+    private async Task SearchChannel(ChangeEventArgs evt)
+    {
+        _channelSearch = evt.Value as string;
+        if (_channelSearch.Length < 3)
+        {
+            _searchResults = new HelixChannelSearchResult[0];
+            return;
+        }
+        _searchResults = await twitchApiClient.SearchChannelsAsync(_channelSearch);
+    }
+
+    private async Task SelectChannel(HelixChannelSearchResult channel)
+    {
+        _searchResults = null;
+
+        var client = await ClientProvider.GetConnectedClient();
+        var grain = client.GetGrain<IUserGrain>(ServiceContext.UserId);
+        await grain.AllowAsBot(channel.Id);
+
+        _allowedChannels = await grain.GetChannelBotAllowList();
+    }
+
+    private async Task RevokeChannel(HelixChannelInfo channel)
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var grain = client.GetGrain<IUserGrain>(ServiceContext.UserId);
+        await grain.RevokeAsBot(channel.BroadcasterId);
+
+        _allowedChannels = await grain.GetChannelBotAllowList();
+    }
+
+}

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Conceptoire.Twitch.API;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,5 +12,6 @@ namespace BotServiceGrainInterface
     {
         public bool HasActiveChannel { get; set; } = false;
         public string OAuthToken { get; set; }
+        public List<HelixChannelInfo> CanBeBotOnChannels { get; set; } = new List<HelixChannelInfo>();
     }
 }

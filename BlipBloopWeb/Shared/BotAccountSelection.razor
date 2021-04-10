@@ -1,0 +1,46 @@
+﻿@using BotServiceGrain
+@using BotServiceGrainInterface.Model
+@inject IClientProvider ClientProvider
+
+<div>
+    <h3>BotAccountSelection</h3>
+
+    <select @onchange="OnSelect" class="form-select" aria-label="Bot command type selection" disabled="@(ServiceContext.IsBotRunning)">
+        @foreach (var botAccount in _botAccounts)
+        {
+            <option selected="@botAccount.IsActive" value="@botAccount.UserId">@botAccount.UserLogin</option>
+        }
+    </select>
+
+</div>
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+
+    private BotAccountInfo[] _botAccounts = new BotAccountInfo[0];
+    private string _botUserId;
+
+    private IChannelGrain _channelGrain;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        _channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+
+        _botAccounts = await _channelGrain.GetAllowedBotAccounts();
+
+        await base.OnParametersSetAsync();
+    }
+
+    protected async Task OnSelect(ChangeEventArgs evt)
+    {
+        _botUserId = evt.Value as string;
+
+        var client = await ClientProvider.GetConnectedClient();
+        _channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+
+        await _channelGrain.SetActiveBotAccount(_botUserId);
+    }
+
+}
