@@ -106,6 +106,7 @@ namespace BlipBloopCommands.Storage
                 TwitchCategoryId = TwitchCategoryId,
                 Language = Language,
                 Name = Name,
+                Summary = Summary,
                 Synopsis = Synopsis,
                 Source = Source,
                 IGDBId = IGDBId,
