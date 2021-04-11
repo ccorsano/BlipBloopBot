@@ -68,7 +68,7 @@ namespace BlipBloopWeb
             services.AddSingleton<IClientProvider, GrainClientProvider>();
 
             // Load config, mainly the EventSub secret used for registration
-            services.Configure<EventSubOptions>(Configuration.GetSection("Twitch:EventSub"));
+            services.Configure<EventSubOptions>(Configuration.GetSection("twitch:EventSub"));
             // Add the EventSub handler instance to DI
             services.AddEventSub();
             // Register an EventSub event Handler for channel.update events
