@@ -48,7 +48,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
                 _gameInfo = gameInfo;
             };
 
-            _asReply = bool.Parse(context.CommandOptions.Parameters.GetValueOrDefault("reply") ?? bool.FalseString);
+            _asReply = true;
         }
 
         public void OnMessage(ParsedIRCMessage message, Action<OutgoingMessage> sendResponse)
