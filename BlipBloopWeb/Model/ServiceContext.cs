@@ -13,5 +13,6 @@ namespace BlipBloopWeb.Model
         public string UserName { get; set; }
         public string UserId { get; set; }
         public string OAuthToken { get; set; }
+        public string ActiveChannel { get; set; }
     }
 }

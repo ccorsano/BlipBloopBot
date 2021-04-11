@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Conceptoire.Twitch.Commands;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,5 +16,7 @@ namespace Conceptoire.Twitch.IRC
         public string Language { get; set; }
 
         public string CategoryId { get; set; }
+
+        public CommandOptions CommandOptions { get; set; }
     }
 }

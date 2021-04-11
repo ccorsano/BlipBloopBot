@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Conceptoire.Twitch.Commands;
+using System.Collections.Generic;
 
 namespace Conceptoire.Twitch.Options
 {
