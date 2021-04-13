@@ -93,6 +93,8 @@ namespace BotServiceGrainInterface
         {
             _channelBotState.State.Commands.Add(Guid.NewGuid(), options);
             var command = _registeredCommands[options.Type].Processor();
+            // WIP
+            throw new NotImplementedException();
         }
 
         public override Task OnDeactivateAsync()

@@ -79,6 +79,7 @@ namespace BlipBloopBot
 
                     // Add hosted chatbot service
                     services.AddHostedService<BotHostedService>();
+                    services.AddHostedService(services => services.GetRequiredService<PollingTwitchCategoryProvider>());
                 })
                 .UseConsoleLifetime();
 

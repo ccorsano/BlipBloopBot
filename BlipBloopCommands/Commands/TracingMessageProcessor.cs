@@ -18,12 +18,17 @@ namespace BlipBloopBot.Commands
             _logger = logger;
         }
 
+        public bool CanHandleMessage(in ParsedIRCMessage message)
+        {
+            return true;
+        }
+
         public Task OnUpdateContext(IProcessorContext context)
         {
             return Task.CompletedTask;
         }
 
-        public void OnMessage(ParsedIRCMessage message, Action<OutgoingMessage> _)
+        public void OnMessage(in ParsedIRCMessage message, Action<OutgoingMessage> _)
         {
             _logger.LogInformation(":{prefix} {command} : {message}", new string(message.Prefix), new string(message.Command), new string(message.Trailing));
 

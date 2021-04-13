@@ -11,6 +11,6 @@ namespace Conceptoire.Twitch.IRC
         public string ChannelName { get; }
         public string CategoryId { get; }
         public string Language { get; }
-        public CommandOptions CommandOptions { get; }
+        public TState GetState<TState>(Guid processorId) where TState : class;
     }
 }

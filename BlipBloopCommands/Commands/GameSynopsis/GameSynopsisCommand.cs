@@ -18,12 +18,29 @@ namespace BlipBloopCommands.Commands.GameSynopsis
         private string _channelId;
         private GameInfo _gameInfo;
 
+        private string[] _aliases;
+
         public GameSynopsisCommand(
             ITwitchCategoryProvider twitchProvider,
             ILogger<GameSynopsisCommand> logger)
         {
             _twitchCategoryProvider = twitchProvider;
             _logger = logger;
+        }
+
+        public bool CanHandleMessage(in ParsedIRCMessage message)
+        {
+            foreach (var botCommand in message.Trailing.ParseBotCommands('!'))
+            {
+                foreach(var alias in _aliases)
+                {
+                    if (alias == botCommand)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         public async Task OnUpdateContext(IProcessorContext context)
@@ -48,10 +65,10 @@ namespace BlipBloopCommands.Commands.GameSynopsis
                 _gameInfo = gameInfo;
             };
 
-            _asReply = bool.Parse(context.CommandOptions.Parameters.GetValueOrDefault("reply") ?? bool.FalseString);
+            _asReply = bool.Parse(context.CommandOptions?.Parameters?.GetValueOrDefault("reply") ?? bool.FalseString);
         }
 
-        public void OnMessage(ParsedIRCMessage message, Action<OutgoingMessage> sendResponse)
+        public void OnMessage(in ParsedIRCMessage message, Action<OutgoingMessage> sendResponse)
         {
             string msgId = _asReply ? message.GetMessageIdTag() : null;
             var reply = new OutgoingMessage

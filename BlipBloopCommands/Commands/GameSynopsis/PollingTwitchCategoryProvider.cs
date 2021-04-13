@@ -11,10 +11,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Conceptoire.Twitch.Options;
+using Microsoft.Extensions.Hosting;
 
 namespace BlipBloopCommands.Commands.GameSynopsis
 {
-    public class PollingTwitchCategoryProvider : ITwitchCategoryProvider, IDisposable
+    public class PollingTwitchCategoryProvider : ITwitchCategoryProvider, IDisposable, IHostedService
     {
         private readonly TwitchAPIClient _twitchAPIClient;
         private readonly IGameLocalizationStore _gameLocalization;
@@ -42,16 +43,6 @@ namespace BlipBloopCommands.Commands.GameSynopsis
             _gameLocalization = gameLocalizationStore;
             _twitchOptions = twitchOptions.Value;
             _logger = logger;
-
-            var unawaited = Task.Run(async () =>
-            {
-                await _broadcasterLoginSet.Task;
-                while (!_cancellationTokenSource.Token.IsCancellationRequested)
-                {
-                    await RefreshCategory(_broacasterLogin);
-                    await Task.Delay(TimeSpan.FromMinutes(1));
-                }
-            });
         }
 
         public bool CheckAndSchedule(string broacasterLogin)
@@ -67,7 +58,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
             return true;
         }
 
-        public async Task<GameInfo> RefreshCategory(string broadcasterId)
+        public async Task<GameInfo> RefreshCategory(string broadcasterId, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Starting category refresh for channelId {broadcasterId}", broadcasterId);
 
@@ -79,7 +70,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
                 if (newResults.GameId != _lastResult?.GameId)
                 {
                     _lastInfo = await _twitchAPIClient.GetChannelInfoAsync(newResults.Id);
-                    _gameInfo = await _gameLocalization.ResolveLocalizedGameInfo(newResults.BroadcasterLanguage, newResults.GameId);
+                    _gameInfo = await _gameLocalization.ResolveLocalizedGameInfoAsync(newResults.BroadcasterLanguage, newResults.GameId);
 
                     if (OnUpdate != null)
                     {
@@ -99,18 +90,38 @@ namespace BlipBloopCommands.Commands.GameSynopsis
             return _gameInfo;
         }
 
-        async Task<GameInfo> ITwitchCategoryProvider.FetchChannelInfo(string categoryId, string language)
+        async Task<GameInfo> ITwitchCategoryProvider.FetchChannelInfo(string categoryId, string language, CancellationToken cancellationToken)
         {
             if (_broacasterLogin != null && (_gameInfo.Language != language || _gameInfo.TwitchCategoryId != categoryId))
             {
-                await RefreshCategory(_broacasterLogin);
+                await RefreshCategory(_broacasterLogin, cancellationToken);
             }
-            return await _gameLocalization.ResolveLocalizedGameInfo(language, categoryId);
+            return await _gameLocalization.ResolveLocalizedGameInfoAsync(language, categoryId);
         }
 
         public void Dispose()
         {
             _cancellationTokenSource.Dispose();
+        }
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            var unawaited = Task.Run(async () =>
+            {
+                await _broadcasterLoginSet.Task;
+                while (!_cancellationTokenSource.Token.IsCancellationRequested)
+                {
+                    await RefreshCategory(_broacasterLogin, cancellationToken);
+                    await Task.Delay(TimeSpan.FromMinutes(1));
+                }
+            });
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            _cancellationTokenSource.Cancel();
+            return Task.CompletedTask;
         }
     }
 }

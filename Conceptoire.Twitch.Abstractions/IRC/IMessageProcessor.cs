@@ -8,6 +8,7 @@ namespace Conceptoire.Twitch.IRC
     /// </summary>
     public interface IMessageProcessor
     {
+        bool CanHandleMessage(in ParsedIRCMessage message);
         /// <summary>
         /// Called when the Twitch IRC context changes.
         /// 
@@ -25,6 +26,6 @@ namespace Conceptoire.Twitch.IRC
         /// </summary>
         /// <param name="message">Parsed Twitch IRC message</param>
         /// <param name="sendResponse">Outgoing messages to push to the reply queue</param>
-        void OnMessage(ParsedIRCMessage message, Action<OutgoingMessage> sendResponse);
+        void OnMessage(in ParsedIRCMessage message, Action<OutgoingMessage> sendResponse);
     }
 }

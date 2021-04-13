@@ -113,7 +113,7 @@ namespace TwitchCategoriesCrawler
 
                         if (_gameLocalization != null)
                         {
-                            var existingLog = await _gameLocalization.ResolveLocalizedGameInfo(TargetLanguage, category.Id);
+                            var existingLog = await _gameLocalization.ResolveLocalizedGameInfoAsync(TargetLanguage, category.Id);
                             if (existingLog != null)
                             {
                                 _logger.LogWarning("Found existing persisted entry, skipping");
@@ -217,7 +217,7 @@ namespace TwitchCategoriesCrawler
 
                     if (_gameLocalization != null)
                     {
-                        await _gameLocalization.SaveGameInfo(localizedGameInfo);
+                        await _gameLocalization.SaveGameInfoAsync(localizedGameInfo);
                     }
                 }
             }
