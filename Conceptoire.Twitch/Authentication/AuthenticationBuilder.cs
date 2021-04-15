@@ -5,7 +5,7 @@ using static Conceptoire.Twitch.Constants.TwitchConstants;
 
 namespace Conceptoire.Twitch.Authentication
 {
-    public class AuthenticationBuilder : IAuthenticationBuilder
+    public class AuthenticationBuilder : IBotAuthenticationBuilder
     {
         private enum AuthType
         {
@@ -28,7 +28,7 @@ namespace Conceptoire.Twitch.Authentication
         {
         }
 
-        public IAuthenticated Build()
+        IAuthenticated IAuthenticationBuilder.Build()
         {
             switch (SelectedAuthType)
             {
@@ -40,6 +40,15 @@ namespace Conceptoire.Twitch.Authentication
                 default:
                     throw new InvalidOperationException("No authentication type selected");
             }
+        }
+
+        IBotAuthenticated IBotAuthenticationBuilder.Build()
+        {
+            if (SelectedAuthType != AuthType.OAuthToken)
+            {
+                throw new InvalidOperationException("Bot Authentication require to use OAuth token");
+            }
+            return CreateOAuthTokenAuthenticated();
         }
 
         public OAuthAuthenticated CreateOAuthTokenAuthenticated()
@@ -96,7 +105,7 @@ namespace Conceptoire.Twitch.Authentication
             return new ClientCredentialsAuthenticated(client, AppClientId, AppClientSecret, ConfiguredScopes);
         }
 
-        public IAuthenticationBuilder FromAppCredentials(string clientId, string clientSecret)
+        IAuthenticationBuilder IAuthenticationBuilder.FromAppCredentials(string clientId, string clientSecret)
         {
             SelectedAuthType = AuthType.AppCredentials;
             AppClientId = clientId;
@@ -104,38 +113,50 @@ namespace Conceptoire.Twitch.Authentication
             return this;
         }
 
-        public IAuthenticationBuilder FromOAuthToken(string oauth)
+        IAuthenticationBuilder IAuthenticationBuilder.FromOAuthToken(string oauth) => FromOAuthToken(oauth);
+
+        public IBotAuthenticationBuilder FromOAuthToken(string oauth)
         {
             SelectedAuthType = AuthType.OAuthToken;
             OAuthToken = oauth;
             return this;
         }
 
-        public IAuthenticationBuilder WithScope(TwitchOAuthScopes scope)
+        IAuthenticationBuilder IAuthenticationBuilder.WithScope(TwitchOAuthScopes scope) => WithScope(scope);
+
+        public IBotAuthenticationBuilder WithScope(TwitchOAuthScopes scope)
         {
             ConfiguredScopes.Add(scope);
             return this;
         }
 
-        public IAuthenticationBuilder WithHttpMessageHandler(HttpMessageHandler httpMessageHandler)
+        IAuthenticationBuilder IAuthenticationBuilder.WithHttpMessageHandler(HttpMessageHandler httpMessageHandler) => WithHttpMessageHandler(httpMessageHandler);
+
+        public IBotAuthenticationBuilder WithHttpMessageHandler(HttpMessageHandler httpMessageHandler)
         {
             HttpMessageHandler = httpMessageHandler;
             return this;
         }
 
-        public IAuthenticationBuilder WithHttpClient(HttpClient httpClient)
+        IAuthenticationBuilder IAuthenticationBuilder.WithHttpClient(HttpClient httpClient) => WithHttpClient(httpClient);
+
+        public IBotAuthenticationBuilder WithHttpClient(HttpClient httpClient)
         {
             HttpClient = httpClient;
             return this;
         }
 
-        public IAuthenticationBuilder UseHttpClientFactory(IHttpClientFactory httpClientFactory)
+        IAuthenticationBuilder IAuthenticationBuilder.UseHttpClientFactory(IHttpClientFactory httpClientFactory) => UseHttpClientFactory(httpClientFactory);
+
+        public IBotAuthenticationBuilder UseHttpClientFactory(IHttpClientFactory httpClientFactory)
         {
             HttpClientFactory = httpClientFactory;
             return this;
         }
 
-        public IAuthenticationBuilder UseHttpMessageHandlerFactory(IHttpMessageHandlerFactory messageHandlerFactory)
+        IAuthenticationBuilder IAuthenticationBuilder.UseHttpMessageHandlerFactory(IHttpMessageHandlerFactory messageHandlerFactory) => UseHttpMessageHandlerFactory(messageHandlerFactory);
+
+        public IBotAuthenticationBuilder UseHttpMessageHandlerFactory(IHttpMessageHandlerFactory messageHandlerFactory)
         {
             HttpMessageHandlerFactory = messageHandlerFactory;
             return this;
