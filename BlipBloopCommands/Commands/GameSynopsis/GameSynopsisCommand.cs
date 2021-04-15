@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace BlipBloopCommands.Commands.GameSynopsis
 {
-    public class GameSynopsisCommand : IMessageProcessor
+    public class GameSynopsisCommand : BotCommandBase
     {
         private readonly ITwitchCategoryProvider _twitchCategoryProvider;
         private readonly ILogger _logger;
@@ -17,6 +17,8 @@ namespace BlipBloopCommands.Commands.GameSynopsis
         private bool _asReply;
         private string _channelId;
         private GameInfo _gameInfo;
+
+        private GameSynopsisCommandSettings _settings;
 
         private string[] _aliases;
 
@@ -28,7 +30,19 @@ namespace BlipBloopCommands.Commands.GameSynopsis
             _logger = logger;
         }
 
-        public bool CanHandleMessage(in ParsedIRCMessage message)
+        public override Task<IProcessorSettings> CreateSettings(Guid processorId)
+        {
+            _settings = new GameSynopsisCommandSettings();
+            return Task.FromResult<IProcessorSettings>(_settings);
+        }
+
+        public override Task OnChangeSettings(IProcessorSettings settings)
+        {
+            _settings = settings as GameSynopsisCommandSettings;
+            return Task.CompletedTask;
+        }
+
+        public override bool CanHandleMessage(in ParsedIRCMessage message)
         {
             foreach (var botCommand in message.Trailing.ParseBotCommands('!'))
             {
@@ -43,7 +57,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
             return false;
         }
 
-        public async Task OnUpdateContext(IProcessorContext context)
+        public override async Task OnUpdateContext(IProcessorContext context)
         {
             _logger.LogWarning("Received channel update for {channelId}: Category={categoryId} Lang={language}", context.ChannelId, context.CategoryId, context.Language);
 
@@ -65,10 +79,10 @@ namespace BlipBloopCommands.Commands.GameSynopsis
                 _gameInfo = gameInfo;
             };
 
-            _asReply = bool.Parse(context.CommandOptions?.Parameters?.GetValueOrDefault("reply") ?? bool.FalseString);
+            _asReply = _settings.AsReply;
         }
 
-        public void OnMessage(in ParsedIRCMessage message, Action<OutgoingMessage> sendResponse)
+        public override void OnMessage(in ParsedIRCMessage message, Action<OutgoingMessage> sendResponse)
         {
             string msgId = _asReply ? message.GetMessageIdTag() : null;
             var reply = new OutgoingMessage

@@ -55,7 +55,7 @@ namespace Conceptoire.Twitch.IRC
             await SendCommandAsync("NICK", _authenticated.Login, cancellationToken);
             // Request IRCv3 Tags capability
             await SendCommandAsync("CAP REQ", ":twitch.tv/tags", cancellationToken);
-            await ReceiveIRCMessage(new List<IMessageProcessor>(), cancellationToken);
+            await ReceiveIRCMessage(new ProcessorContext(), new List<IMessageProcessor>(), cancellationToken);
 
             _logger.LogInformation("Connected");
         }
@@ -92,12 +92,12 @@ namespace Conceptoire.Twitch.IRC
             await _webSocket.SendAsync(_outBuffer.AsMemory().Slice(0, length), WebSocketMessageType.Text, true, cancellationToken);
         }
 
-        public async Task ReceiveIRCMessage(IEnumerable<IMessageProcessor> processors, CancellationToken cancellationToken)
+        public async Task ReceiveIRCMessage(IProcessorContext context, IEnumerable<IMessageProcessor> processors, CancellationToken cancellationToken)
         {
             var rcvResult = await _webSocket.ReceiveAsync(_inBuffer, cancellationToken);
             var stringMessage = Encoding.UTF8.GetString(_inBuffer.AsSpan().Slice(0, rcvResult.Count));
 
-            ParseMessage(stringMessage, processors);
+            ParseMessage(stringMessage, context, processors);
 
             if (_receivedPing)
             {
@@ -111,7 +111,7 @@ namespace Conceptoire.Twitch.IRC
             }
         }
 
-        private void ParseMessage(string receivedMessage, IEnumerable<IMessageProcessor> processors)
+        private void ParseMessage(string receivedMessage, IProcessorContext context, IEnumerable<IMessageProcessor> processors)
         {
             foreach (var line in receivedMessage.SplitLines())
             {

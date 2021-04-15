@@ -8,7 +8,26 @@ namespace Conceptoire.Twitch.IRC
     /// </summary>
     public interface IMessageProcessor
     {
+        /// <summary>
+        /// Check if a message should be processed by this processor
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
         bool CanHandleMessage(in ParsedIRCMessage message);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        Task<IProcessorSettings> CreateSettings(Guid processorId);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <returns></returns>
+        Task OnChangeSettings(IProcessorSettings settings);
+
         /// <summary>
         /// Called when the Twitch IRC context changes.
         /// 

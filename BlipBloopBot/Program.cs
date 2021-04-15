@@ -67,6 +67,12 @@ namespace BlipBloopBot
                                 s.GetService<IOptions<TwitchApplicationOptions>>().Value.ClientSecret)
                             .Build()
                     );
+                    services.AddSingleton<IBotAuthenticated>(s =>
+                        Twitch.AuthenticateBot()
+                            .FromOAuthToken(
+                                s.GetService<IOptions<TwitchApplicationOptions>>().Value.IrcOptions.OAuthToken)
+                            .Build()
+                    );
                     services.AddTransient<ITwitchChatClientBuilder>(s =>
                         TwitchChatClientBuilder.Create()
                             .WithOAuthToken(s.GetRequiredService<IOptions<TwitchApplicationOptions>>().Value.IrcOptions.OAuthToken)
@@ -78,7 +84,7 @@ namespace BlipBloopBot
                     services.AddCommand<TracingMessageProcessor>("MessageTracer");
 
                     // Add hosted chatbot service
-                    services.AddHostedService<BotHostedService>();
+                    services.AddHostedService<TwitchChatBot>();
                     services.AddHostedService(services => services.GetRequiredService<PollingTwitchCategoryProvider>());
                 })
                 .UseConsoleLifetime();

@@ -100,7 +100,7 @@ namespace BlipBloopBot
                         await ircClient.JoinAsync(channelName, cancellationToken);
                         while (!cancellationToken.IsCancellationRequested)
                         {
-                            await ircClient.ReceiveIRCMessage(commandProcessors, cancellationToken);
+                            await ircClient.ReceiveIRCMessage(botContext, null, cancellationToken);
                         }
                     }
                 }

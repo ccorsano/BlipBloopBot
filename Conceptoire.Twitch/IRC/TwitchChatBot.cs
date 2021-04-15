@@ -1,8 +1,10 @@
 ﻿using Conceptoire.Twitch.API;
 using Conceptoire.Twitch.Authentication;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,55 +15,84 @@ namespace Conceptoire.Twitch.IRC
 {
     public class TwitchChatBot : IHostedService
     {
-        private readonly IAuthenticated _authenticated;
+        private readonly IBotAuthenticated _authenticated;
         private TwitchAPIClient _twitchAPIClient;
-        private readonly ILoggerFactory _loggerFactory;
+        private readonly IServiceProvider _serviceProvider;
         private readonly ILogger _logger;
 
-        private readonly TwitchChatClientOptions _options;
-        private readonly Dictionary<Guid, IMessageProcessor> _commandProcessors;
+        private readonly ConcurrentDictionary<Guid, IMessageProcessor> _commandProcessors = new ConcurrentDictionary<Guid, IMessageProcessor>();
+
+        private TaskCompletionSource<string> _channelIdCompletionSource = new TaskCompletionSource<string>();
 
         private bool _commandsUpdate;
         private Task _botTask;
         private CancellationTokenSource _botCancellationSource;
+        private IProcessorContext _currentContext;
 
-        public TwitchChatBot(IAuthenticated authenticated, TwitchAPIClient twitchAPIClient, ILoggerFactory loggerFactory, ILogger<TwitchChatBot> logger)
+        public TwitchChatBot(IBotAuthenticated authenticated, TwitchAPIClient twitchAPIClient, IServiceProvider serviceProvider, ILogger<TwitchChatBot> logger)
         {
             _authenticated = authenticated;
             _twitchAPIClient = twitchAPIClient;
-            _loggerFactory = loggerFactory;
+            _serviceProvider = serviceProvider;
             _logger = logger;
+        }
+
+        public bool SetChannel(string channelId)
+        {
+            return _channelIdCompletionSource.TrySetResult(channelId);
+        }
+
+        public Task UpdateContext(IProcessorContext context)
+        {
+            _currentContext = context;
+
+            return Task.WhenAll(_commandProcessors.Values.Select(c => c.OnUpdateContext(context)));
+        }
+
+        public async Task RegisterMessageProcessor<TMessageProcessor>() where TMessageProcessor : IMessageProcessor
+        {
+            var newCommandId = Guid.NewGuid();
+
+            var processor = _serviceProvider.GetRequiredService<TMessageProcessor>();
+            
+
+            var settings = await processor.CreateSettings(newCommandId);
+            var initTask = Task.Run(async () =>
+            {
+                await processor.OnUpdateContext(_currentContext);
+                if (!_commandProcessors.TryAdd(newCommandId, _serviceProvider.GetRequiredService<TMessageProcessor>()))
+                {
+                    throw new InvalidOperationException("Could not add command, unexpectedly. Id collision ??");
+                }
+            });
         }
 
         public Task StartAsync(CancellationToken externalCancellationToken)
         {
             var botChatClientBuilder = TwitchChatClientBuilder.Create()
                 .WithAuthenticatedUser(_authenticated)
-                .WithLoggerFactory(_loggerFactory);
+                .WithLoggerFactory(_serviceProvider.GetRequiredService<ILoggerFactory>());
             var orleansTaskScheduler = TaskScheduler.Current;
             
-
             _botCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken);
             var cancellationToken = _botCancellationSource.Token;
-            //var commandProcessors = _channelBotState.State.Commands.Select(c => (Command: c.Key, Processor: _commands[c.Value.Type])).ToArray();
-
-            //await Task.WhenAll(commandProcessors.Select(processor => {
-            //    var botContext = new ProcessorContext
-            //    {
-            //        ChannelId = _channelId,
-            //        ChannelName = _channelInfo.BroadcasterName,
-            //        Language = _channelInfo.BroadcasterLanguage,
-            //        CategoryId = _channelInfo.GameId,
-            //        CommandOptions = _channelBotState.State.Commands[processor.Command]
-            //    };
-            //    return processor.Processor.OnUpdateContext(botContext);
-            //}));
 
             _botTask = Task.Run(async () =>
             {
                 try
                 {
-                    var channelName = _channelInfo.BroadcasterName.ToLowerInvariant();
+                    var channelId = await _channelIdCompletionSource.Task;
+                    var channelInfo = await _twitchAPIClient.GetChannelInfoAsync(channelId, cancellationToken);
+
+                    var channelName = channelInfo.BroadcasterName.ToLowerInvariant();
+
+                    var botContext = new ProcessorContext
+                    {
+                        ChannelId = channelId,
+                        ChannelName = channelInfo.BroadcasterName,
+                        Language = channelInfo.BroadcasterLanguage,
+                        CategoryId = channelInfo.GameId,
+                    };
 
                     using (var ircClient = botChatClientBuilder.Build())
                     {
@@ -69,14 +100,7 @@ namespace Conceptoire.Twitch.IRC
                         await ircClient.JoinAsync(channelName, cancellationToken);
                         while (!cancellationToken.IsCancellationRequested)
                         {
-                            await ircClient.ReceiveIRCMessage(commandProcessors, cancellationToken);
-                            //if (_commandsUpdate)
-                            //{
-                            //    lock (_botTask)
-                            //    {
-                            //        commandProcessors = _channelBotState.State.Commands.Select(c => (Command: c.Key, Processor: _commands[c.Value.Type])).ToArray();
-                            //    }
-                            //}
+                            await ircClient.ReceiveIRCMessage(botContext, _commandProcessors.Values, cancellationToken);
                         }
                     }
                 }
@@ -85,11 +109,17 @@ namespace Conceptoire.Twitch.IRC
                     _logger.LogError(ex, "Error in channel listener");
                 }
             });
+
+            return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            if (! _botTask.IsCompleted)
+            {
+                _botCancellationSource.Cancel();
+            }
+            return _botTask;
         }
     }
 }
