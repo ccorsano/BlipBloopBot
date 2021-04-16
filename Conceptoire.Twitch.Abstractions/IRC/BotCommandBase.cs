@@ -27,10 +27,15 @@ namespace Conceptoire.Twitch.IRC
 
         }
 
-        public virtual Task<IProcessorSettings> CreateSettings(Guid processorId)
+        public virtual async Task<IProcessorSettings> CreateSettings(Guid processorId, IProcessorSettings settings)
         {
             Id = processorId;
-            return Task.FromResult<IProcessorSettings>(new ProcessorSettingsBase());
+            if (settings == null)
+            {
+                settings = new ProcessorSettingsBase();
+            }
+            await OnChangeSettings(settings);
+            return settings;
         }
 
         public virtual Task OnChangeSettings(IProcessorSettings settings)

@@ -9,6 +9,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
 {
     public class GameSynopsisCommandSettings : IProcessorSettings
     {
+        public string[] Aliases { get; set; }
         public bool AsReply { get; set; }
 
         public Task ReadAsync()

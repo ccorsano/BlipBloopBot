@@ -26,10 +26,17 @@ namespace BlipBloopCommands.Commands
             return false;
         }
 
-        public override Task<IProcessorSettings> CreateSettings(Guid processorId)
+        public override Task<IProcessorSettings> CreateSettings(Guid processorId, IProcessorSettings settings)
         {
-            _settings = new ResponseCommandSettings();
-            return base.CreateSettings(processorId);
+            if (settings as ResponseCommandSettings == null)
+            {
+                _settings = new ResponseCommandSettings();
+            }
+            else
+            {
+                _settings = settings as ResponseCommandSettings;
+            }
+            return base.CreateSettings(processorId, _settings);
         }
 
         public override Task OnChangeSettings(IProcessorSettings settings)

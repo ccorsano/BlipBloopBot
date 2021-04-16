@@ -49,17 +49,20 @@ namespace Conceptoire.Twitch.IRC
             return Task.WhenAll(_commandProcessors.Values.Select(c => c.OnUpdateContext(context)));
         }
 
-        public async Task RegisterMessageProcessor<TMessageProcessor>() where TMessageProcessor : IMessageProcessor
+        public async Task RegisterMessageProcessor<TMessageProcessor>(IProcessorSettings settings = null) where TMessageProcessor : IMessageProcessor
         {
             var newCommandId = Guid.NewGuid();
 
             var processor = _serviceProvider.GetRequiredService<TMessageProcessor>();
             
 
-            var settings = await processor.CreateSettings(newCommandId);
+            await processor.CreateSettings(newCommandId, settings);
             var initTask = Task.Run(async () =>
             {
-                await processor.OnUpdateContext(_currentContext);
+                if (_currentContext != null)
+                {
+                    await processor.OnUpdateContext(_currentContext);
+                }
                 if (!_commandProcessors.TryAdd(newCommandId, _serviceProvider.GetRequiredService<TMessageProcessor>()))
                 {
                     throw new InvalidOperationException("Could not add command, unexpectedly. Id collision ??");

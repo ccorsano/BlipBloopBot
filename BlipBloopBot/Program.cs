@@ -84,12 +84,22 @@ namespace BlipBloopBot
                     services.AddCommand<TracingMessageProcessor>("MessageTracer");
 
                     // Add hosted chatbot service
-                    services.AddHostedService<TwitchChatBot>();
+                    services.AddSingleton<TwitchChatBot>();
+                    services.AddHostedService<TwitchChatBot>(s => s.GetRequiredService<TwitchChatBot>());
                     services.AddHostedService(services => services.GetRequiredService<PollingTwitchCategoryProvider>());
                 })
                 .UseConsoleLifetime();
 
             var host = builder.Build();
+
+            var twitchBot = host.Services.GetRequiredService<TwitchChatBot>();
+            twitchBot.SetChannel("158511925");
+            await twitchBot.RegisterMessageProcessor<GameSynopsisCommand>(new GameSynopsisCommandSettings
+            {
+                AsReply = true,
+                Aliases = new string[] { "jeu", "game" }
+            });
+
 
             await host.RunAsync();
         }

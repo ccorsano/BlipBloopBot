@@ -19,7 +19,7 @@ namespace Conceptoire.Twitch.IRC
         /// 
         /// </summary>
         /// <returns></returns>
-        Task<IProcessorSettings> CreateSettings(Guid processorId);
+        Task<IProcessorSettings> CreateSettings(Guid processorId, IProcessorSettings settings);
 
         /// <summary>
         /// 

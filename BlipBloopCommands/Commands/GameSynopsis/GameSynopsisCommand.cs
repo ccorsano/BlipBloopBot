@@ -30,15 +30,25 @@ namespace BlipBloopCommands.Commands.GameSynopsis
             _logger = logger;
         }
 
-        public override Task<IProcessorSettings> CreateSettings(Guid processorId)
+        public override Task<IProcessorSettings> CreateSettings(Guid processorId, IProcessorSettings settings = null)
         {
-            _settings = new GameSynopsisCommandSettings();
-            return Task.FromResult<IProcessorSettings>(_settings);
+            if (settings as GameSynopsisCommandSettings == null)
+            {
+                _settings = new GameSynopsisCommandSettings();
+            }
+            else
+            {
+                _settings = settings as GameSynopsisCommandSettings;
+            }
+
+            return base.CreateSettings(processorId, _settings);
         }
 
         public override Task OnChangeSettings(IProcessorSettings settings)
         {
             _settings = settings as GameSynopsisCommandSettings;
+            _aliases = _settings.Aliases;
+            _asReply = _settings.AsReply;
             return Task.CompletedTask;
         }
 
