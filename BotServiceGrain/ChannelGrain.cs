@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using static Conceptoire.Twitch.Constants.TwitchConstants;
 
 namespace BotServiceGrainInterface
 {
@@ -24,6 +25,7 @@ namespace BotServiceGrainInterface
         private readonly IPersistentState<ChannelBotSettingsState> _channelBotState;
         private readonly TwitchAPIClient _appClient;
         private readonly TwitchChatClientOptions _options;
+        private readonly TwitchApplicationOptions _twitchOptions;
         private readonly Dictionary<string, CommandRegistration> _registeredCommands;
         private readonly ILogger _logger;
         private string _channelId;
@@ -41,6 +43,7 @@ namespace BotServiceGrainInterface
             [PersistentState("botsettings", "botSettingsStore")] IPersistentState<ChannelBotSettingsState> botSettingsState,
             TwitchAPIClient appClient,
             IOptions<TwitchChatClientOptions> botOptions,
+            IOptions<TwitchApplicationOptions> appOptions,
             IEnumerable<CommandRegistration> commands,
             ILogger<ChannelGrain> logger)
         {
@@ -48,6 +51,7 @@ namespace BotServiceGrainInterface
             _channelBotState = botSettingsState;
             _appClient = appClient;
             _options = botOptions.Value;
+            _twitchOptions = appOptions.Value;
             _registeredCommands = commands.ToDictionary(c => c.Name, c => c);
             _logger = logger;
         }
@@ -92,6 +96,7 @@ namespace BotServiceGrainInterface
                 // Activate bot if it is supposed to be running
                 if (_channelBotState.State.IsActive)
                 {
+                    await RegisterEventSubSubscriptions(CancellationToken.None);
                     await StartBot(_channelState.State.BroadcasterToken);
                 }
             }
@@ -142,6 +147,34 @@ namespace BotServiceGrainInterface
             await _channelState.WriteStateAsync();
 
             _channelInfo = await channelInfoTask;
+            await RegisterEventSubSubscriptions(CancellationToken.None);
+        }
+
+        private async Task RegisterEventSubSubscriptions(CancellationToken cancellationToken)
+        {
+            if (! Uri.TryCreate(_twitchOptions?.EventSub?.CallbackUrl, UriKind.Absolute, out Uri callbackUri))
+            {
+                _logger.LogError("No valid twitch:EventSub:BaseUrl provided: Cannot register EventSub subscriptions for {channelId}", _channelId);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_twitchOptions?.EventSub?.WebHookSecret))
+            {
+                _logger.LogError("No twitch:EventSub:WebHookSecret provided: Cannot register EventSub subscriptions for {channelId}", _channelId);
+                return;
+            }
+
+            bool isChannelUpdateRegistered = false;
+            await foreach (var subscription in _appClient.EnumerateEventSubSubscriptions(EventSubStatus.Enabled, cancellationToken))
+            {
+                isChannelUpdateRegistered |= subscription.Type == EventSubTypes.ChannelUpdate;
+            }
+
+            if (! isChannelUpdateRegistered)
+            {
+                await _appClient.CreateEventSubChannelUpdateSubscription(_channelId, callbackUri, _twitchOptions.EventSub.WebHookSecret, cancellationToken);
+            }
+
         }
 
         Task<bool> IChannelGrain.IsBotActive()

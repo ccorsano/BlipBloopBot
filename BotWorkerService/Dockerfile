@@ -25,6 +25,7 @@ COPY --from=publish /app/publish .
 ENV HOSTNAME "localhost"
 ENV REDIS_URL "redis://redis:6379"
 ENV Storage__AzureStorageConnectionString ""
+ENV twitch__EventSub__CallbackUrl "" # eg. https://twitch-service.conceptoire.com/webhooks/eventsub
 EXPOSE 11111
 EXPOSE 30000
 ENTRYPOINT ["dotnet", "BotWorkerService.dll"]

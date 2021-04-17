@@ -1,4 +1,5 @@
 ﻿using Conceptoire.Twitch.IRC;
+using Conceptoire.Twitch.Options;
 
 namespace Conceptoire.Twitch
 {
@@ -8,5 +9,6 @@ namespace Conceptoire.Twitch
         public string ClientSecret { get; set; }
         public TwitchChatClientOptions IrcOptions { get; set; }
         public string SteamApiKey { get; set; }
+        public EventSubOptions EventSub { get; set; }
     }
 }
