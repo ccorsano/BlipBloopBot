@@ -1,4 +1,6 @@
-﻿namespace Conceptoire.Twitch.Model
+﻿using CsvHelper.Configuration.Attributes;
+
+namespace Conceptoire.Twitch.Model
 {
     public class GameInfo
     {
@@ -8,6 +10,11 @@
         public string Synopsis { get; set; }
         public string Summary { get; set; }
         public string Source { get; set; }
+
+        [Optional]
         public ulong? IGDBId { get; set; }
+
+        [Optional]
+        public ulong? SteamId { get; set; }
     }
 }
