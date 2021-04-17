@@ -122,44 +122,32 @@ namespace TwitchCategoriesCrawler
                                 _logger.LogWarning("Found existing persisted base entry, no IGDB record, skipping");
                                 continue;
                             }
+                            gameInfo = existingBaseEntry;
 
+                            var existingLog = await _gameLocalization.ResolveLocalizedGameInfoAsync(TargetLanguage, category.Id);
+                            if (!Force && gameInfo != null && existingLog != null)
+                            {
+                                _logger.LogWarning("Found existing persisted base entry, no IGDB record, skipping");
+                                continue;
+                            }
+                        }
+                        else
+                        {
                             if (gameDb.TryGetValue((category.Id, steamLanguage.Key), out gameInfo))
                             {
                                 _logger.LogWarning("Found existing entry {categoryId}, {categoryName}, {language}", category.Id, category.Name, steamLanguage.Key);
                                 continue;
                             }
-                            gameInfo = existingBaseEntry;
-                        }
-                        else
-                        {
+
                             if (gameDb.TryGetValue((category.Id, TwitchConstants.LanguageCodes.ENGLISH), out gameInfo))
                             {
                                 _logger.LogWarning("Found existing base EN entry for {categoryId}, {categoryName}", category.Id, category.Name);
-                                var existingLog = await _gameLocalization.ResolveLocalizedGameInfoAsync(TargetLanguage, category.Id);
-                                if (!Force && gameInfo != null && existingLog != null)
-                                {
-                                    _logger.LogWarning("Found existing persisted entry, skipping");
-                                    continue;
-                                }
                             }
                             else
                             {
-                                if (gameDb.TryGetValue((category.Id, steamLanguage.Key), out gameInfo))
+                                if (steamLanguage.Key != TwitchConstants.LanguageCodes.ENGLISH && !gameDb.TryAdd((category.Id, TwitchConstants.LanguageCodes.ENGLISH), gameInfo))
                                 {
-                                    _logger.LogWarning("Found existing entry {categoryId}, {categoryName}, {language}", category.Id, category.Name, steamLanguage.Key);
-                                    continue;
-                                }
-
-                                if (gameDb.TryGetValue((category.Id, TwitchConstants.LanguageCodes.ENGLISH), out gameInfo))
-                                {
-                                    _logger.LogWarning("Found existing base EN entry for {categoryId}, {categoryName}", category.Id, category.Name);
-                                }
-                                else
-                                {
-                                    if (steamLanguage.Key != TwitchConstants.LanguageCodes.ENGLISH && !gameDb.TryAdd((category.Id, TwitchConstants.LanguageCodes.ENGLISH), gameInfo))
-                                    {
-                                        _logger.LogWarning("Received same category twice {categoryId} ({categoryName})", category.Id, category.Name);
-                                    }
+                                    _logger.LogWarning("Received same category twice {categoryId} ({categoryName})", category.Id, category.Name);
                                 }
                             }
                         }
