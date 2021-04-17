@@ -36,7 +36,8 @@ namespace Conceptoire.Twitch.Extensions
             services.AddTransient(provider => new CommandRegistration
             {
                 Metadata = metadata,
-                Processor = () => provider.GetRequiredService<TMessageProcessor>()
+                Processor = () => provider.GetRequiredService<TMessageProcessor>(),
+                ProcessorType = typeof(TMessageProcessor),
             });
 
             return services;

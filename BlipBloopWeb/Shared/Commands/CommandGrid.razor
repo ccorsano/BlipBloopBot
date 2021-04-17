@@ -17,9 +17,9 @@
     <tbody>
         @if (Commands != null)
         {
-            @foreach ((var command, var options) in Commands)
+            @foreach (var options in Commands)
             {
-                <CommandItem CommandName="@command" CommandType="@options.Type" />
+                <CommandItem CommandName="@options.Name" CommandType="@options.Type" />
             }
         }
         else
@@ -39,7 +39,7 @@
     [CascadingParameter(Name = "ServiceContext")]
     public MainLayout ServiceContext { get; set; }
 
-    public Dictionary<string, CommandOptions> Commands { get; set; }
+    public CommandOptions[] Commands { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {

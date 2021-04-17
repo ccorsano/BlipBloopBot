@@ -1,9 +1,11 @@
 ﻿using BotServiceGrain;
 using BotServiceGrainInterface.Model;
+using Conceptoire.Twitch;
 using Conceptoire.Twitch.API;
 using Conceptoire.Twitch.Commands;
 using Conceptoire.Twitch.IRC;
 using Conceptoire.Twitch.Options;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -23,13 +25,14 @@ namespace BotServiceGrainInterface
         private readonly TwitchAPIClient _appClient;
         private readonly TwitchChatClientOptions _options;
         private readonly Dictionary<string, CommandRegistration> _registeredCommands;
-        private readonly Dictionary<string, IMessageProcessor> _commands;
-        private readonly ILoggerFactory _loggerFactory;
         private readonly ILogger _logger;
         private string _channelId;
         private TwitchAPIClient _userClient;
         private HelixChannelInfo _channelInfo;
+        private Dictionary<Guid, IProcessorSettings> _commandProcessors;
+        private TwitchChatBot _chatBot;
 
+        private bool _commandsUpdate;
         private Task _botTask;
         private CancellationTokenSource _botCancellationSource;
 
@@ -39,7 +42,6 @@ namespace BotServiceGrainInterface
             TwitchAPIClient appClient,
             IOptions<TwitchChatClientOptions> botOptions,
             IEnumerable<CommandRegistration> commands,
-            ILoggerFactory loggerFactory,
             ILogger<ChannelGrain> logger)
         {
             _channelState = channelState;
@@ -47,8 +49,6 @@ namespace BotServiceGrainInterface
             _appClient = appClient;
             _options = botOptions.Value;
             _registeredCommands = commands.ToDictionary(c => c.Name, c => c);
-            _commands = commands.ToDictionary(c => c.Name, c => c.Processor());
-            _loggerFactory = loggerFactory;
             _logger = logger;
         }
 
@@ -65,25 +65,49 @@ namespace BotServiceGrainInterface
                     UserLogin = _options.TokenInfo.Login,
                 };
                 _channelBotState.State.AllowedBotAccounts.Add(defaultBotInfo);
-                _channelBotState.State.Commands = new Dictionary<string, Conceptoire.Twitch.Options.CommandOptions>
+                _channelBotState.State.Commands = new Dictionary<Guid, Conceptoire.Twitch.Commands.CommandOptions>
                 {
-                    { "*", new CommandOptions
+                    { Guid.NewGuid(), new CommandOptions
                         {
-                            Type = "MessageTracer"
+                            Name = "*",
+                            Type = "MessageTracer",
                         }
                     },
-                    { "jeu", new CommandOptions
+                    { Guid.NewGuid(), new CommandOptions
                         {
-                            Type = "GameSynopsis"
+                            Name = "jeu",
+                            Type = "GameSynopsis",
+                            Aliases = new string[]
+                            {
+                                "jeu",
+                                "game"
+                            },
+                            Parameters = new Dictionary<string, string>(),
                         }
                     }
                 };
+            }
+            else
+            {
+                // Activate bot if it is supposed to be running
+                if (_channelBotState.State.IsActive)
+                {
+                    await StartBot(_channelState.State.BroadcasterToken);
+                }
             }
 
             await base.OnActivateAsync();
 
             _channelInfo = await _appClient.GetChannelInfoAsync(_channelId);
             await OnChannelUpdate(_channelInfo);
+        }
+
+        private Task AddCommand(CommandOptions options)
+        {
+            _channelBotState.State.Commands.Add(Guid.NewGuid(), options);
+            var command = _registeredCommands[options.Type].Processor();
+            // WIP
+            throw new NotImplementedException();
         }
 
         public override Task OnDeactivateAsync()
@@ -94,7 +118,7 @@ namespace BotServiceGrainInterface
 
         async Task IChannelGrain.Activate(string userToken)
         {
-            var userAuthenticated = Conceptoire.Twitch.Twitch.Authenticate()
+            var userAuthenticated = Twitch.Authenticate()
                 .FromOAuthToken(userToken)
                 .Build();
             var userClient = TwitchAPIClient.CreateFromBase(_appClient, userAuthenticated);
@@ -112,14 +136,17 @@ namespace BotServiceGrainInterface
             {
                 moderators.Add(moderator);
             }
+            _channelState.State.BroadcasterToken = userToken;
             _channelState.State.Editors = (await editorsTask).ToList();
             _channelState.State.Moderators = moderators.ToList();
+            await _channelState.WriteStateAsync();
+
             _channelInfo = await channelInfoTask;
         }
 
         Task<bool> IChannelGrain.IsBotActive()
         {
-            return Task.FromResult(_channelBotState.State.IsActive);
+            return Task.FromResult(_channelBotState.State.IsActive && _chatBot != null);
         }
 
         private async Task<string> GetBotOAuthToken()
@@ -165,52 +192,29 @@ namespace BotServiceGrainInterface
 
         private async Task StartBot(string oauthToken)
         {
-            var botChatClientBuilder = TwitchChatClientBuilder.Create()
-                .WithOAuthToken(oauthToken)
-                .WithLoggerFactory(_loggerFactory);
+            var botChatAuthenticated = Twitch.AuthenticateBot()
+                .FromOAuthToken(oauthToken)
+                .Build();
+            _chatBot = new TwitchChatBot(botChatAuthenticated, _appClient, ServiceProvider, ServiceProvider.GetRequiredService<ILogger<TwitchChatBot>>());
+
             var orleansTaskScheduler = TaskScheduler.Current;
 
             _botCancellationSource = new CancellationTokenSource();
             var cancellationToken = _botCancellationSource.Token;
-            var commandProcessors = _channelBotState.State.Commands.Select(c => (Command: c.Key, Processor: _commands[c.Value.Type])).ToArray();
+            _botTask = Task.Run(() => _chatBot.StartAsync(cancellationToken));
 
-            var botContext = new ProcessorContext
+            _chatBot.SetChannel(_channelId);
+
+            foreach ((var key, var processorInfo) in _channelBotState.State.Commands)
             {
-                ChannelId = _channelId,
-                ChannelName = _channelInfo.BroadcasterName,
-                Language = _channelInfo.BroadcasterLanguage,
-                CategoryId = _channelInfo.GameId,
-            };
-
-            await Task.WhenAll(commandProcessors.Select(processor => processor.Processor.OnUpdateContext(botContext)));
-
-            _botTask = Task.Run(async () =>
-            {
-                try
-                {
-                    var channelName = _channelInfo.BroadcasterName.ToLowerInvariant();
-
-                    using (var ircClient = botChatClientBuilder.Build())
-                    {
-                        await ircClient.ConnectAsync(cancellationToken);
-                        await ircClient.JoinAsync(channelName, cancellationToken);
-                        while (!cancellationToken.IsCancellationRequested)
-                        {
-                            await ircClient.ReceiveIRCMessage(commandProcessors, cancellationToken);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error in channel listener");
-                }
-            });
+                var registration = _registeredCommands[processorInfo.Type];
+                await _chatBot.RegisterMessageProcessor(registration.ProcessorType, processorInfo);
+            }
         }
 
         private Task StopBot()
         {
-            _botCancellationSource.Cancel();
-            return Task.CompletedTask;
+            return _chatBot.StopAsync(CancellationToken.None);
         }
 
         public async Task OnChannelUpdate(HelixChannelInfo info)
@@ -220,15 +224,21 @@ namespace BotServiceGrainInterface
             _channelState.State.LastLanguage = info.BroadcasterLanguage;
             _channelState.State.LastTitle = info.Title;
             await _channelState.WriteStateAsync();
+
+            if (_chatBot == null)
+            {
+                return;
+            }
+
             var botContext = new ProcessorContext
             {
                 ChannelId = info.BroadcasterId,
                 ChannelName = info.BroadcasterName,
                 Language = info.BroadcasterLanguage,
                 CategoryId = info.GameId,
+                //CommandOptions = _channelBotState.State.Commands[kvp.Key],
             };
-            var commandsUpdateTasks = _commands.Select(kvp => kvp.Value.OnUpdateContext(botContext));
-            await Task.WhenAll(commandsUpdateTasks);
+            await _chatBot.UpdateContext(botContext);
         }
 
         public Task<ChannelStaff> GetStaff()
@@ -240,9 +250,19 @@ namespace BotServiceGrainInterface
             });
         }
 
-        public Task<Dictionary<string, CommandOptions>> GetBotCommands()
+        public Task<CommandOptions[]> GetBotCommands()
         {
-            return Task.FromResult(_channelBotState.State.Commands);
+            return Task.FromResult(_channelBotState.State.Commands.Values.ToArray());
+        }
+
+        public Task UpdateBotCommands(CommandOptions[] commands)
+        {
+            lock(_botTask)
+            {
+                //_channelBotState.State.Commands = commands.ToDictionary(c => c.Name, c => c);
+            }
+            _commandsUpdate = true;
+            return Task.CompletedTask;
         }
 
         public Task<CommandMetadata[]> GetSupportedCommandTypes()

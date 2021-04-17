@@ -6,5 +6,10 @@
         {
             return new Authentication.AuthenticationBuilder();
         }
+
+        public static Authentication.IBotAuthenticationBuilder AuthenticateBot()
+        {
+            return new Authentication.AuthenticationBuilder();
+        }
     }
 }

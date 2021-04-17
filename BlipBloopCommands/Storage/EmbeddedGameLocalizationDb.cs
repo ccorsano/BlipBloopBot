@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BlipBloopBot.Storage
@@ -50,7 +51,7 @@ namespace BlipBloopBot.Storage
             }
         }
 
-        public async Task<GameInfo> ResolveLocalizedGameInfoAsync(string language, string twitchCategoryId)
+        async Task<GameInfo> IGameLocalizationStore.ResolveLocalizedGameInfoAsync(string language, string twitchCategoryId, CancellationToken cancellationToken)
         {
             await _loaderTask;
 
@@ -62,7 +63,7 @@ namespace BlipBloopBot.Storage
             return null;
         }
 
-        public Task SaveGameInfoAsync(GameInfo gameInfo)
+        Task IGameLocalizationStore.SaveGameInfoAsync(GameInfo gameInfo, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }

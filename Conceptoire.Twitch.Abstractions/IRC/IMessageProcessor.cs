@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Conceptoire.Twitch.Commands;
+using System;
 using System.Threading.Tasks;
 
 namespace Conceptoire.Twitch.IRC
@@ -8,6 +9,28 @@ namespace Conceptoire.Twitch.IRC
     /// </summary>
     public interface IMessageProcessor
     {
+        /// <summary>
+        /// Check if a message should be processed by this processor
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        bool CanHandleMessage(in ParsedIRCMessage message);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        Task<IProcessorSettings> CreateSettings(Guid processorId, IProcessorSettings settings);
+
+        Task<IProcessorSettings> LoadSettings(Guid processorId, CommandOptions options);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <returns></returns>
+        Task OnChangeSettings(IProcessorSettings settings);
+
         /// <summary>
         /// Called when the Twitch IRC context changes.
         /// 
@@ -25,6 +48,6 @@ namespace Conceptoire.Twitch.IRC
         /// </summary>
         /// <param name="message">Parsed Twitch IRC message</param>
         /// <param name="sendResponse">Outgoing messages to push to the reply queue</param>
-        void OnMessage(ParsedIRCMessage message, Action<OutgoingMessage> sendResponse);
+        void OnMessage(in ParsedIRCMessage message, Action<OutgoingMessage> sendResponse);
     }
 }

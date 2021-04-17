@@ -11,5 +11,7 @@ namespace Conceptoire.Twitch.Commands
         public CommandMetadata Metadata { get; set; }
 
         public Func<IMessageProcessor> Processor { get; set; }
+
+        public Type ProcessorType { get; set; }
     }
 }

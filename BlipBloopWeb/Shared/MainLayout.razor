@@ -30,6 +30,7 @@
     public string UserName { get; private set; }
     public string UserId { get; private set; }
     public string OAuthToken { get; private set; }
+    public string ActiveChannel { get; private set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -39,11 +40,21 @@
             UserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
             UserName = authState.User.FindFirstValue("preferred_username");
             OAuthToken = authState.User.FindFirstValue("access_token");
+            ActiveChannel = UserId;
             IsAuthenticated = true;
             StateHasChanged();
         }
 
         await base.OnInitializedAsync();
+    }
+
+    public void SetActiveChannel(string activeChannel)
+    {
+        if (ActiveChannel != activeChannel)
+        {
+            ActiveChannel = activeChannel;
+            StateHasChanged();
+        }
     }
 
     public void SetAuthenticated(bool value)

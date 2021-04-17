@@ -15,6 +15,6 @@ namespace Conceptoire.Twitch.IRC
 
         public Task SendMessageAsync(OutgoingMessage message, CancellationToken cancellationToken);
 
-        public Task ReceiveIRCMessage(IEnumerable<(string, IMessageProcessor)> processors, CancellationToken cancellationToken);
+        public Task ReceiveIRCMessage(IProcessorContext context, IEnumerable<IMessageProcessor> processors, CancellationToken cancellationToken);
     }
 }

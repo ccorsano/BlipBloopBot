@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Conceptoire.Twitch.Authentication
 {
-    public class OAuthAuthenticated : IAuthenticated
+    public class OAuthAuthenticated : IBotAuthenticated
     {
         private HttpClient _httpClient;
         private string _oauthToken;

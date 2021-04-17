@@ -13,6 +13,7 @@ namespace BotServiceGrainInterface
         public string LastLanguage { get; set; }
         public string LastCategoryId { get; set; }
         public string LastCategoryName { get; set; }
+        public string BroadcasterToken { get; set; }
 
         public List<HelixChannelModerator> Moderators { get; set; }
 

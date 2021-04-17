@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BlipBloopCommands.Storage
@@ -30,12 +31,12 @@ namespace BlipBloopCommands.Storage
             _table = _tableClient.GetTableReference(_options.TableName);
         }
 
-        public async Task<GameInfo> ResolveLocalizedGameInfoAsync(string language, string twitchCategoryId)
+        async Task<GameInfo> IGameLocalizationStore.ResolveLocalizedGameInfoAsync(string language, string twitchCategoryId, CancellationToken cancellationToken)
         {
             try
             {
                 TableOperation retrieveOperation = TableOperation.Retrieve<GameLocalizationInfoEntity>(twitchCategoryId, language);
-                TableResult result = await _table.ExecuteAsync(retrieveOperation);
+                TableResult result = await _table.ExecuteAsync(retrieveOperation, cancellationToken);
                 GameLocalizationInfoEntity gameInfoEntity = result.Result as GameLocalizationInfoEntity;
                 if (gameInfoEntity == null)
                 {
@@ -51,13 +52,13 @@ namespace BlipBloopCommands.Storage
             }
         }
 
-        public async Task SaveGameInfoAsync(GameInfo gameInfo)
+        async Task IGameLocalizationStore.SaveGameInfoAsync(GameInfo gameInfo, CancellationToken cancellationToken)
         {
             try
             {
                 var gameInfoEntity = new GameLocalizationInfoEntity(gameInfo);
                 var operation = TableOperation.InsertOrMerge(gameInfoEntity);
-                var result = await _table.ExecuteAsync(operation);
+                var result = await _table.ExecuteAsync(operation, cancellationToken);
                 if (result.HttpStatusCode / 100 != 2)
                 {
                     _logger.LogError("Non success code on insert {httpStatus}", result.HttpStatusCode);

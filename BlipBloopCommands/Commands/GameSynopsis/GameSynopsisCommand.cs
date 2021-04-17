@@ -1,4 +1,5 @@
-﻿using Conceptoire.Twitch.Extensions;
+﻿using Conceptoire.Twitch.Commands;
+using Conceptoire.Twitch.Extensions;
 using Conceptoire.Twitch.IRC;
 using Conceptoire.Twitch.Model;
 using Microsoft.Extensions.Logging;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace BlipBloopCommands.Commands.GameSynopsis
 {
-    public class GameSynopsisCommand : IMessageProcessor
+    public class GameSynopsisCommand : BotCommandBase
     {
         private readonly ITwitchCategoryProvider _twitchCategoryProvider;
         private readonly ILogger _logger;
@@ -17,6 +18,10 @@ namespace BlipBloopCommands.Commands.GameSynopsis
         private bool _asReply;
         private string _channelId;
         private GameInfo _gameInfo;
+
+        private GameSynopsisCommandSettings _settings;
+
+        private string[] _aliases;
 
         public GameSynopsisCommand(
             ITwitchCategoryProvider twitchProvider,
@@ -26,7 +31,52 @@ namespace BlipBloopCommands.Commands.GameSynopsis
             _logger = logger;
         }
 
-        public async Task OnUpdateContext(IProcessorContext context)
+        public override Task<IProcessorSettings> CreateSettings(Guid processorId, IProcessorSettings settings = null)
+        {
+            if (settings as GameSynopsisCommandSettings == null)
+            {
+                _settings = new GameSynopsisCommandSettings();
+            }
+            else
+            {
+                _settings = settings as GameSynopsisCommandSettings;
+            }
+
+            return base.CreateSettings(processorId, _settings);
+        }
+
+        public override Task<IProcessorSettings> LoadSettings(Guid processorId, CommandOptions options)
+        {
+            _settings = new GameSynopsisCommandSettings();
+            _settings.LoadFromOptions(options);
+
+            return base.CreateSettings(processorId, _settings);
+        }
+
+        public override Task OnChangeSettings(IProcessorSettings settings)
+        {
+            _settings = settings as GameSynopsisCommandSettings;
+            _aliases = _settings.Aliases;
+            _asReply = _settings.AsReply;
+            return Task.CompletedTask;
+        }
+
+        public override bool CanHandleMessage(in ParsedIRCMessage message)
+        {
+            foreach (var botCommand in message.Trailing.ParseBotCommands('!'))
+            {
+                foreach(var alias in _aliases)
+                {
+                    if (alias == botCommand)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public override async Task OnUpdateContext(IProcessorContext context)
         {
             _logger.LogWarning("Received channel update for {channelId}: Category={categoryId} Lang={language}", context.ChannelId, context.CategoryId, context.Language);
 
@@ -48,10 +98,10 @@ namespace BlipBloopCommands.Commands.GameSynopsis
                 _gameInfo = gameInfo;
             };
 
-            _asReply = true;
+            _asReply = _settings.AsReply;
         }
 
-        public void OnMessage(ParsedIRCMessage message, Action<OutgoingMessage> sendResponse)
+        public override void OnMessage(in ParsedIRCMessage message, Action<OutgoingMessage> sendResponse)
         {
             string msgId = _asReply ? message.GetMessageIdTag() : null;
             var reply = new OutgoingMessage

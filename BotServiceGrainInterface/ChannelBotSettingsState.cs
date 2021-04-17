@@ -1,4 +1,5 @@
 ﻿using BotServiceGrainInterface.Model;
+using Conceptoire.Twitch.Commands;
 using Conceptoire.Twitch.Options;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,6 @@ namespace BotServiceGrainInterface
     {
         public bool IsActive { get; set; }
         public List<BotAccountInfo> AllowedBotAccounts { get; set; } = new List<BotAccountInfo>();
-        public Dictionary<string, CommandOptions> Commands { get; set; }
+        public Dictionary<Guid, CommandOptions> Commands { get; set; }
     }
 }

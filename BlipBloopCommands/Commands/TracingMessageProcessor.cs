@@ -9,7 +9,7 @@ namespace BlipBloopBot.Commands
     /// <summary>
     /// Dummy message processor, logging messages
     /// </summary>
-    public class TracingMessageProcessor : IMessageProcessor
+    public class TracingMessageProcessor : BotCommandBase
     {
         private readonly ILogger _logger;
 
@@ -18,12 +18,17 @@ namespace BlipBloopBot.Commands
             _logger = logger;
         }
 
-        public Task OnUpdateContext(IProcessorContext context)
+        public override bool CanHandleMessage(in ParsedIRCMessage message)
+        {
+            return true;
+        }
+
+        public override Task OnUpdateContext(IProcessorContext context)
         {
             return Task.CompletedTask;
         }
 
-        public void OnMessage(ParsedIRCMessage message, Action<OutgoingMessage> _)
+        public override void OnMessage(in ParsedIRCMessage message, Action<OutgoingMessage> _)
         {
             _logger.LogInformation(":{prefix} {command} : {message}", new string(message.Prefix), new string(message.Command), new string(message.Trailing));
 
