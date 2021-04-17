@@ -36,6 +36,9 @@ namespace TwitchCategoriesCrawler
         [Option("-l", CommandOptionType.SingleValue, Description = "Language to import from Steam")]
         public string TargetLanguage { get; set; }
 
+        [Option("-f", CommandOptionType.SingleOrNoValue, Description = "Force update of existing entries")]
+        public bool Force { get; set; }
+
         public TwitchCategoriesCrawlerCommand(
             TwitchAPIClient twitchApiClient,
             IGDBClient igdbClient,
@@ -109,14 +112,15 @@ namespace TwitchCategoriesCrawler
                     // Scan all categories
                     await foreach (var category in _twitchAPIClient.EnumerateTwitchCategoriesAsync())
                     {
-                        GameInfo gameInfo;
+                        GameInfo gameInfo = null;
 
                         if (_gameLocalization != null)
                         {
-                            var existingLog = await _gameLocalization.ResolveLocalizedGameInfo(TargetLanguage, category.Id);
-                            if (existingLog != null)
+                            var existingBaseEntry = await _gameLocalization.ResolveLocalizedGameInfoAsync("", category.Id);
+                            if (!Force && existingBaseEntry != null && !existingBaseEntry.IGDBId.HasValue)
                             {
                                 _logger.LogWarning("Found existing persisted entry, skipping");
+                                _logger.LogWarning("Found existing persisted base entry, no IGDB record, skipping");
                                 continue;
                             }
                         }
@@ -126,16 +130,36 @@ namespace TwitchCategoriesCrawler
                             _logger.LogWarning("Found existing entry {categoryId}, {categoryName}, {language}", category.Id, category.Name, steamLanguage.Key);
                             continue;
                         }
+                            gameInfo = existingBaseEntry;
 
                         if (gameDb.TryGetValue((category.Id, TwitchConstants.LanguageCodes.ENGLISH), out gameInfo))
                         {
                             _logger.LogWarning("Found existing base EN entry for {categoryId}, {categoryName}", category.Id, category.Name);
+                            var existingLog = await _gameLocalization.ResolveLocalizedGameInfoAsync(TargetLanguage, category.Id);
+                            if (!Force && gameInfo != null && existingLog != null)
+                            {
+                                _logger.LogWarning("Found existing persisted entry, skipping");
+                                continue;
+                            }
                         }
                         else
                         {
-                            if (steamLanguage.Key != TwitchConstants.LanguageCodes.ENGLISH && !gameDb.TryAdd((category.Id, TwitchConstants.LanguageCodes.ENGLISH), gameInfo))
+                            if (gameDb.TryGetValue((category.Id, steamLanguage.Key), out gameInfo))
                             {
-                                _logger.LogWarning("Received same category twice {categoryId} ({categoryName})", category.Id, category.Name);
+                                _logger.LogWarning("Found existing entry {categoryId}, {categoryName}, {language}", category.Id, category.Name, steamLanguage.Key);
+                                continue;
+                            }
+
+                            if (gameDb.TryGetValue((category.Id, TwitchConstants.LanguageCodes.ENGLISH), out gameInfo))
+                            {
+                                _logger.LogWarning("Found existing base EN entry for {categoryId}, {categoryName}", category.Id, category.Name);
+                            }
+                            else
+                            {
+                                if (steamLanguage.Key != TwitchConstants.LanguageCodes.ENGLISH && !gameDb.TryAdd((category.Id, TwitchConstants.LanguageCodes.ENGLISH), gameInfo))
+                                {
+                                    _logger.LogWarning("Received same category twice {categoryId} ({categoryName})", category.Id, category.Name);
+                                }
                             }
                         }
 
@@ -144,6 +168,7 @@ namespace TwitchCategoriesCrawler
                             gameInfo = new GameInfo
                             {
                                 TwitchCategoryId = category.Id,
+                                Language = "",
                                 Name = category.Name,
                             };
                         }
@@ -155,7 +180,13 @@ namespace TwitchCategoriesCrawler
                             continue;
                         }
 
-                        csvWriter.WriteRecords(await FetchCategoryInfo(category, steamLanguage.Key, steamLanguage.Value, gameInfo));
+                        var updatedGameInfo = await FetchCategoryInfo(category, steamLanguage.Key, steamLanguage.Value, gameInfo);
+                        csvWriter.WriteRecords(updatedGameInfo);
+
+                        if (_gameLocalization != null)
+                        {
+                            await Task.WhenAll(updatedGameInfo.Select(gameInfo => _gameLocalization.SaveGameInfoAsync(gameInfo)));
+                        }
                     }
 
                     var gameInfos = (await Task.WhenAll(categoriesList)).SelectMany(c => c);
@@ -167,14 +198,16 @@ namespace TwitchCategoriesCrawler
         {
             var resultList = new List<GameInfo>();
 
-            if (! gameInfo.IGDBId.HasValue)
+            var hasSteamEntry = gameInfo.IGDBId.HasValue && gameInfo.SteamId.HasValue;
+
+            if (Force || !gameInfo.IGDBId.HasValue)
             {
                 _logger.LogInformation("Category: {categoryName}, id: {categoryId}", category.Name, category.Id);
                 var igdbExternalEntry = await _igdbClient.SearchExternalGame("uid", $"\"{category.Id}\"", IGDBExternalGameCategory.Twitch);
                 if (igdbExternalEntry.Length == 0)
                 {
                     _logger.LogInformation("No IGDB entry");
-                    return new GameInfo[0];
+                    return new GameInfo[] { gameInfo };
                 }
                 gameInfo.IGDBId = igdbExternalEntry.First().Game.Id;
 
@@ -184,23 +217,30 @@ namespace TwitchCategoriesCrawler
                 if (igdbEntry == null)
                 {
                     _logger.LogInformation("Failed to resolve IGDB entry");
-                    return new GameInfo[0];
+                    return new GameInfo[] { gameInfo };
                 }
                 gameInfo.IGDBId = igdbEntry.ParentGame?.Id ?? igdbEntry.Id;
                 gameInfo.Summary = igdbEntry.Summary;
 
                 _logger.LogInformation("Resolved IGDB entry: {igdbName}, {igdbGameId}", igdbEntry.Name, igdbExternalEntry.First().Game.Id);
+                var igdbSteamEntry = await _igdbClient.SearchExternalGame("game", gameInfo.IGDBId.ToString(), IGDBExternalGameCategory.Steam);
+                if (igdbSteamEntry.Length > 0)
+                {
+                    gameInfo.SteamId = ulong.Parse(igdbSteamEntry.First().Uid);
+                    hasSteamEntry = true;
+                    _logger.LogInformation("Found a Steam entry !");
+                }
+                resultList.Add(gameInfo);
             }
             else
             {
                 _logger.LogInformation("Using existing IGDB entry: {igdbGameId}", gameInfo.IGDBId);
             }
 
-            var igdbSteamEntry = await _igdbClient.SearchExternalGame("game", gameInfo.IGDBId.ToString(), IGDBExternalGameCategory.Steam);
-            if (igdbSteamEntry.Length > 0)
+            if (hasSteamEntry)
             {
                 _logger.LogInformation("Found a Steam entry !");
-                var storeEntry = await _steamStoreClient.GetStoreDetails(igdbSteamEntry.First().Uid, steamLanguage);
+                var storeEntry = await _steamStoreClient.GetStoreDetails(gameInfo.SteamId.ToString(), steamLanguage);
                 if (storeEntry != null)
                 {
                     var localizedGameInfo = new GameInfo
@@ -211,19 +251,11 @@ namespace TwitchCategoriesCrawler
                         Summary = storeEntry.ShortDescription,
                         Language = twitchLanguage,
                         Source = "steam",
+                        SteamId = storeEntry.SteamAppid
                     };
 
                     resultList.Add(localizedGameInfo);
-
-                    if (_gameLocalization != null)
-                    {
-                        await _gameLocalization.SaveGameInfo(localizedGameInfo);
-                    }
                 }
-            }
-            else
-            {
-                resultList.Add(gameInfo);
             }
 
             return resultList.ToArray();

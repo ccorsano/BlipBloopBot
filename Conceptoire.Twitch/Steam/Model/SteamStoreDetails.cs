@@ -77,7 +77,7 @@ namespace Conceptoire.Twitch.Steam.Model
         public string Name { get; set; }
 
         [JsonPropertyName("steam_appid")]
-        public long SteamAppid { get; set; }
+        public ulong SteamAppid { get; set; }
 
         //[JsonPropertyName("required_age")]
         //public string RequiredAge { get; set; }
@@ -88,7 +88,7 @@ namespace Conceptoire.Twitch.Steam.Model
         [JsonPropertyName("controller_support")]
         public string ControllerSupport { get; set; }
 
-        public long[] Dlc { get; set; }
+        public ulong[] Dlc { get; set; }
 
         [JsonPropertyName("detailed_description")]
         public string DetailedDescription { get; set; }
@@ -125,7 +125,7 @@ namespace Conceptoire.Twitch.Steam.Model
 
         public Demo[] Demos { get; set; }
 
-        public long[] Packages { get; set; }
+        public ulong[] Packages { get; set; }
 
         public object[] PackageGroups { get; set; }
 

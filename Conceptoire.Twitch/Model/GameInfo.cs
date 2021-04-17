@@ -9,5 +9,6 @@
         public string Summary { get; set; }
         public string Source { get; set; }
         public ulong? IGDBId { get; set; }
+        public ulong? SteamId { get; set; }
     }
 }

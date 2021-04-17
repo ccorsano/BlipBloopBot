@@ -88,7 +88,18 @@ namespace BlipBloopCommands.Storage
             Synopsis = gameInfo.Synopsis;
             Summary = gameInfo.Summary;
             Source = gameInfo.Source;
-            IGDBId = gameInfo.IGDBId;
+
+            if (gameInfo.IGDBId.HasValue && gameInfo.IGDBId > long.MaxValue)
+            {
+                throw new ArgumentOutOfRangeException($"IGDB Id {gameInfo.IGDBId} exceeds the supported storage type for Azure Table");
+            }
+            IGDBId = (long?) gameInfo.IGDBId;
+
+            if (gameInfo.SteamId.HasValue && gameInfo.SteamId > long.MaxValue)
+            {
+                throw new ArgumentOutOfRangeException($"Steam Id {gameInfo.SteamId} exceeds the supported storage type for Azure Table");
+            }
+            SteamId = (long?) gameInfo.SteamId;
         }
 
         public string TwitchCategoryId => PartitionKey;
@@ -97,10 +108,20 @@ namespace BlipBloopCommands.Storage
         public string Synopsis { get; set; }
         public string Summary { get; set; }
         public string Source { get; set; }
-        public ulong? IGDBId { get; set; }
+        public long? IGDBId { get; set; }
+        public long? SteamId { get; set; }
 
         public GameInfo ToGameInfo()
         {
+            if (IGDBId.HasValue && IGDBId < 0)
+            {
+                throw new ArgumentOutOfRangeException($"Negative IGDB Id {IGDBId} found on entity {TwitchCategoryId}:{Language}");
+            }
+
+            if (SteamId.HasValue && SteamId < 0)
+            {
+                throw new ArgumentOutOfRangeException($"Negative Steam Id {SteamId} found on entity {TwitchCategoryId}:{Language}");
+            }
             return new GameInfo
             {
                 TwitchCategoryId = TwitchCategoryId,
@@ -109,7 +130,8 @@ namespace BlipBloopCommands.Storage
                 Summary = Summary,
                 Synopsis = Synopsis,
                 Source = Source,
-                IGDBId = IGDBId,
+                IGDBId = (ulong?) IGDBId,
+                SteamId = (ulong?) SteamId,
             };
         }
     }
