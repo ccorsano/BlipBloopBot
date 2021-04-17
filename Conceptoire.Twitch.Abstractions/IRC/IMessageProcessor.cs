@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Conceptoire.Twitch.Commands;
+using System;
 using System.Threading.Tasks;
 
 namespace Conceptoire.Twitch.IRC
@@ -20,6 +21,8 @@ namespace Conceptoire.Twitch.IRC
         /// </summary>
         /// <returns></returns>
         Task<IProcessorSettings> CreateSettings(Guid processorId, IProcessorSettings settings);
+
+        Task<IProcessorSettings> LoadSettings(Guid processorId, CommandOptions options);
 
         /// <summary>
         /// 

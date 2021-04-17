@@ -1,20 +1,28 @@
-﻿using Conceptoire.Twitch.IRC;
+﻿using Conceptoire.Twitch.Commands;
+using Conceptoire.Twitch.IRC;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BlipBloopCommands.Commands
 {
     public class ResponseCommandSettings : IProcessorSettings
     {
+        public string[] Aliases { get; set; }
         public string Message { get; set; }
 
-        public Task ReadAsync()
+        public void LoadFromOptions(CommandOptions options)
         {
-            throw new System.NotImplementedException();
+            Aliases = options.Aliases.ToArray();
+            if (options.Parameters.TryGetValue("Message", out string message))
+            {
+                Message = message;
+            }
         }
 
-        public Task WriteAsync()
+        public void SaveToOptions(CommandOptions options)
         {
-            throw new System.NotImplementedException();
+            options.Aliases = Aliases.ToArray();
+            options.Parameters["Message"] = Message;
         }
     }
 }

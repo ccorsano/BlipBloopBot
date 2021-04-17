@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Conceptoire.Twitch.Commands;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,14 +11,23 @@ namespace Conceptoire.Twitch.IRC
     {
         class ProcessorSettingsBase : IProcessorSettings
         {
-            public Task ReadAsync()
+            protected string[] Aliases { get; set; }
+
+            private Dictionary<string, string> _parameters = new Dictionary<string, string>();
+
+            public void LoadFromOptions(CommandOptions options)
             {
-                return Task.CompletedTask;
+                Aliases = options.Aliases?.ToArray() ?? new string[0];
+                _parameters = options.Parameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             }
 
-            public Task WriteAsync()
+            public void SaveToOptions(CommandOptions options)
             {
-                return Task.CompletedTask;
+                options.Aliases = Aliases.ToArray();
+                foreach ((var key, var param) in _parameters)
+                {
+                    options.Parameters[key] = param;
+                }
             }
         }
 
@@ -34,6 +45,15 @@ namespace Conceptoire.Twitch.IRC
             {
                 settings = new ProcessorSettingsBase();
             }
+            await OnChangeSettings(settings);
+            return settings;
+        }
+
+        public virtual async Task<IProcessorSettings> LoadSettings(Guid processorId, CommandOptions options)
+        {
+            Id = processorId;
+            var settings = new ProcessorSettingsBase();
+            settings.LoadFromOptions(options);
             await OnChangeSettings(settings);
             return settings;
         }

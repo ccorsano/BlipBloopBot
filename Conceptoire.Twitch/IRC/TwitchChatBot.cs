@@ -1,5 +1,6 @@
 ﻿using Conceptoire.Twitch.API;
 using Conceptoire.Twitch.Authentication;
+using Conceptoire.Twitch.Commands;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -49,25 +50,36 @@ namespace Conceptoire.Twitch.IRC
             return Task.WhenAll(_commandProcessors.Values.Select(c => c.OnUpdateContext(context)));
         }
 
-        public async Task RegisterMessageProcessor<TMessageProcessor>(IProcessorSettings settings = null) where TMessageProcessor : IMessageProcessor
+        public Task RegisterMessageProcessor<TMessageProcessor>(Guid commandId, CommandOptions options = null) where TMessageProcessor : IMessageProcessor
+         => RegisterMessageProcessor(commandId, typeof(TMessageProcessor), options);
+
+        public Task RegisterMessageProcessor<TMessageProcessor>(CommandOptions options = null) where TMessageProcessor : IMessageProcessor
+         => RegisterMessageProcessor(typeof(TMessageProcessor), options);
+
+        public Task<IMessageProcessor> RegisterMessageProcessor(Type messageProcessorType, CommandOptions options = null)
         {
             var newCommandId = Guid.NewGuid();
+            return RegisterMessageProcessor(newCommandId, messageProcessorType, options);
+        }
 
-            var processor = _serviceProvider.GetRequiredService<TMessageProcessor>();
-            
+        public async Task<IMessageProcessor> RegisterMessageProcessor(Guid commandId, Type messageProcessorType, CommandOptions options = null)
+        {
+            var processor = _serviceProvider.GetRequiredService(messageProcessorType) as IMessageProcessor;
 
-            await processor.CreateSettings(newCommandId, settings);
+            await processor.LoadSettings(commandId, options);
             var initTask = Task.Run(async () =>
             {
                 if (_currentContext != null)
                 {
                     await processor.OnUpdateContext(_currentContext);
                 }
-                if (!_commandProcessors.TryAdd(newCommandId, _serviceProvider.GetRequiredService<TMessageProcessor>()))
+                if (!_commandProcessors.TryAdd(commandId, processor))
                 {
                     throw new InvalidOperationException("Could not add command, unexpectedly. Id collision ??");
                 }
             });
+
+            return processor;
         }
 
         public Task StartAsync(CancellationToken externalCancellationToken)

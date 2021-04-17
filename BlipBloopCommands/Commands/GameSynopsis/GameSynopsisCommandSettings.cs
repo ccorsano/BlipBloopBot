@@ -1,4 +1,5 @@
-﻿using Conceptoire.Twitch.IRC;
+﻿using Conceptoire.Twitch.Commands;
+using Conceptoire.Twitch.IRC;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,16 +11,21 @@ namespace BlipBloopCommands.Commands.GameSynopsis
     public class GameSynopsisCommandSettings : IProcessorSettings
     {
         public string[] Aliases { get; set; }
-        public bool AsReply { get; set; }
+        public bool AsReply { get; set; } = true;
 
-        public Task ReadAsync()
+        public void LoadFromOptions(CommandOptions options)
         {
-            return Task.CompletedTask;
+            Aliases = options.Aliases.ToArray();
+            if (options.Parameters.ContainsKey("AsReply"))
+            {
+                AsReply = bool.Parse(options.Parameters["AsReply"]);
+            }
         }
 
-        public Task WriteAsync()
+        public void SaveToOptions(CommandOptions options)
         {
-            return Task.CompletedTask;
+            options.Aliases = Aliases;
+            options.Parameters["AsReply"] = AsReply ? bool.TrueString : bool.FalseString;
         }
     }
 }

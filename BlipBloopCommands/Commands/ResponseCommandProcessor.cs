@@ -1,4 +1,5 @@
-﻿using Conceptoire.Twitch.Extensions;
+﻿using Conceptoire.Twitch.Commands;
+using Conceptoire.Twitch.Extensions;
 using Conceptoire.Twitch.IRC;
 using Microsoft.Extensions.Logging;
 using System;
@@ -36,6 +37,13 @@ namespace BlipBloopCommands.Commands
             {
                 _settings = settings as ResponseCommandSettings;
             }
+            return base.CreateSettings(processorId, _settings);
+        }
+
+        public override Task<IProcessorSettings> LoadSettings(Guid processorId, CommandOptions options)
+        {
+            _settings = new ResponseCommandSettings();
+            _settings.LoadFromOptions(options);
             return base.CreateSettings(processorId, _settings);
         }
 

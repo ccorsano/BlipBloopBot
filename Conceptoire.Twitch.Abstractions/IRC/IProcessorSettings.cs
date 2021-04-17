@@ -1,10 +1,12 @@
-﻿using System.Threading.Tasks;
+﻿using Conceptoire.Twitch.Commands;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Conceptoire.Twitch.IRC
 {
     public interface IProcessorSettings
     {
-        Task WriteAsync();
-        Task ReadAsync();
+        void LoadFromOptions(CommandOptions options);
+        void SaveToOptions(CommandOptions options);
     }
 }

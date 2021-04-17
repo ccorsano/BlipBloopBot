@@ -16,6 +16,7 @@ using Conceptoire.Twitch;
 using Conceptoire.Twitch.IRC;
 using Conceptoire.Twitch.API;
 using Conceptoire.Twitch.Authentication;
+using Conceptoire.Twitch.Commands;
 
 namespace BlipBloopBot
 {
@@ -92,13 +93,32 @@ namespace BlipBloopBot
 
             var host = builder.Build();
 
+
+            var categoryProvider = host.Services.GetRequiredService<PollingTwitchCategoryProvider>();
+            categoryProvider.CheckAndSchedule("miekyld");
+
             var twitchBot = host.Services.GetRequiredService<TwitchChatBot>();
             twitchBot.SetChannel("158511925");
-            await twitchBot.RegisterMessageProcessor<GameSynopsisCommand>(new GameSynopsisCommandSettings
+            await twitchBot.RegisterMessageProcessor<GameSynopsisCommand>(new CommandOptions
             {
-                AsReply = true,
-                Aliases = new string[] { "jeu", "game" }
+                Aliases = new string[] { "jeu", "game" },
+                Parameters = new Dictionary<string, string>
+                {
+                    { "AsReply", bool.TrueString },
+                }
             });
+
+            categoryProvider.OnUpdate += async (sender, gameinfo) =>
+            {
+                var context = new ProcessorContext
+                {
+                    CategoryId = gameinfo.TwitchCategoryId,
+                    ChannelId = "158511925",
+                    ChannelName = gameinfo.Name,
+                    Language = gameinfo.Language,
+                };
+                await twitchBot.UpdateContext(context);
+            };
 
 
             await host.RunAsync();

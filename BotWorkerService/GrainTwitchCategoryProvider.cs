@@ -34,9 +34,9 @@ namespace BotServiceGrain
             _logger = logger;
         }
 
-        async Task<GameInfo> ITwitchCategoryProvider.FetchChannelInfo(string categoryId, string language)
+        async Task<GameInfo> ITwitchCategoryProvider.FetchChannelInfo(string categoryId, string language, System.Threading.CancellationToken cancellationToken)
         {
-            var localized = await _gameLocalizationStore.ResolveLocalizedGameInfo(language, categoryId);
+            var localized = await _gameLocalizationStore.ResolveLocalizedGameInfoAsync(language, categoryId, cancellationToken);
             if (OnUpdate != null)
             {
                 OnUpdate(this, localized);
