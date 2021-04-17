@@ -46,6 +46,7 @@ namespace Conceptoire.Twitch.API
         {
             var uri = "https://api.twitch.tv/helix/eventsub/subscriptions";
             var jsonContent = JsonContent.Create(request);
+            jsonContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
             var jsonMessage = new HttpRequestMessage(HttpMethod.Post, uri)
             {
                 Content = jsonContent
@@ -53,6 +54,8 @@ namespace Conceptoire.Twitch.API
             await _authenticated.AuthenticateMessageAsync(jsonMessage, cancellationToken);
 
             var result = await _httpClient.SendAsync(jsonMessage, cancellationToken);
+            result.EnsureSuccessStatusCode();
+
             var response = await JsonSerializer.DeserializeAsync<HelixEventSubSubscriptionsListReponse>(await result.Content.ReadAsStreamAsync());
             return response.Data[0];
         }
@@ -279,7 +282,7 @@ namespace Conceptoire.Twitch.API
                 Type = EventSubTypes.ChannelUpdate,
                 Condition = new Dictionary<string, string>
                 {
-                    { "broadcaster_id", broadcasterId }
+                    { "broadcaster_user_id", broadcasterId }
                 },
                 Transport = new HelixEventSubTransport
                 {
