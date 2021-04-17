@@ -110,6 +110,7 @@ namespace BotServiceGrain
                     };
                 }
             }
+            await _gameLocalizationStore.SaveGameInfoAsync(gameInfo, cancellationToken);
             return gameInfo;
         }
 
