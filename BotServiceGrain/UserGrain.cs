@@ -58,6 +58,13 @@ namespace BotServiceGrain
             if (validated != null)
             {
                 _tokenInfo = validated;
+
+                if (_profile.State.HasActiveChannel)
+                {
+                    var channelGrain = GrainFactory.GetGrain<IChannelGrain>(UserId);
+                    await channelGrain.Activate(_profile.State.OAuthToken);
+                }
+
                 await _profile.WriteStateAsync();
             }
 

@@ -12,12 +12,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using Conceptoire.Twitch.Options;
 using Microsoft.Extensions.Hosting;
+using Conceptoire.Twitch.Steam;
+using Conceptoire.Twitch.Constants;
 
 namespace BlipBloopCommands.Commands.GameSynopsis
 {
     public class PollingTwitchCategoryProvider : ITwitchCategoryProvider, IDisposable, IHostedService
     {
         private readonly TwitchAPIClient _twitchAPIClient;
+        private readonly IGDBClient _igdbClient;
+        private readonly SteamStoreClient _steamStoreClient;
         private readonly IGameLocalizationStore _gameLocalization;
         private readonly TwitchApplicationOptions _twitchOptions;
         private readonly ILogger _logger;
@@ -35,11 +39,14 @@ namespace BlipBloopCommands.Commands.GameSynopsis
 
         public PollingTwitchCategoryProvider(
             TwitchAPIClient twitchAPIClient,
+            IGDBClient IGDBClient,
+            SteamStoreClient steamStoreClient,
             IGameLocalizationStore gameLocalizationStore,
             IOptions<TwitchApplicationOptions> twitchOptions,
             ILogger<PollingTwitchCategoryProvider> logger)
         {
             _twitchAPIClient = twitchAPIClient;
+            _igdbClient = IGDBClient;
             _gameLocalization = gameLocalizationStore;
             _twitchOptions = twitchOptions.Value;
             _logger = logger;
@@ -64,13 +71,13 @@ namespace BlipBloopCommands.Commands.GameSynopsis
 
             try
             {
-                var results = await _twitchAPIClient.SearchChannelsAsync(broadcasterId);
+                var results = await _twitchAPIClient.SearchChannelsAsync(broadcasterId, cancellationToken);
                 var newResults = results.First(c => c.BroadcasterLogin == broadcasterId);
 
                 if (newResults.GameId != _lastResult?.GameId)
                 {
-                    _lastInfo = await _twitchAPIClient.GetChannelInfoAsync(newResults.Id);
-                    _gameInfo = await _gameLocalization.ResolveLocalizedGameInfoAsync(newResults.BroadcasterLanguage, newResults.GameId);
+                    _lastInfo = await _twitchAPIClient.GetChannelInfoAsync(newResults.Id, cancellationToken);
+                    _gameInfo = await _gameLocalization.ResolveLocalizedGameInfoAsync(newResults.BroadcasterLanguage, newResults.GameId, cancellationToken);
 
                     if (OnUpdate != null)
                     {
@@ -82,7 +89,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
                 _broacasterLogin = broadcasterId;
                 _lastCheck = DateTime.UtcNow;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Error refreshing category for channelId {broadcasterId}", broadcasterId);
             }

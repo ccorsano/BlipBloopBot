@@ -87,6 +87,14 @@ namespace BotServiceGrainInterface
                     }
                 };
             }
+            else
+            {
+                // Activate bot if it is supposed to be running
+                if (_channelBotState.State.IsActive)
+                {
+                    await StartBot(_channelState.State.BroadcasterToken);
+                }
+            }
 
             await base.OnActivateAsync();
 
@@ -110,7 +118,7 @@ namespace BotServiceGrainInterface
 
         async Task IChannelGrain.Activate(string userToken)
         {
-            var userAuthenticated = Conceptoire.Twitch.Twitch.Authenticate()
+            var userAuthenticated = Twitch.Authenticate()
                 .FromOAuthToken(userToken)
                 .Build();
             var userClient = TwitchAPIClient.CreateFromBase(_appClient, userAuthenticated);
@@ -128,14 +136,17 @@ namespace BotServiceGrainInterface
             {
                 moderators.Add(moderator);
             }
+            _channelState.State.BroadcasterToken = userToken;
             _channelState.State.Editors = (await editorsTask).ToList();
             _channelState.State.Moderators = moderators.ToList();
+            await _channelState.WriteStateAsync();
+
             _channelInfo = await channelInfoTask;
         }
 
         Task<bool> IChannelGrain.IsBotActive()
         {
-            return Task.FromResult(_channelBotState.State.IsActive);
+            return Task.FromResult(_channelBotState.State.IsActive && _chatBot != null);
         }
 
         private async Task<string> GetBotOAuthToken()
