@@ -79,7 +79,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
                 if (newResults.GameId != _lastResult?.GameId)
                 {
                     _lastInfo = await _twitchAPIClient.GetChannelInfoAsync(newResults.Id);
-                    _gameInfo = await _gameLocalization.ResolveLocalizedGameInfo(newResults.BroadcasterLanguage, newResults.GameId);
+                    _gameInfo = await _gameLocalization.ResolveLocalizedGameInfoAsync(newResults.BroadcasterLanguage, newResults.GameId);
 
                     if (OnUpdate != null)
                     {
@@ -105,7 +105,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
             {
                 await RefreshCategory(_broacasterLogin);
             }
-            return await _gameLocalization.ResolveLocalizedGameInfo(language, categoryId);
+            return await _gameLocalization.ResolveLocalizedGameInfoAsync(language, categoryId);
         }
 
         public void Dispose()

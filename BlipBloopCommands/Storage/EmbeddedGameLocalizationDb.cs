@@ -50,7 +50,7 @@ namespace BlipBloopBot.Storage
             }
         }
 
-        public async Task<GameInfo> ResolveLocalizedGameInfo(string language, string twitchCategoryId)
+        public async Task<GameInfo> ResolveLocalizedGameInfoAsync(string language, string twitchCategoryId)
         {
             await _loaderTask;
 
@@ -62,7 +62,7 @@ namespace BlipBloopBot.Storage
             return null;
         }
 
-        public Task SaveGameInfo(GameInfo gameInfo)
+        public Task SaveGameInfoAsync(GameInfo gameInfo)
         {
             throw new NotImplementedException();
         }

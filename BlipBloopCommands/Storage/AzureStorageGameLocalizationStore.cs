@@ -30,7 +30,7 @@ namespace BlipBloopCommands.Storage
             _table = _tableClient.GetTableReference(_options.TableName);
         }
 
-        public async Task<GameInfo> ResolveLocalizedGameInfo(string language, string twitchCategoryId)
+        public async Task<GameInfo> ResolveLocalizedGameInfoAsync(string language, string twitchCategoryId)
         {
             try
             {
@@ -51,7 +51,7 @@ namespace BlipBloopCommands.Storage
             }
         }
 
-        public async Task SaveGameInfo(GameInfo gameInfo)
+        public async Task SaveGameInfoAsync(GameInfo gameInfo)
         {
             try
             {

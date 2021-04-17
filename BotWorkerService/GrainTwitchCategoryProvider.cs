@@ -36,7 +36,7 @@ namespace BotServiceGrain
 
         async Task<GameInfo> ITwitchCategoryProvider.FetchChannelInfo(string categoryId, string language)
         {
-            var localized = await _gameLocalizationStore.ResolveLocalizedGameInfo(language, categoryId);
+            var localized = await _gameLocalizationStore.ResolveLocalizedGameInfoAsync(language, categoryId);
             if (OnUpdate != null)
             {
                 OnUpdate(this, localized);

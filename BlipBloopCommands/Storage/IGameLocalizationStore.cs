@@ -9,7 +9,7 @@ namespace BlipBloopBot.Storage
 {
     public interface IGameLocalizationStore
     {
-        Task SaveGameInfo(GameInfo gameInfo);
-        Task<GameInfo> ResolveLocalizedGameInfo(string language, string twitchCategoryId);
+        Task SaveGameInfoAsync(GameInfo gameInfo);
+        Task<GameInfo> ResolveLocalizedGameInfoAsync(string language, string twitchCategoryId);
     }
 }
