@@ -238,5 +238,7 @@ namespace Conceptoire.Twitch.Constants
         };
 
         public const string IRCWebSocketUri = "wss://irc-ws.chat.twitch.tv:443";
+
+        public const string PubSubWebSocketUri = "wss://pubsub-edge.twitch.tv";
     }
 }
