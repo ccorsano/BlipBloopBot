@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Conceptoire.Twitch.PubSub
 {
-    public class TwitchPubSubResult
+    public class ServerMessage
     {
         [JsonPropertyName("type")]
         public string Type { get; set; }
@@ -19,6 +19,6 @@ namespace Conceptoire.Twitch.PubSub
         public string Error { get; set; }
 
         [JsonPropertyName("data")]
-        public string Data { get; set; }
+        public MessageData Data { get; set; }
     }
 }

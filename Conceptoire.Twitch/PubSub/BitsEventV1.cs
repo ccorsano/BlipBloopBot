@@ -1,16 +1,17 @@
-﻿using System;
+﻿using Conceptoire.Twitch.PubSub;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Conceptoire.Twitch.IRC
+namespace Conceptoire.Twitch.PubSub
 {
-    public class TwitchPubSubBitsEventV1
+    public class BitsEventV1 : IPubSubDataObject
     {
         [JsonPropertyName("data")]
-        public TwitchPubSubBitsEventData Data { get; set; }
+        public BitsEventData Data { get; set; }
 
         [JsonPropertyName("version")]
         public string Version { get; set; }

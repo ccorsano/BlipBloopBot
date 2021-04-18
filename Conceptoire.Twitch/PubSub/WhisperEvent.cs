@@ -7,28 +7,28 @@ using System.Threading.Tasks;
 
 namespace Conceptoire.Twitch.PubSub
 {
-    public class TwitchPubSubWhisperEvent
+    public class WhisperEvent
     {
         [JsonPropertyName("type")]
         public string Type { get; set; }
 
         [JsonPropertyName("data")]
-        public TwitchPubSubWhisperData Data { get; set; }
+        public WhisperData Data { get; set; }
     }
 
-    public class TwitchPubSubWhisperData
+    public class WhisperData
     {
         [JsonPropertyName("topic")]
         public string Topic { get; set; }
 
         [JsonPropertyName("message")]
-        public TwitchPubSubWhisperDataObject Message { get; set; }
+        public WhisperDataObject Message { get; set; }
 
         [JsonPropertyName("data_object")]
-        public TwitchPubSubWhisperDataObject DataObject { get; set; }
+        public WhisperDataObject DataObject { get; set; }
     }
 
-    public class TwitchPubSubWhisperDataObject
+    public class WhisperDataObject
     {
         [JsonPropertyName("id")]
         public long? Id { get; set; }
@@ -46,10 +46,10 @@ namespace Conceptoire.Twitch.PubSub
         public long FromId { get; set; }
 
         [JsonPropertyName("tags")]
-        public TwitchPubSubWhisperTags Tags { get; set; }
+        public WhisperTags Tags { get; set; }
 
         [JsonPropertyName("recipient")]
-        public TwitchPubSubWhisperRecipient Recipient { get; set; }
+        public WhisperRecipient Recipient { get; set; }
 
         [JsonPropertyName("nonce")]
         public string Nonce { get; set; }
@@ -58,16 +58,16 @@ namespace Conceptoire.Twitch.PubSub
         public string Type { get; set; }
 
         [JsonPropertyName("data")]
-        public TwitchPubSubWhisperDataObjectData Data { get; set; }
+        public WhisperDataObjectData Data { get; set; }
     }
 
-    public class TwitchPubSubWhisperDataObjectData
+    public class WhisperDataObjectData
     {
         [JsonPropertyName("id")]
         public long Id { get; set; }
     }
 
-    public class TwitchPubSubWhisperRecipient
+    public class WhisperRecipient
     {
         [JsonPropertyName("id")]
         public long Id { get; set; }
@@ -85,7 +85,7 @@ namespace Conceptoire.Twitch.PubSub
         public object[] Badges { get; set; }
     }
 
-    public class TwitchPubSubWhisperTags
+    public class WhisperTags
     {
         [JsonPropertyName("login")]
         public string Login { get; set; }

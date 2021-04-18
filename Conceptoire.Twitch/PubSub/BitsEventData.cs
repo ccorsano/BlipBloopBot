@@ -5,9 +5,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Conceptoire.Twitch.IRC
+namespace Conceptoire.Twitch.PubSub
 {
-    public class TwitchPubSubBitsEventData
+    public class BitsEventData
     {
         [JsonPropertyName("user_name")]
         public string UserName { get; set; }
@@ -37,6 +37,15 @@ namespace Conceptoire.Twitch.IRC
         public string Context { get; set; }
 
         [JsonPropertyName("badge_entitlement")]
-        public TwitchPubSubBadgeEntitlement BadgeEntitlement { get; set; }
+        public BadgeEntitlement BadgeEntitlement { get; set; }
+    }
+
+    public class BadgeEntitlement
+    {
+        [JsonPropertyName("new_version")]
+        public long NewVersion { get; set; }
+
+        [JsonPropertyName("previous_version")]
+        public long PreviousVersion { get; set; }
     }
 }

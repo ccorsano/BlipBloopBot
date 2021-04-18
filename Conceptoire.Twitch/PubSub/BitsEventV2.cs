@@ -5,9 +5,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Conceptoire.Twitch.IRC
+namespace Conceptoire.Twitch.PubSub
 {
-    public class TwitchPubSubBitsEventv2 : TwitchPubSubBitsEventV1
+    public class BitsEventV2 : BitsEventV1
     {
 
         [JsonPropertyName("is_anonymous")]

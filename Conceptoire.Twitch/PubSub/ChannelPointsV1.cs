@@ -7,31 +7,31 @@ using System.Threading.Tasks;
 
 namespace Conceptoire.Twitch.PubSub
 {
-    public class TwitchPubSubChannelPoints
+    public class ChannelPointsV1 : IPubSubDataObject
     {
         [JsonPropertyName("type")]
         public string Type { get; set; }
 
         [JsonPropertyName("data")]
-        public TwitchPubSubChannelPointsData Data { get; set; }
+        public ChannelPointsData Data { get; set; }
     }
 
-    public class TwitchPubSubChannelPointsData
+    public class ChannelPointsData
     {
         [JsonPropertyName("timestamp")]
         public DateTimeOffset Timestamp { get; set; }
 
         [JsonPropertyName("redemption")]
-        public TwitchPubSubChannelPointsRedemption Redemption { get; set; }
+        public ChannelPointsRedemption Redemption { get; set; }
     }
 
-    public class TwitchPubSubChannelPointsRedemption
+    public class ChannelPointsRedemption
     {
         [JsonPropertyName("id")]
         public Guid Id { get; set; }
 
         [JsonPropertyName("user")]
-        public TwitchPubSubChannelPointsUser User { get; set; }
+        public ChannelPointsUser User { get; set; }
 
         [JsonPropertyName("channel_id")]
         public string ChannelId { get; set; }
@@ -40,7 +40,7 @@ namespace Conceptoire.Twitch.PubSub
         public DateTimeOffset RedeemedAt { get; set; }
 
         [JsonPropertyName("reward")]
-        public TwitchPubSubChannelPointsReward Reward { get; set; }
+        public ChannelPointsReward Reward { get; set; }
 
         [JsonPropertyName("user_input")]
         public string UserInput { get; set; }
@@ -49,7 +49,7 @@ namespace Conceptoire.Twitch.PubSub
         public string Status { get; set; }
     }
 
-    public class TwitchPubSubChannelPointsUser
+    public class ChannelPointsUser
     {
         [JsonPropertyName("id")]
         public string Id { get; set; }
@@ -61,7 +61,7 @@ namespace Conceptoire.Twitch.PubSub
         public string DisplayName { get; set; }
     }
 
-    public class TwitchPubSubChannelPointsReward
+    public class ChannelPointsReward
     {
         [JsonPropertyName("id")]
         public Guid Id { get; set; }
@@ -85,10 +85,10 @@ namespace Conceptoire.Twitch.PubSub
         public bool IsSubOnly { get; set; }
 
         [JsonPropertyName("image")]
-        public TwitchPubSubChannelPointsImage Image { get; set; }
+        public ChannelPointsImage Image { get; set; }
 
         [JsonPropertyName("default_image")]
-        public TwitchPubSubChannelPointsImage DefaultImage { get; set; }
+        public ChannelPointsImage DefaultImage { get; set; }
 
         [JsonPropertyName("background_color")]
         public string BackgroundColor { get; set; }
@@ -103,13 +103,13 @@ namespace Conceptoire.Twitch.PubSub
         public bool IsInStock { get; set; }
 
         [JsonPropertyName("max_per_stream")]
-        public TwitchPubSubChannelPointsMaxPerStream MaxPerStream { get; set; }
+        public ChannelPointsMaxPerStream MaxPerStream { get; set; }
 
         [JsonPropertyName("should_redemptions_skip_request_queue")]
         public bool ShouldRedemptionsSkipRequestQueue { get; set; }
     }
 
-    public class TwitchPubSubChannelPointsImage
+    public class ChannelPointsImage
     {
         [JsonPropertyName("url_1x")]
         public Uri Url1X { get; set; }
@@ -121,12 +121,12 @@ namespace Conceptoire.Twitch.PubSub
         public Uri Url4X { get; set; }
     }
 
-    public class TwitchPubSubChannelPointsMaxPerStream
+    public class ChannelPointsMaxPerStream
     {
         [JsonPropertyName("is_enabled")]
         public bool IsEnabled { get; set; }
 
         [JsonPropertyName("max_per_stream")]
-        public long MaxPerStreamMaxPerStream { get; set; }
+        public long MaxPerStream { get; set; }
     }
 }

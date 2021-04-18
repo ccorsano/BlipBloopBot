@@ -62,7 +62,7 @@ namespace Conceptoire.Twitch.PubSub
                     {
                         throw new FormatException("Twitch PubSub is expected to communicate using Text WS messages only.");
                     }
-                    var result = JsonSerializer.Deserialize<TwitchPubSubResult>(_inBuffer.AsSpan(0, receiveInfo.Count));
+                    var result = JsonSerializer.Deserialize<ServerMessage>(_inBuffer.AsSpan(0, receiveInfo.Count));
 
                 }
             });

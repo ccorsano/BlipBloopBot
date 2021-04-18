@@ -7,25 +7,7 @@ using System.Threading.Tasks;
 
 namespace Conceptoire.Twitch.PubSub
 {
-    public class TwitchPubSubSubscriptionEvent
-    {
-        [JsonPropertyName("type")]
-        public string Type { get; set; }
-
-        [JsonPropertyName("data")]
-        public TwitchPubSubSubscriptionData Data { get; set; }
-    }
-
-    public class TwitchPubSubSubscriptionData
-    {
-        [JsonPropertyName("topic")]
-        public string Topic { get; set; }
-
-        [JsonPropertyName("message")]
-        public TwitchPubSubSubscriptionMessage Message { get; set; }
-    }
-
-    public class TwitchPubSubSubscriptionMessage
+    public class SubscriptionEventV1 : IPubSubDataObject
     {
         [JsonPropertyName("user_name")]
         public string UserName { get; set; }
@@ -73,19 +55,19 @@ namespace Conceptoire.Twitch.PubSub
         public ushort MultiMonthDuration { get; set; }
 
         [JsonPropertyName("sub_message")]
-        public TwitchPubSubSubscriptionSubMessage SubMessage { get; set; }
+        public SubscriptionSubMessage SubMessage { get; set; }
     }
 
-    public class TwitchPubSubSubscriptionSubMessage
+    public class SubscriptionSubMessage
     {
         [JsonPropertyName("message")]
         public string Message { get; set; }
 
         [JsonPropertyName("emotes")]
-        public TwitchPubSubSubscriptionEmote[] Emotes { get; set; }
+        public SubscriptionEmote[] Emotes { get; set; }
     }
 
-    public class TwitchPubSubSubscriptionEmote
+    public class SubscriptionEmote
     {
         [JsonPropertyName("start")]
         public long Start { get; set; }
