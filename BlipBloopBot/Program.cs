@@ -17,6 +17,8 @@ using Conceptoire.Twitch.IRC;
 using Conceptoire.Twitch.API;
 using Conceptoire.Twitch.Authentication;
 using Conceptoire.Twitch.Commands;
+using Conceptoire.Twitch.PubSub;
+using System.Threading;
 
 namespace BlipBloopBot
 {
@@ -88,6 +90,8 @@ namespace BlipBloopBot
                     services.AddSingleton<TwitchChatBot>();
                     services.AddHostedService<TwitchChatBot>(s => s.GetRequiredService<TwitchChatBot>());
                     services.AddHostedService(services => services.GetRequiredService<PollingTwitchCategoryProvider>());
+                    services.AddSingleton<TwitchPubSubClient>();
+                    services.AddHostedService<TwitchPubSubClient>(s => s.GetRequiredService<TwitchPubSubClient>());
                 })
                 .UseConsoleLifetime();
 
@@ -120,6 +124,22 @@ namespace BlipBloopBot
                 await twitchBot.UpdateContext(context);
             };
 
+            using (var userClient = TwitchAPIClient.Create(host.Services.GetRequiredService<IBotAuthenticated>()))
+            {
+                var userInfo = await userClient.ValidateToken();
+
+                var twitchPubSub = host.Services.GetRequiredService<TwitchPubSubClient>();
+                var topics = new Topic[]
+                {
+                    new Topic(Conceptoire.Twitch.Constants.TwitchConstants.PubSubTopicType.Whispers, userInfo.UserId),
+                    //new Topic(Conceptoire.Twitch.Constants.TwitchConstants.PubSubTopicType.ChannelSubscriptionsV1, "150716625"),
+                    //new Topic(Conceptoire.Twitch.Constants.TwitchConstants.PubSubTopicType.BitsV1, "150716625"),
+                    //new Topic(Conceptoire.Twitch.Constants.TwitchConstants.PubSubTopicType.BitsV2, "150716625"),
+                    //new Topic(Conceptoire.Twitch.Constants.TwitchConstants.PubSubTopicType.BitsBadge, "150716625"),
+                    //new Topic(Conceptoire.Twitch.Constants.TwitchConstants.PubSubTopicType.ChannelPointsV1, "150716625"),
+                };
+                _ = twitchPubSub.Listen(topics, CancellationToken.None);
+            }
 
             await host.RunAsync();
         }

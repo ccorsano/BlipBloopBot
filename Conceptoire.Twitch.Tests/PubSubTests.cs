@@ -1,5 +1,8 @@
 using Conceptoire.Twitch.Constants;
 using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using Xunit;
 
@@ -7,6 +10,19 @@ namespace Conceptoire.Twitch.Tests
 {
     public class PubSubTests
     {
+        public PubSubTests()
+        {
+        }
+
+        public string GetEmbeddedSample(string sampleName)
+        {
+            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"Conceptoire.Twitch.Tests.Samples.{sampleName}.json"))
+            using (var streamReader = new StreamReader(stream))
+            {
+                return streamReader.ReadToEnd();
+            }
+        }
+
         [Fact]
         public void CanDeserializeResponse()
         {
@@ -23,7 +39,8 @@ namespace Conceptoire.Twitch.Tests
         [Fact]
         public void CanDeserializeBitsEventV1Message()
         {
-            var sample = "{\"type\":\"MESSAGE\",\"data\":{\"topic\":\"channel-bits-events-v1.44322889\",\"message\":\"{\\\"data\\\":{\\\"user_name\\\":\\\"dallasnchains\\\",\\\"channel_name\\\":\\\"dallas\\\",\\\"user_id\\\":\\\"129454141\\\",\\\"channel_id\\\":\\\"44322889\\\",\\\"time\\\":\\\"2017-02-09T13:23:58.168Z\\\",\\\"chat_message\\\":\\\"cheer10000 New badge hype!\\\",\\\"bits_used\\\":10000,\\\"total_bits_used\\\":25000,\\\"context\\\":\\\"cheer\\\",\\\"badge_entitlement\\\":{\\\"new_version\\\":25000,\\\"previous_version\\\":10000}},\\\"version\\\":\\\"1.0\\\",\\\"message_type\\\":\\\"bits_event\\\",\\\"message_id\\\":\\\"8145728a4-35f0-4cf7-9dc0-f2ef24de1eb6\\\"}\"}}";
+            var sample = GetEmbeddedSample("PubSub_BitsV1SampleFromDocs");
+            //var sample = "{\"type\":\"MESSAGE\",\"data\":{\"topic\":\"channel-bits-events-v1.44322889\",\"message\":\"{\\\"data\\\":{\\\"user_name\\\":\\\"dallasnchains\\\",\\\"channel_name\\\":\\\"dallas\\\",\\\"user_id\\\":\\\"129454141\\\",\\\"channel_id\\\":\\\"44322889\\\",\\\"time\\\":\\\"2017-02-09T13:23:58.168Z\\\",\\\"chat_message\\\":\\\"cheer10000 New badge hype!\\\",\\\"bits_used\\\":10000,\\\"total_bits_used\\\":25000,\\\"context\\\":\\\"cheer\\\",\\\"badge_entitlement\\\":{\\\"new_version\\\":25000,\\\"previous_version\\\":10000}},\\\"version\\\":\\\"1.0\\\",\\\"message_type\\\":\\\"bits_event\\\",\\\"message_id\\\":\\\"8145728a4-35f0-4cf7-9dc0-f2ef24de1eb6\\\"}\"}}";
 
             var serverMessage = JsonSerializer.Deserialize<PubSub.ServerMessage>(sample);
             Assert.NotNull(serverMessage);
@@ -52,7 +69,8 @@ namespace Conceptoire.Twitch.Tests
         [Fact]
         public void CanDeserializeBitsEventV2Message()
         {
-            var sample = "{\"type\":\"MESSAGE\",\"data\":{\"topic\":\"channel-bits-events-v2.46024993\",\"message\":\"{\\\"data\\\":{\\\"user_name\\\":\\\"jwp\\\",\\\"channel_name\\\":\\\"bontakun\\\",\\\"user_id\\\":\\\"95546976\\\",\\\"channel_id\\\":\\\"46024993\\\",\\\"time\\\":\\\"2017-02-09T13:23:58.168Z\\\",\\\"chat_message\\\":\\\"cheer10000 New badge hype!\\\",\\\"bits_used\\\":10000,\\\"total_bits_used\\\":25000,\\\"context\\\":\\\"cheer\\\",\\\"badge_entitlement\\\":{\\\"new_version\\\":25000,\\\"previous_version\\\":10000}},\\\"version\\\":\\\"1.0\\\",\\\"message_type\\\":\\\"bits_event\\\",\\\"message_id\\\":\\\"8145728a4-35f0-4cf7-9dc0-f2ef24de1eb6\\\",\\\"is_anonymous\\\":true}\"}}";
+            var sample = GetEmbeddedSample("PubSub_BitsV2SampleFromDocs");
+            //var sample = "{\"type\":\"MESSAGE\",\"data\":{\"topic\":\"channel-bits-events-v2.46024993\",\"message\":\"{\\\"data\\\":{\\\"user_name\\\":\\\"jwp\\\",\\\"channel_name\\\":\\\"bontakun\\\",\\\"user_id\\\":\\\"95546976\\\",\\\"channel_id\\\":\\\"46024993\\\",\\\"time\\\":\\\"2017-02-09T13:23:58.168Z\\\",\\\"chat_message\\\":\\\"cheer10000 New badge hype!\\\",\\\"bits_used\\\":10000,\\\"total_bits_used\\\":25000,\\\"context\\\":\\\"cheer\\\",\\\"badge_entitlement\\\":{\\\"new_version\\\":25000,\\\"previous_version\\\":10000}},\\\"version\\\":\\\"1.0\\\",\\\"message_type\\\":\\\"bits_event\\\",\\\"message_id\\\":\\\"8145728a4-35f0-4cf7-9dc0-f2ef24de1eb6\\\",\\\"is_anonymous\\\":true}\"}}";
 
             var serverMessage = JsonSerializer.Deserialize<PubSub.ServerMessage>(sample);
             Assert.NotNull(serverMessage);
@@ -82,7 +100,8 @@ namespace Conceptoire.Twitch.Tests
         [Fact]
         public void CanDeserializeBitsBadgeNotificationMessage()
         {
-            var sample = "{\"type\":\"MESSAGE\",\"data\":{\"topic\":\"channel-bits-badge-unlocks.401394874\",\"message\":\"     {          \\\"user_id\\\":\\\"232889822\\\",\\\"user_name\\\":\\\"willowolf\\\",\\\"channel_id\\\":\\\"401394874\\\",\\\"channel_name\\\":\\\"fun_test12345\\\",\\\"badge_tier\\\":1000,\\\"chat_message\\\":\\\"this should be received by the public pubsub listener\\\",\\\"time\\\":\\\"2020-12-06T00:01:43.71253159Z\\\"}\"}}";
+            var sample = GetEmbeddedSample("PubSub_BitsBadgeSampleFromDocs");
+            //var sample = "{\"type\":\"MESSAGE\",\"data\":{\"topic\":\"channel-bits-badge-unlocks.401394874\",\"message\":\"     {          \\\"user_id\\\":\\\"232889822\\\",\\\"user_name\\\":\\\"willowolf\\\",\\\"channel_id\\\":\\\"401394874\\\",\\\"channel_name\\\":\\\"fun_test12345\\\",\\\"badge_tier\\\":1000,\\\"chat_message\\\":\\\"this should be received by the public pubsub listener\\\",\\\"time\\\":\\\"2020-12-06T00:01:43.71253159Z\\\"}\"}}";
 
             var serverMessage = JsonSerializer.Deserialize<PubSub.ServerMessage>(sample);
             Assert.NotNull(serverMessage);
@@ -145,6 +164,30 @@ namespace Conceptoire.Twitch.Tests
             Assert.Equal("#00C7AC", channelPointData.Data.Redemption.Reward.BackgroundColor);
             Assert.Equal("yeooo", channelPointData.Data.Redemption.UserInput);
             Assert.Equal("FULFILLED", channelPointData.Data.Redemption.Status);
+        }
+
+        [Fact]
+        public void CanDeserializeWhisperMessage()
+        {
+            var sample = GetEmbeddedSample("PubSub_WhisperSample");
+
+            var serverMessage = JsonSerializer.Deserialize<PubSub.ServerMessage>(sample);
+            Assert.NotNull(serverMessage);
+            Assert.Equal(TwitchConstants.PUBSUB_SERVER_MESSAGE, serverMessage.Type);
+            Assert.Null(serverMessage.Nonce);
+            Assert.Null(serverMessage.Error);
+            Assert.NotNull(serverMessage.Data);
+            Assert.Equal(TwitchConstants.PubSubTopicType.Whispers, serverMessage.Data.Topic.TopicType);
+            Assert.Equal("158511925", serverMessage.Data.Topic.Scope1);
+            Assert.Null(serverMessage.Data.Topic.Scope2);
+            Assert.IsType<PubSub.WhisperEvent>(serverMessage.Data.Message);
+            var whisperData = (PubSub.WhisperEvent) serverMessage.Data.Message;
+            Assert.Equal("whisper_received", whisperData.Type);
+            Assert.Equal(6, whisperData.DataObject.Id);
+            Assert.Equal(Guid.Parse("e47d4b51-db09-4184-89b7-fd58927c16af"), whisperData.DataObject.MessageId);
+            Assert.Equal("test VoHiYo SmoocherZ cmonBruh KomodoHype", whisperData.DataObject.Body);
+            Assert.Equal(660015310, whisperData.DataObject.FromId);
+            Assert.Equal(Guid.Parse("e47d4b51-db09-4184-89b7-fd58927c16af"), whisperData.DataObject.MessageId);
         }
     }
 }

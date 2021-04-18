@@ -7,22 +7,14 @@ using System.Threading.Tasks;
 
 namespace Conceptoire.Twitch.PubSub
 {
-    public class WhisperEvent
+    public class WhisperEvent : IPubSubDataObject
     {
         [JsonPropertyName("type")]
         public string Type { get; set; }
 
-        [JsonPropertyName("data")]
-        public WhisperData Data { get; set; }
-    }
-
-    public class WhisperData
-    {
-        [JsonPropertyName("topic")]
-        public string Topic { get; set; }
-
-        [JsonPropertyName("message")]
-        public WhisperDataObject Message { get; set; }
+        // Ignore the string representation of the data object, use the DataObject
+        //[JsonPropertyName("data")]
+        //public string Data { get; set; }
 
         [JsonPropertyName("data_object")]
         public WhisperDataObject DataObject { get; set; }
@@ -30,8 +22,11 @@ namespace Conceptoire.Twitch.PubSub
 
     public class WhisperDataObject
     {
+        [JsonPropertyName("message_id")]
+        public Guid MessageId { get; set; }
+
         [JsonPropertyName("id")]
-        public long? Id { get; set; }
+        public long Id { get; set; }
 
         [JsonPropertyName("thread_id")]
         public string ThreadId { get; set; }
@@ -53,18 +48,6 @@ namespace Conceptoire.Twitch.PubSub
 
         [JsonPropertyName("nonce")]
         public string Nonce { get; set; }
-
-        [JsonPropertyName("type")]
-        public string Type { get; set; }
-
-        [JsonPropertyName("data")]
-        public WhisperDataObjectData Data { get; set; }
-    }
-
-    public class WhisperDataObjectData
-    {
-        [JsonPropertyName("id")]
-        public long Id { get; set; }
     }
 
     public class WhisperRecipient
@@ -80,9 +63,6 @@ namespace Conceptoire.Twitch.PubSub
 
         [JsonPropertyName("color")]
         public string Color { get; set; }
-
-        [JsonPropertyName("badges")]
-        public object[] Badges { get; set; }
     }
 
     public class WhisperTags
@@ -97,7 +77,7 @@ namespace Conceptoire.Twitch.PubSub
         public string Color { get; set; }
 
         [JsonPropertyName("emotes")]
-        public object[] Emotes { get; set; }
+        public Emote[] Emotes { get; set; }
 
         [JsonPropertyName("badges")]
         public TwitchPubSubWhisperBadge[] Badges { get; set; }

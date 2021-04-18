@@ -64,18 +64,6 @@ namespace Conceptoire.Twitch.PubSub
         public string Message { get; set; }
 
         [JsonPropertyName("emotes")]
-        public SubscriptionEmote[] Emotes { get; set; }
-    }
-
-    public class SubscriptionEmote
-    {
-        [JsonPropertyName("start")]
-        public long Start { get; set; }
-
-        [JsonPropertyName("end")]
-        public long End { get; set; }
-
-        [JsonPropertyName("id")]
-        public long Id { get; set; }
+        public Emote[] Emotes { get; set; }
     }
 }

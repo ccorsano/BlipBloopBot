@@ -79,7 +79,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
                     _lastInfo = await _twitchAPIClient.GetChannelInfoAsync(newResults.Id, cancellationToken);
                     _gameInfo = await _gameLocalization.ResolveLocalizedGameInfoAsync(newResults.BroadcasterLanguage, newResults.GameId, cancellationToken);
 
-                    if (OnUpdate != null)
+                    if (_gameInfo != null && OnUpdate != null)
                     {
                         OnUpdate(this, _gameInfo);
                     }

@@ -64,7 +64,7 @@ namespace Conceptoire.Twitch.PubSub
                 //messageData.Message = JsonSerializer.Deserialize<ChatModerationEvent>(reader.ValueSpan);
                 //break;
                 case TwitchConstants.PubSubTopicType.Whispers:
-                    messageData.Message = JsonSerializer.Deserialize<BitsEventV1>(reader.GetString());
+                    messageData.Message = JsonSerializer.Deserialize<WhisperEvent>(reader.GetString());
                     break;
                 default:
                     throw new ArgumentOutOfRangeException($"Unsupported topic {TwitchConstants.GetTopicString(messageData.Topic.TopicType)}");
