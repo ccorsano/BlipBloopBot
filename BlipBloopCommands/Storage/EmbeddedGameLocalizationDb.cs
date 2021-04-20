@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -66,6 +67,16 @@ namespace BlipBloopBot.Storage
         Task IGameLocalizationStore.SaveGameInfoAsync(GameInfo gameInfo, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
+        }
+
+        public async IAsyncEnumerable<GameInfo> EnumerateGameInfoAsync(string language, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            await _loaderTask;
+
+            foreach(var entry in _localizedInfo)
+            {
+                yield return entry.Value;
+            }
         }
     }
 }

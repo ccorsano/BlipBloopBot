@@ -22,7 +22,7 @@ using BlipBloopBot.Storage;
 
 namespace TwitchCategoriesCrawler
 {
-    [Command(Description = "Crawl Twitch categories and resolve localization from Steam")]
+    [Command("crawl", Description = "Crawl Twitch categories and resolve localization from Steam")]
     [HelpOption]
     public class TwitchCategoriesCrawlerCommand
     {
@@ -67,13 +67,6 @@ namespace TwitchCategoriesCrawler
 
             IDictionary<ulong, Platform> platformDb = new Dictionary<ulong, Platform>();
             IDictionary<(string, string), GameInfo> gameDb = new Dictionary<(string, string), GameInfo>();
-
-            // Load IGDB platforms
-            //await foreach(var platform in _igdbClient.EnumeratePlatforms())
-            //{
-            //    platformDb.Add(platform.Id, platform);
-            //    _logger.LogInformation("Platform {platformName} - {platformCategory} - {platformFamily}", platform.Name, platform.Category, platform.PlatformFamily?.Name);
-            //}
 
             var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
             {

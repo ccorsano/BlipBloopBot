@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,7 +58,7 @@ namespace BlipBloopCommands.Storage
             try
             {
                 var gameInfoEntity = new GameLocalizationInfoEntity(gameInfo);
-                var operation = TableOperation.InsertOrMerge(gameInfoEntity);
+                var operation = TableOperation.InsertOrReplace(gameInfoEntity);
                 var result = await _table.ExecuteAsync(operation, cancellationToken);
                 if (result.HttpStatusCode / 100 != 2)
                 {
@@ -70,6 +71,28 @@ namespace BlipBloopCommands.Storage
                 _logger.LogError(e, e.Message);
                 throw;
             }
+        }
+
+        async IAsyncEnumerable<GameInfo> IGameLocalizationStore.EnumerateGameInfoAsync(string language, [EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            var query = new TableQuery<GameLocalizationInfoEntity>()
+            {
+                TakeCount = 1000
+            }.Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, language));
+            
+            TableContinuationToken continuationToken = null;
+            do
+            {
+                TableQuerySegment<GameLocalizationInfoEntity> segment = await _table.ExecuteQuerySegmentedAsync(query, continuationToken);
+
+                foreach (var entry in segment)
+                {
+                    yield return entry.ToGameInfo();
+                }
+
+                continuationToken = segment.ContinuationToken;
+            }
+            while (continuationToken != null);
         }
     }
 

@@ -12,5 +12,6 @@ namespace BlipBloopBot.Storage
     {
         Task SaveGameInfoAsync(GameInfo gameInfo, CancellationToken cancellationToken = default);
         Task<GameInfo> ResolveLocalizedGameInfoAsync(string language, string twitchCategoryId, CancellationToken cancellationToken = default);
+        IAsyncEnumerable<GameInfo> EnumerateGameInfoAsync(string language, CancellationToken cancellationToken = default);
     }
 }

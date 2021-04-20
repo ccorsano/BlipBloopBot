@@ -61,7 +61,7 @@ namespace TwitchCategoriesCrawler
                 })
                 .UseConsoleLifetime();
 
-            await builder.RunCommandLineApplicationAsync<TwitchCategoriesCrawlerCommand>(args);
+            await builder.RunCommandLineApplicationAsync<Tool>(args);
         }
     }
 }
