@@ -63,6 +63,7 @@ namespace TwitchCategoriesCrawler
                     {
                         entryCount++;
                         csvWriter.WriteRecord(gameInfo);
+                        csvWriter.NextRecord();
                     }
                     _logger.LogInformation("Exported {totalCount} localized category entries for language {language}", entryCount, targetLanguage);
                 }
