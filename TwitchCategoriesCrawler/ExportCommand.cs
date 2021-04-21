@@ -1,6 +1,7 @@
 ﻿using BlipBloopBot.Storage;
 using Conceptoire.Twitch.API;
 using Conceptoire.Twitch.Constants;
+using Conceptoire.Twitch.Model;
 using Conceptoire.Twitch.Steam;
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -55,7 +56,9 @@ namespace TwitchCategoriesCrawler
             using (var textWriter = new StreamWriter(OutFile, false))
             using (var csvWriter = new CsvWriter(textWriter, configuration))
             {
-                foreach(var targetLanguage in TargetLanguages)
+                csvWriter.WriteHeader<GameInfo>();
+                csvWriter.NextRecord();
+                foreach (var targetLanguage in TargetLanguages)
                 {
                     _logger.LogInformation("Enumerating all generic category entries");
                     var entryCount = 0;
