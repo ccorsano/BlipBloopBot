@@ -23,7 +23,7 @@
         </th>
         <td>@_commandType</td>
         <td></td>
-        <td></td>
+        <td><div class="btn btn-danger" @onclick="OnDeleteCommand">Delete</div></td>
     }
     else
     {
@@ -60,6 +60,15 @@
     [Parameter]
     public string CommandType { get; set; }
 
+    [Parameter]
+    public Guid? CommandId { get; set; }
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnDelete { get; set; }
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnValidate { get; set; }
+
     private string _commandType;
 
     private CommandMetadata[] availableCommands;
@@ -71,6 +80,8 @@
         var client = await ClientProvider.GetConnectedClient();
         var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
         availableCommands = (await channelGrain.GetSupportedCommandTypes()).ToArray();
+
+        _isEditing = ! CommandId.HasValue;
 
         await base.OnInitializedAsync();
     }
@@ -87,10 +98,31 @@
         _isEditing = true;
     }
 
-    protected void OnConfirmCommand(MouseEventArgs evt, string key)
+    protected async Task OnDeleteCommand(MouseEventArgs evt)
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+        await channelGrain.DeleteCommand(CommandId.Value);
+        _isEditing = false;
+        if (OnDelete.HasDelegate)
+        { 
+            await OnDelete.InvokeAsync(evt);
+        }
+    }
+
+    protected async Task OnConfirmCommand(MouseEventArgs evt, string key)
     {
         CommandName = _commandName;
         CommandType = _commandType;
         _isEditing = false;
+
+        var client = await ClientProvider.GetConnectedClient();
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+        var commandStub = new CommandOptions { Name = CommandName, Aliases = new string[] { CommandName }, Type = CommandType };
+        await channelGrain.AddCommand(commandStub);
+        if (OnValidate.HasDelegate)
+        {
+            await OnValidate.InvokeAsync(evt);
+        }
     }
 }

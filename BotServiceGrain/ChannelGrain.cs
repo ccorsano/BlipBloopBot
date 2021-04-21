@@ -107,12 +107,23 @@ namespace BotServiceGrainInterface
             await OnChannelUpdate(_channelInfo);
         }
 
-        private Task AddCommand(CommandOptions options)
+        public async Task AddCommand(CommandOptions options)
         {
-            _channelBotState.State.Commands.Add(Guid.NewGuid(), options);
+            options.Id = Guid.NewGuid();
+            _logger.LogInformation("Adding bot command {commandId} ({commandName} - {commandType})", options.Id, options.Name, options.Type);
+            _channelBotState.State.Commands.Add(options.Id, options);
             var command = _registeredCommands[options.Type].Processor();
-            // WIP
-            throw new NotImplementedException();
+
+            var registration = _registeredCommands[options.Type];
+            await _chatBot.RegisterMessageProcessor(registration.ProcessorType, options);
+        }
+
+        public async Task DeleteCommand(Guid commandId)
+        {
+            var command = _channelBotState.State.Commands.GetValueOrDefault(commandId);
+            _logger.LogInformation("Removing bot command {commandId} ({commandName} - )", commandId, command?.Name, command?.Type);
+            _channelBotState.State.Commands.Remove(commandId);
+            await _chatBot.RemoveMessageProcessor(commandId);
         }
 
         public override Task OnDeactivateAsync()
