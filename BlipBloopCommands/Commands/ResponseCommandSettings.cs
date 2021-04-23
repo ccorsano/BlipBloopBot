@@ -9,6 +9,7 @@ namespace BlipBloopCommands.Commands
     {
         public string[] Aliases { get; set; }
         public string Message { get; set; }
+        public string BroadcasterId { get; set; }
 
         public void LoadFromOptions(CommandOptions options)
         {

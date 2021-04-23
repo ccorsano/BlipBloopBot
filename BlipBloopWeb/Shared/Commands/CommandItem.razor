@@ -44,6 +44,7 @@
         </td>
         <td>
             <select @bind="_commandType" class="form-select" aria-label="Bot command type selection">
+                <option value="">Select a command</option>
                 @foreach (var commandType in ServiceContext.AvailableCommands)
                 {
                     <option value="@commandType.Name">@commandType.Name</option>
@@ -121,6 +122,12 @@
     {
         CommandName = _commandName;
         CommandType = _commandType;
+
+        if (string.IsNullOrEmpty(_commandType))
+        {
+            return;
+        }
+
         _isEditing = false;
 
         var client = await ClientProvider.GetConnectedClient();

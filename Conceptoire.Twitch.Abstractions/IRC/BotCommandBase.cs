@@ -12,6 +12,7 @@ namespace Conceptoire.Twitch.IRC
         class ProcessorSettingsBase : IProcessorSettings
         {
             protected string[] Aliases { get; set; }
+            public string BroadcasterId { get; set; }
 
             private Dictionary<string, string> _parameters = new Dictionary<string, string>();
 
@@ -38,21 +39,23 @@ namespace Conceptoire.Twitch.IRC
 
         }
 
-        public virtual async Task<IProcessorSettings> CreateSettings(Guid processorId, IProcessorSettings settings)
+        public virtual async Task<IProcessorSettings> CreateSettings(Guid processorId, string broadcasterId, IProcessorSettings settings)
         {
             Id = processorId;
             if (settings == null)
             {
                 settings = new ProcessorSettingsBase();
             }
+            settings.BroadcasterId = broadcasterId;
             await OnChangeSettings(settings);
             return settings;
         }
 
-        public virtual async Task<IProcessorSettings> LoadSettings(Guid processorId, CommandOptions options)
+        public virtual async Task<IProcessorSettings> LoadSettings(Guid processorId, string broadcasterId, CommandOptions options)
         {
             Id = processorId;
             var settings = new ProcessorSettingsBase();
+            settings.BroadcasterId = broadcasterId;
             settings.LoadFromOptions(options);
             await OnChangeSettings(settings);
             return settings;
