@@ -24,7 +24,7 @@ namespace BlipBloopCommands.Commands
 
         public override bool CanHandleMessage(in ParsedIRCMessage message)
         {
-            return false;
+            return HasMatchingCommand(message, _settings.Aliases);
         }
 
         public override Task<IProcessorSettings> CreateSettings(Guid processorId, IProcessorSettings settings)
@@ -49,7 +49,9 @@ namespace BlipBloopCommands.Commands
 
         public override Task OnChangeSettings(IProcessorSettings settings)
         {
-            throw new NotImplementedException();
+            _message = (settings as ResponseCommandSettings).Message;
+            _asReply = false;
+            return Task.CompletedTask;
         }
 
         public override Task OnUpdateContext(IProcessorContext context)

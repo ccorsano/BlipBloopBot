@@ -26,6 +26,7 @@ using BlipBloopBot.Storage;
 using Orleans.Persistence;
 using BlipBloopCommands.Storage;
 using System.Net.Http;
+using BlipBloopCommands.Commands;
 
 namespace BotWorkerService
 {
@@ -155,7 +156,8 @@ namespace BotWorkerService
 
                 // Configure commands
                 services.AddCommand<GameSynopsisCommand>("GameSynopsis");
-                services.AddCommand<TracingMessageProcessor>("MessageTracer");
+                services.AddCommand<TracingMessageProcessor>("Logger");
+                services.AddCommand<ResponseCommandProcessor>("Response");
             });
             _siloHost = builder.Build();
         }

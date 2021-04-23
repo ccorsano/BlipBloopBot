@@ -11,7 +11,7 @@
             <th scope="col"></th>
             <th scope="col">Trigger</th>
             <th scope="col">Command type</th>
-            <th scope="col">Description</th>
+            @*<th scope="col">Description</th>*@
             <th scope="col">Parameters</th>
         </tr>
     </thead>
@@ -20,19 +20,19 @@
         {
             @foreach (var options in Commands)
             {
-                <CommandItem CommandName="@options.Name" CommandType="@options.Type" CommandId="@options.Id" OnDelete="OnDelete" OnValidate="OnValidate" />
+                <CommandItem CommandName="@options.Name" CommandType="@options.Type" Parameters="@options.Parameters" CommandId="@options.Id" OnDelete="OnDelete" OnValidate="OnValidate" />
             }
             @if (NewItem != null)
             {
-                <CommandItem CommandName="@NewItem.Name" CommandType="@NewItem.Type" CommandId="@NewItem.Id" />
+                <CommandItem CommandName="@NewItem.Name" CommandType="@NewItem.Type" Parameters="@NewItem.Parameters" CommandId="@NewItem.Id" />
             }
             else
             { 
                 <tr>
-                    <td><div class="btn btn-primary" @onclick="OnAdd">Add</div></td>
+                    <td><a class="btn btn-primary" @onclick="OnAdd"><i class="bi bi-plus-circle"></i></a></td>
                     <td></td>
                     <td></td>
-                    <td></td>
+                    @*<td></td>*@
                     <td></td>
                 </tr>
             }
@@ -69,7 +69,11 @@
 
     protected void OnAdd()
     {
-        Commands.Add(new CommandItemModel());
+        Commands.Add(new CommandItemModel
+        {
+            Aliases = new List<string>(),
+            Parameters = new Dictionary<string, string>(),
+        });
     }
 
     protected async Task OnDelete(MouseEventArgs evt)
@@ -94,5 +98,6 @@
         Name = options.Name,
         Aliases = options.Aliases?.ToList() ?? new List<string>(),
         Type = options.Type,
+        Parameters = options.Parameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
     };
 }
