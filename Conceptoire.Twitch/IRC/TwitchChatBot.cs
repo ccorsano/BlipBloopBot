@@ -66,7 +66,7 @@ namespace Conceptoire.Twitch.IRC
         {
             var processor = _serviceProvider.GetRequiredService(messageProcessorType) as IMessageProcessor;
 
-            await processor.LoadSettings(commandId, options);
+            await processor.LoadSettings(commandId, await _channelIdCompletionSource.Task, options);
             var initTask = Task.Run(async () =>
             {
                 if (_currentContext != null)

@@ -27,7 +27,7 @@ namespace BlipBloopCommands.Commands
             return HasMatchingCommand(message, _settings.Aliases);
         }
 
-        public override Task<IProcessorSettings> CreateSettings(Guid processorId, IProcessorSettings settings)
+        public override Task<IProcessorSettings> CreateSettings(Guid processorId, string broadcasterId, IProcessorSettings settings)
         {
             if (settings as ResponseCommandSettings == null)
             {
@@ -37,14 +37,14 @@ namespace BlipBloopCommands.Commands
             {
                 _settings = settings as ResponseCommandSettings;
             }
-            return base.CreateSettings(processorId, _settings);
+            return base.CreateSettings(processorId, broadcasterId, _settings);
         }
 
-        public override Task<IProcessorSettings> LoadSettings(Guid processorId, CommandOptions options)
+        public override Task<IProcessorSettings> LoadSettings(Guid processorId, string broadcasterId, CommandOptions options)
         {
             _settings = new ResponseCommandSettings();
             _settings.LoadFromOptions(options);
-            return base.CreateSettings(processorId, _settings);
+            return base.CreateSettings(processorId, broadcasterId, _settings);
         }
 
         public override Task OnChangeSettings(IProcessorSettings settings)

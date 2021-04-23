@@ -1,4 +1,5 @@
-﻿using Conceptoire.Twitch.Commands;
+﻿using Conceptoire.Twitch.API;
+using Conceptoire.Twitch.Commands;
 using Conceptoire.Twitch.Extensions;
 using Conceptoire.Twitch.IRC;
 using Conceptoire.Twitch.Model;
@@ -13,6 +14,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
     public class GameSynopsisCommand : BotCommandBase
     {
         private readonly ITwitchCategoryProvider _twitchCategoryProvider;
+        private readonly TwitchAPIClient _twitchAPIClient;
         private readonly ILogger _logger;
 
         private bool _asReply;
@@ -25,13 +27,15 @@ namespace BlipBloopCommands.Commands.GameSynopsis
 
         public GameSynopsisCommand(
             ITwitchCategoryProvider twitchProvider,
+            TwitchAPIClient twitchAPIClient,
             ILogger<GameSynopsisCommand> logger)
         {
             _twitchCategoryProvider = twitchProvider;
+            _twitchAPIClient = twitchAPIClient;
             _logger = logger;
         }
 
-        public override Task<IProcessorSettings> CreateSettings(Guid processorId, IProcessorSettings settings = null)
+        public override Task<IProcessorSettings> CreateSettings(Guid processorId, string broadcasterId, IProcessorSettings settings = null)
         {
             if (settings as GameSynopsisCommandSettings == null)
             {
@@ -42,15 +46,20 @@ namespace BlipBloopCommands.Commands.GameSynopsis
                 _settings = settings as GameSynopsisCommandSettings;
             }
 
-            return base.CreateSettings(processorId, _settings);
+            return base.CreateSettings(processorId, broadcasterId, _settings);
         }
 
-        public override Task<IProcessorSettings> LoadSettings(Guid processorId, CommandOptions options)
+        public override async Task<IProcessorSettings> LoadSettings(Guid processorId, string broadcasterId, CommandOptions options)
         {
             _settings = new GameSynopsisCommandSettings();
             _settings.LoadFromOptions(options);
 
-            return base.CreateSettings(processorId, _settings);
+            await base.CreateSettings(processorId, broadcasterId, _settings);
+
+            var context = await _twitchAPIClient.GetChannelInfoAsync(broadcasterId);
+            _gameInfo = await _twitchCategoryProvider.FetchChannelInfo(context.GameId, context.BroadcasterLanguage);
+
+            return _settings;
         }
 
         public override Task OnChangeSettings(IProcessorSettings settings)

@@ -12,6 +12,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
     {
         public string[] Aliases { get; set; }
         public bool AsReply { get; set; } = true;
+        public string BroadcasterId { get; set; }
 
         public void LoadFromOptions(CommandOptions options)
         {
