@@ -58,7 +58,7 @@ namespace Conceptoire.Twitch.IRC
 
         public Task<IMessageProcessor> RegisterMessageProcessor(Type messageProcessorType, CommandOptions options = null)
         {
-            var newCommandId = Guid.NewGuid();
+            var newCommandId = options?.Id ?? Guid.NewGuid();
             return RegisterMessageProcessor(newCommandId, messageProcessorType, options);
         }
 
@@ -80,6 +80,11 @@ namespace Conceptoire.Twitch.IRC
             });
 
             return processor;
+        }
+
+        public Task<bool> RemoveMessageProcessor(Guid processorId)
+        {
+            return Task.FromResult(_commandProcessors.TryRemove(processorId, out IMessageProcessor processor));
         }
 
         public Task StartAsync(CancellationToken externalCancellationToken)

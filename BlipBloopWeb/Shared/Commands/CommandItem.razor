@@ -8,9 +8,10 @@
 <tr>
     @if (!_isEditing)
     {
-        <td>
-            <a class="btn btn-lg" @onclick="@(e => OnEditCommand(e, CommandName))"><i class="bi bi-pencil-square"></i></a>
-        </td>
+    <td>
+        <a class="btn btn-danger btn-xsmall" @onclick="OnDeleteCommand"><i class="bi bi-x-square"></i></a>
+        <a class="btn btn-primary btn-xsmall" @onclick="@(e => OnEditCommand(e, CommandName))"><i class="bi bi-pencil-square"></i></a>
+    </td>
         <th>
             @if (CommandName == "*")
             {
@@ -22,20 +23,28 @@
             }
         </th>
         <td>@_commandType</td>
-        <td></td>
-        <td></td>
+        @*<td></td>*@
+        <td>
+            <ul>
+                @foreach (var parameter in Parameters)
+                {
+                    <li>@parameter.Key: @parameter.Value</li>
+                }
+            </ul>
+        </td>
     }
     else
     {
         <td>
-            <a class="btn btn-lg btn-primary" @onclick="@(e => OnConfirmCommand(e, CommandName))">Done</a>
+            <a class="btn btn-primary" @onclick="@(e => OnConfirmCommand(e, CommandName))"><i class="bi bi-check-square"></i></a>
+            <a class="btn btn-secondary" @onclick="@(e => OnCancelCommand(e, CommandName))"><i class="bi bi-slash-square"></i></a>
         </td>
         <td>
             <input @bind="_commandName" @bind:event="oninput" />
         </td>
         <td>
             <select @bind="_commandType" class="form-select" aria-label="Bot command type selection">
-                @foreach (var commandType in availableCommands)
+                @foreach (var commandType in ServiceContext.AvailableCommands)
                 {
                     <option value="@commandType.Name">@commandType.Name</option>
                 }
@@ -44,6 +53,7 @@
         <td>
         </td>
         <td>
+            <ParametersPropertyGrid Parameters="@Parameters" OnSave="OnSaveParameters"></ParametersPropertyGrid>
         </td>
     }
 </tr>
@@ -60,18 +70,25 @@
     [Parameter]
     public string CommandType { get; set; }
 
+    [Parameter]
+    public Guid? CommandId { get; set; }
+
+    [Parameter]
+    public Dictionary<string,string> Parameters { get; set; }
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnDelete { get; set; }
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnValidate { get; set; }
+
     private string _commandType;
 
-    private CommandMetadata[] availableCommands;
-
     private bool _isEditing = false;
+    private bool IsNew => !CommandId.HasValue;
 
     protected override async Task OnInitializedAsync()
     {
-        var client = await ClientProvider.GetConnectedClient();
-        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
-        availableCommands = (await channelGrain.GetSupportedCommandTypes()).ToArray();
-
         await base.OnInitializedAsync();
     }
 
@@ -79,6 +96,7 @@
     {
         _commandName = CommandName;
         _commandType = CommandType;
+        _isEditing = IsNew;
         base.OnParametersSet();
     }
 
@@ -87,10 +105,62 @@
         _isEditing = true;
     }
 
-    protected void OnConfirmCommand(MouseEventArgs evt, string key)
+    protected async Task OnDeleteCommand(MouseEventArgs evt)
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+        await channelGrain.DeleteCommand(CommandId.Value);
+        _isEditing = false;
+        if (OnDelete.HasDelegate)
+        {
+            await OnDelete.InvokeAsync(evt);
+        }
+    }
+
+    protected async Task OnConfirmCommand(MouseEventArgs evt, string key)
     {
         CommandName = _commandName;
         CommandType = _commandType;
         _isEditing = false;
+
+        var client = await ClientProvider.GetConnectedClient();
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+        if (IsNew)
+        {
+            var commandStub = new CommandOptions { Name = CommandName, Aliases = new string[] { CommandName }, Type = CommandType, Parameters = Parameters };
+            await channelGrain.AddCommand(commandStub);
+        }
+        else
+        {
+            var commandStub = new CommandOptions { Id = CommandId.Value, Name = CommandName, Aliases = new string[] { CommandName }, Type = CommandType, Parameters = Parameters };
+            await channelGrain.DeleteCommand(CommandId.Value);
+            await channelGrain.AddCommand(commandStub);
+        }
+        if (OnValidate.HasDelegate)
+        {
+            await OnValidate.InvokeAsync(evt);
+        }
+    }
+
+    protected async Task OnCancelCommand(MouseEventArgs evt, string key)
+    {
+        CommandName = _commandName;
+        CommandType = _commandType;
+        _isEditing = false;
+
+        if (OnDelete.HasDelegate)
+        {
+            await OnDelete.InvokeAsync(evt);
+        }
+    }
+
+    protected Task OnSaveParameters(Dictionary<string, string> parameters)
+    {
+        Parameters.Clear();
+        foreach((var k, var v) in parameters)
+        {
+            Parameters.Add(k, v);
+        }
+        return Task.CompletedTask;
     }
 }

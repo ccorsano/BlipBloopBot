@@ -1,4 +1,5 @@
-﻿@using BotServiceGrain
+﻿@using System.Linq 
+@using BotServiceGrain
 @using Conceptoire.Twitch.Commands
 @using Conceptoire.Twitch.Options
 @using Microsoft.Extensions.DependencyInjection
@@ -10,7 +11,7 @@
             <th scope="col"></th>
             <th scope="col">Trigger</th>
             <th scope="col">Command type</th>
-            <th scope="col">Description</th>
+            @*<th scope="col">Description</th>*@
             <th scope="col">Parameters</th>
         </tr>
     </thead>
@@ -19,7 +20,21 @@
         {
             @foreach (var options in Commands)
             {
-                <CommandItem CommandName="@options.Name" CommandType="@options.Type" />
+                <CommandItem CommandName="@options.Name" CommandType="@options.Type" Parameters="@options.Parameters" CommandId="@options.Id" OnDelete="OnDelete" OnValidate="OnValidate" />
+            }
+            @if (NewItem != null)
+            {
+                <CommandItem CommandName="@NewItem.Name" CommandType="@NewItem.Type" Parameters="@NewItem.Parameters" CommandId="@NewItem.Id" />
+            }
+            else
+            { 
+                <tr>
+                    <td><a class="btn btn-primary" @onclick="OnAdd"><i class="bi bi-plus-circle"></i></a></td>
+                    <td></td>
+                    <td></td>
+                    @*<td></td>*@
+                    <td></td>
+                </tr>
             }
         }
         else
@@ -39,15 +54,50 @@
     [CascadingParameter(Name = "ServiceContext")]
     public MainLayout ServiceContext { get; set; }
 
-    public CommandOptions[] Commands { get; set; }
+    public List<CommandItemModel> Commands { get; set; }
+    private CommandItemModel NewItem { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
         var client = await ClientProvider.GetConnectedClient();
         var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
 
-        Commands = await channelGrain.GetBotCommands();
+        Commands = (await channelGrain.GetBotCommands()).Select(ToCommandItem).ToList();
 
         await base.OnParametersSetAsync();
     }
+
+    protected void OnAdd()
+    {
+        Commands.Add(new CommandItemModel
+        {
+            Aliases = new List<string>(),
+            Parameters = new Dictionary<string, string>(),
+        });
+    }
+
+    protected async Task OnDelete(MouseEventArgs evt)
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+
+        Commands = (await channelGrain.GetBotCommands()).Select(ToCommandItem).ToList();
+    }
+
+    protected async Task OnValidate(MouseEventArgs evt)
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+
+        Commands = (await channelGrain.GetBotCommands()).Select(ToCommandItem).ToList();
+    }
+
+    protected CommandItemModel ToCommandItem(CommandOptions options) => new CommandItemModel
+    {
+        Id = options.Id,
+        Name = options.Name,
+        Aliases = options.Aliases?.ToList() ?? new List<string>(),
+        Type = options.Type,
+        Parameters = options.Parameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+    };
 }

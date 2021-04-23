@@ -69,30 +69,19 @@ namespace BotServiceGrainInterface
                     UserLogin = _options.TokenInfo.Login,
                 };
                 _channelBotState.State.AllowedBotAccounts.Add(defaultBotInfo);
-                _channelBotState.State.Commands = new Dictionary<Guid, Conceptoire.Twitch.Commands.CommandOptions>
-                {
-                    { Guid.NewGuid(), new CommandOptions
-                        {
-                            Name = "*",
-                            Type = "MessageTracer",
-                        }
-                    },
-                    { Guid.NewGuid(), new CommandOptions
-                        {
-                            Name = "jeu",
-                            Type = "GameSynopsis",
-                            Aliases = new string[]
-                            {
-                                "jeu",
-                                "game"
-                            },
-                            Parameters = new Dictionary<string, string>(),
-                        }
-                    }
-                };
+                _channelBotState.State.Commands = new Dictionary<Guid, Conceptoire.Twitch.Commands.CommandOptions>();
             }
             else
             {
+                // Temps: fix existing ids
+                foreach((var id, var command) in _channelBotState.State.Commands)
+                {
+                    command.Id = id;
+                    if (command.Type == "MessageTracer")
+                    {
+                        command.Type = "Logger";
+                    }
+                }
                 // Activate bot if it is supposed to be running
                 if (_channelBotState.State.IsActive)
                 {
@@ -107,12 +96,23 @@ namespace BotServiceGrainInterface
             await OnChannelUpdate(_channelInfo);
         }
 
-        private Task AddCommand(CommandOptions options)
+        public async Task AddCommand(CommandOptions options)
         {
-            _channelBotState.State.Commands.Add(Guid.NewGuid(), options);
+            options.Id = Guid.NewGuid();
+            _logger.LogInformation("Adding bot command {commandId} ({commandName} - {commandType})", options.Id, options.Name, options.Type);
+            _channelBotState.State.Commands.Add(options.Id, options);
             var command = _registeredCommands[options.Type].Processor();
-            // WIP
-            throw new NotImplementedException();
+
+            var registration = _registeredCommands[options.Type];
+            await _chatBot.RegisterMessageProcessor(registration.ProcessorType, options);
+        }
+
+        public async Task DeleteCommand(Guid commandId)
+        {
+            var command = _channelBotState.State.Commands.GetValueOrDefault(commandId);
+            _logger.LogInformation("Removing bot command {commandId} ({commandName} - )", commandId, command?.Name, command?.Type);
+            _channelBotState.State.Commands.Remove(commandId);
+            await _chatBot.RemoveMessageProcessor(commandId);
         }
 
         public override Task OnDeactivateAsync()
@@ -274,7 +274,7 @@ namespace BotServiceGrainInterface
             await _chatBot.UpdateContext(botContext);
         }
 
-        public Task<ChannelStaff> GetStaff()
+        Task<ChannelStaff> IChannelGrain.GetStaff()
         {
             return Task.FromResult(new ChannelStaff
             {
@@ -283,12 +283,12 @@ namespace BotServiceGrainInterface
             });
         }
 
-        public Task<CommandOptions[]> GetBotCommands()
+        Task<CommandOptions[]> IChannelGrain.GetBotCommands()
         {
             return Task.FromResult(_channelBotState.State.Commands.Values.ToArray());
         }
 
-        public Task UpdateBotCommands(CommandOptions[] commands)
+        Task IChannelGrain.UpdateBotCommands(CommandOptions[] commands)
         {
             lock(_botTask)
             {
@@ -298,7 +298,7 @@ namespace BotServiceGrainInterface
             return Task.CompletedTask;
         }
 
-        public Task<CommandMetadata[]> GetSupportedCommandTypes()
+        Task<CommandMetadata[]> IChannelGrain.GetSupportedCommandTypes()
         {
             return Task.FromResult(_registeredCommands.Values.Select(v => v.Metadata).ToArray());
         }

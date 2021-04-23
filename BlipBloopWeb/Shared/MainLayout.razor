@@ -1,6 +1,9 @@
 @inherits LayoutComponentBase
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @using System.Security.Claims
+@using BotServiceGrain
+@using Conceptoire.Twitch.Commands
+@inject IClientProvider ClientProvider
 
 <CascadingValue Name="ServiceContext" Value="this">
 
@@ -31,6 +34,7 @@
     public string UserId { get; private set; }
     public string OAuthToken { get; private set; }
     public string ActiveChannel { get; private set; }
+    public CommandMetadata[] AvailableCommands { get; private set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -42,6 +46,11 @@
             OAuthToken = authState.User.FindFirstValue("access_token");
             ActiveChannel = UserId;
             IsAuthenticated = true;
+
+            var client = await ClientProvider.GetConnectedClient();
+            var channelGrain = client.GetGrain<IChannelGrain>(UserId);
+            AvailableCommands = (await channelGrain.GetSupportedCommandTypes()).ToArray();
+
             StateHasChanged();
         }
 

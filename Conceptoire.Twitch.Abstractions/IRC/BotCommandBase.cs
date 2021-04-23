@@ -68,5 +68,20 @@ namespace Conceptoire.Twitch.IRC
         public abstract void OnMessage(in ParsedIRCMessage message, Action<OutgoingMessage> sendResponse);
 
         public abstract Task OnUpdateContext(IProcessorContext context);
+
+        protected bool HasMatchingCommand(in ParsedIRCMessage message, string[] aliases)
+        {
+            foreach (var botCommand in message.Trailing.ParseBotCommands('!'))
+            {
+                foreach (var alias in aliases)
+                {
+                    if (alias == botCommand)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
     }
 }

@@ -1,0 +1,108 @@
+﻿<table>
+    <thead>
+        <tr>
+            <th>
+                <a class="btn btn-primary btn-sm" @onclick="OnAdd"><i class="bi bi-plus-circle"></i></a>
+            </th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (_parameterList == null)
+        {
+            <tr>
+                <td colspan="3">
+                    <div class="spinner-grow spinner-grow-sm" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="spinner-grow spinner-grow-sm" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="spinner-grow spinner-grow-sm" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var property in _parameterList)
+            {
+                @if (property.IsEditing)
+                {
+                    <tr>
+                        <td><input @bind="property.Key" /></td>
+                        <td><input @bind="property.Value" /></td>
+                        <td>
+                            <a class="btn btn-primary btn-sm" @onclick="(e) => OnValidate(property)"><i class="bi bi-check-square"></i></a>
+                            <a class="btn btn-secondary btn-sm" @onclick="(e) => OnCancel(property)"><i class="bi bi-slash-square"></i></a>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    <tr>
+                        <td>@property.Key</td>
+                        <td>@property.Value</td>
+                        <td>
+                            <a class="btn btn-primary btn-sm" @onclick="(e) => OnEdit(property)"><i class="bi bi-pencil-square"></i></a>
+                        </td>
+                    </tr>
+                }
+            }
+        }
+    </tbody>
+</table>
+
+@code {
+    [Parameter]
+    public Dictionary<string, string> Parameters { get; set; }
+
+    [Parameter]
+    public EventCallback<Dictionary<string, string>> OnSave { get; set; }
+
+    private List<CommandProperty> _parameterList { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _parameterList = Parameters.Select(
+            kvp => new CommandProperty { Key = kvp.Key, Value = kvp.Value, IsEditing = false }).ToList();
+
+        base.OnParametersSet();
+    }
+
+    protected void OnAdd()
+    {
+        _parameterList.Add(
+            new CommandProperty { Key = "", Value = "", IsEditing = true, IsNew = true });
+    }
+
+    protected void OnEdit(CommandProperty property)
+    {
+        property.IsEditing = true;
+    }
+
+    protected async Task OnValidate(CommandProperty property)
+    {
+        property.IsEditing = false;
+        property.IsNew = false;
+
+        if (OnSave.HasDelegate)
+        {
+            await OnSave.InvokeAsync(_parameterList.ToDictionary(p => p.Key, p => p.Value));
+        }
+    }
+
+    protected void OnCancel(CommandProperty property)
+    {
+        if (property.IsNew)
+        {
+            _parameterList.Remove(property);
+        }
+        else
+        {
+            property.IsEditing = false;
+        }
+    }
+}
