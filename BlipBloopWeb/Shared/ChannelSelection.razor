@@ -1,0 +1,54 @@
+﻿@using BotServiceGrainInterface.Model
+
+<AuthorizeView>
+    <Authorized>
+        @if (ServiceContext.ActiveChannel != null)
+        {
+            <div class="btn-group">
+                <a class="nav-link dropdown-toggle btn" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+                    <i class="bi bi-play-btn"></i>
+                    @ServiceContext.ActiveChannel.BroadcasterName
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li class="list-group-item">
+                        Managing
+                        <div class="fw-bold">@ServiceContext.ActiveChannel.BroadcasterName</div>
+                    </li>
+                    <li class="list-group-item">
+                        Other channels
+                    </li>
+                    @foreach (var channel in ServiceContext.AvailableChannels)
+                    {
+                        if (channel != ServiceContext.ActiveChannel)
+                        {
+                            <li class="list-group-item list-group-item-action">
+                                <a class="ms-0 text-decoration-none" @onclick="() => SelectChannel(channel.BroadcasterId)">
+                                    <i class="bi @(
+                                channel.UserRole switch {
+                                    ChannelRole.Broadcaster => "bi-broadcast bi-red",
+                                    ChannelRole.Editor => "bi-pen",
+                                    ChannelRole.Moderator => "bi-shield",
+                                    _ => ""
+                                } )"></i>
+                                    @channel.BroadcasterName
+                                </a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        }
+    </Authorized>
+    <NotAuthorized>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+
+    private void SelectChannel(string channelId)
+    {
+        ServiceContext.SetActiveChannel(channelId);
+    }
+}

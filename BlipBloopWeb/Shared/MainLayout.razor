@@ -14,6 +14,7 @@
 
         <div class="main">
             <div class="top-row px-4">
+                <ChannelSelection />
                 <TwitchLogin />
             </div>
 
@@ -33,7 +34,8 @@
     public string UserName { get; private set; }
     public string UserId { get; private set; }
     public string OAuthToken { get; private set; }
-    public string ActiveChannel { get; private set; }
+    public AvailableChannel ActiveChannel { get; private set; }
+    public AvailableChannel[] AvailableChannels { get; private set; }
     public CommandMetadata[] AvailableCommands { get; private set; }
 
     protected override async Task OnInitializedAsync()
@@ -44,12 +46,30 @@
             UserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
             UserName = authState.User.FindFirstValue("preferred_username");
             OAuthToken = authState.User.FindFirstValue("access_token");
-            ActiveChannel = UserId;
+
             IsAuthenticated = true;
 
             var client = await ClientProvider.GetConnectedClient();
             var channelGrain = client.GetGrain<IChannelGrain>(UserId);
             AvailableCommands = (await channelGrain.GetSupportedCommandTypes()).ToArray();
+
+            var userGrain = client.GetGrain<IUserGrain>(UserId);
+            var roles = await userGrain.GetRoles();
+
+            AvailableChannels = roles.Select(r => new AvailableChannel
+            {
+                BroadcasterId = r.ChannelId,
+                UserRole = r.Role,
+                BroadcasterName = r.ChannelName,
+            }).ToArray();
+            if (AvailableChannels.Any())
+            {
+                ActiveChannel = AvailableChannels[0];
+            }
+            else
+            {
+                ActiveChannel = null;
+            }
 
             StateHasChanged();
         }
@@ -59,9 +79,9 @@
 
     public void SetActiveChannel(string activeChannel)
     {
-        if (ActiveChannel != activeChannel)
+        if (ActiveChannel.BroadcasterName != activeChannel)
         {
-            ActiveChannel = activeChannel;
+            ActiveChannel = AvailableChannels.First(a => a.BroadcasterName == activeChannel);
             StateHasChanged();
         }
     }
