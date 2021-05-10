@@ -23,6 +23,7 @@ using Conceptoire.Twitch.Authentication;
 using Microsoft.Extensions.Options;
 using BlipBloopBot.Storage;
 using BlipBloopCommands.Storage;
+using MudBlazor.Services;
 
 namespace BlipBloopWeb
 {
@@ -162,6 +163,7 @@ namespace BlipBloopWeb
 
             services.AddRazorPages();
             services.AddServerSideBlazor();
+            services.AddMudServices();
             services.AddAuthorizationCore();
         }
 

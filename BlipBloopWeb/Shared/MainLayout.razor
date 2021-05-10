@@ -7,21 +7,17 @@
 
 <CascadingValue Name="ServiceContext" Value="this">
 
-    <div class="page">
-        <div class="sidebar">
+    <MudLayout>
+        <MudAppBar Elevation="1">
+            <TwitchLogin />
+        </MudAppBar>
+        <MudDrawer @bind-Open="_drawerOpen" Elevation="2">
             <NavMenu />
-        </div>
-
-        <div class="main">
-            <div class="top-row px-4">
-                <TwitchLogin />
-            </div>
-
-            <div class="content px-4">
-                @Body
-            </div>
-        </div>
-    </div>
+        </MudDrawer>
+        <MudMainContent>
+            @Body
+        </MudMainContent>
+    </MudLayout>
 
 </CascadingValue>
 
@@ -35,6 +31,8 @@
     public string OAuthToken { get; private set; }
     public string ActiveChannel { get; private set; }
     public CommandMetadata[] AvailableCommands { get; private set; }
+
+    private bool _drawerOpen = true;
 
     protected override async Task OnInitializedAsync()
     {

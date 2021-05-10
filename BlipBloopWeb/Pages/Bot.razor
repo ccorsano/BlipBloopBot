@@ -1,7 +1,9 @@
 ﻿@page "/bot"
 @using Conceptoire.Twitch.Options
 
-<h1 class="display-1"><i class="bi bi-cpu-fill"></i> Bot</h1>
+<MudContainer>
+    <MudText Typo="Typo.h1"><MudIcon Icon="@Icons.Filled.Psychology"/> Bot</MudText>
+</MudContainer>
 
 @if (ServiceContext.IsChannelIntegrationActive)
 {

@@ -2,37 +2,44 @@
 @using Conceptoire.Twitch.API
 @inject IClientProvider ClientProvider
 
-<h3>Staff</h3>
+<MudText Typo="Typo.h6">Staff</MudText>
 
-
-<div class="row col-sm" style="width: 40rem;">
-    <div class="col">
-        <div class="card" style="width: 18rem;">
-            <div class="card-header">
-                Editors
-            </div>
-            <ul class="list-group list-group-flush">
-                @foreach (var editor in _channelEditors)
-                {
-                    <li class="list-group-item"><span class="bi bi-person"></span> @editor.UserName</li>
-                }
-            </ul>
-        </div>
-    </div>
-    <div class="col">
-        <div class="card" style="width: 18rem;">
-            <div class="card-header">
-                Moderators
-            </div>
-            <ul class="list-group list-group-flush">
-                @foreach (var moderator in _channelModerators)
-                {
-                    <li class="list-group-item"><span class="bi bi-person"></span> @moderator.UserName</li>
-                }
-            </ul>
-        </div>
-    </div>
-</div>
+<MudGrid>
+    <MudItem xs="6">
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText>Editors</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudList>
+                    @foreach (var editor in _channelEditors)
+                    {
+                        <MudListItem Icon="@Icons.Filled.Person">@editor.UserName</MudListItem>
+                    }
+                </MudList>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem  xs="6">
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText>Moderators</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudList>
+                    @foreach (var moderator in _channelModerators)
+                    {
+                        <MudListItem Icon="@Icons.Filled.Person">@moderator.UserName</MudListItem>
+                    }
+                </MudList>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
 
 @code {
     [Parameter]
