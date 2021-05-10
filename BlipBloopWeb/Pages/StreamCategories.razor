@@ -1,0 +1,14 @@
+﻿@using BlipBloopWeb.Shared.Commands.GameSynopsis
+@page "/categories"
+
+<h1 class="display-1"><i class="bi bi-collection-play"></i> Stream Categories</h1>
+
+<h2>Custom synopsis</h2>
+
+<h2>Synopsis database</h2>
+<SynopsisBrowser></SynopsisBrowser>
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+}

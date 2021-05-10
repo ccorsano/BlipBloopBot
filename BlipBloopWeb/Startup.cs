@@ -21,6 +21,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Conceptoire.Twitch.Authentication;
 using Microsoft.Extensions.Options;
+using BlipBloopBot.Storage;
+using BlipBloopCommands.Storage;
 
 namespace BlipBloopWeb
 {
@@ -98,6 +100,8 @@ namespace BlipBloopWeb
                     .FromAppCredentials(twitchOptions.ClientId, twitchOptions.ClientSecret)
                     .Build());
             services.AddSingleton<TwitchAPIClient>();
+            services.Configure<AzureGameLocalizationStoreOptions>(Configuration.GetSection("loc:azure"));
+            services.AddSingleton<IGameLocalizationStore, AzureStorageGameLocalizationStore>();
             services.AddHttpClient();
 
             // Identity
