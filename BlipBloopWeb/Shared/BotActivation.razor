@@ -3,11 +3,11 @@
 
 @if (ServiceContext.IsBotRunning)
 {
-    <a class="btn btn-outline-primary btn-lg" @onclick="DeactivateBotAsync">Stop bot service</a>
+    <MudButton FullWidth="true" Color="Color.Primary" OnClick="DeactivateBotAsync" Variant="Variant.Filled">Stop bot service</MudButton>
 }
 else
 {
-    <a class="btn btn-primary btn-lg" @onclick="ActivateBotAsync">Start bot service</a>
+    <MudButton FullWidth="true" Color="Color.Primary" OnClick="ActivateBotAsync" Variant="Variant.Filled">Start bot service</MudButton>
 }
 
 @code {

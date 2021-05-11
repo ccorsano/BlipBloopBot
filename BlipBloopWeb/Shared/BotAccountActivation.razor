@@ -18,6 +18,32 @@
         </MudText>
         <MudText Typo="Typo.h6">Currently allowed channels</MudText>
 
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="4">
+                <MudAutocomplete T="HelixUsersGetResult" Label="Allow channel" @bind-Value="_searchedChannel" SearchFunc="@AutocompleteChannel" ToStringFunc="u => u?.DisplayName" />
+            </MudItem>
+        </MudGrid>
+        <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+        <MudGrid>
+            @if (_searchResults != null)
+            {
+                @foreach (var user in _searchResults)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCard Class="ma-6">
+                            <MudCardMedia Image="@user.ProfileImageUrl.AbsoluteUri" Title="@user.DisplayName" />
+                            <MudCardContent>
+                                <MudText Typo="Typo.h5">@user.DisplayName</MudText>
+                                <MudText Typo="Typo.body1">@user.Description</MudText>
+                            </MudCardContent>
+                            <MudCardActions>
+                                <MudButton OnClick="(_) => SelectChannel(user)" FullWidth="true">Allow</MudButton>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                }
+            }
+        </MudGrid>
         @if (_isLoadingAllowList)
         {
             <MudProgressLinear Indeterminate="true"></MudProgressLinear>
@@ -30,18 +56,21 @@
         }
         else
         {
-            <MudGrid xs="8">
+            <MudGrid xs="12">
                 @foreach (var channel in _allowedChannels)
                 {
-                <MudCard>
-                    <MudCardMedia Image="@channel.ProfileImageUrl.AbsoluteUri" Title="@channel.DisplayName" />
-                    <MudCardContent>
-                        <MudText Typo="Typo.h5">@channel.DisplayName</MudText>
-                        <MudText Typo="Typo.body2">@channel.Description</MudText>
-                        <MudIconButton OnClick="(_) =>RevokeChannel(channel.Id)" Icon="@Icons.Filled.Delete"></MudIconButton>
-                    </MudCardContent>
-
-                </MudCard>
+                    <MudItem xs="6" sm="4" md="3">
+                        <MudCard>
+                            <MudCardMedia Image="@channel.ProfileImageUrl.AbsoluteUri" Title="@channel.DisplayName" />
+                            <MudCardContent>
+                                <MudText Typo="Typo.h5">@channel.DisplayName</MudText>
+                                <MudText Typo="Typo.body2">@channel.Description</MudText>
+                            </MudCardContent>
+                            <MudCardActions>
+                                <MudIconButton OnClick="(_) =>RevokeChannel(channel.Id)" Icon="@Icons.Filled.Delete"></MudIconButton>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
                 }
             </MudGrid>
         }
@@ -57,6 +86,7 @@
     private bool _isLoadingAllowList = true;
     private string _channelSearch;
     private HelixUsersGetResult[] _searchResults;
+    private HelixUsersGetResult _searchedChannel;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -76,16 +106,22 @@
             _allowedChannels = new HelixUsersGetResult[0];
         }
         else
-        { 
+        {
             _allowedChannels = await twitchApiClient.GetUsersByIdAsync(allowedChannels.Select(c => c.BroadcasterId));
         }
 
         _isLoadingAllowList = false;
     }
 
-    private async Task SearchChannel(ChangeEventArgs evt)
+    private async Task<IEnumerable<HelixUsersGetResult>> AutocompleteChannel(string searchText)
     {
-        _channelSearch = evt.Value as string;
+        await SearchChannel(searchText ?? "");
+        return _searchResults;
+    }
+
+    private async Task SearchChannel(string searchText)
+    {
+        _channelSearch = searchText as string;
         if (_channelSearch.Length < 3)
         {
             _searchResults = new HelixUsersGetResult[0];

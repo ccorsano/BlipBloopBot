@@ -1,0 +1,93 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudTable T="KeyValuePair<string,string>" Items="Parameters" OnRowClick="OnRowClicked" OnCommitEditClick="OnCommitEdit">
+            <ToolBarContent>
+                <MudText>Parameters</MudText>
+                <MudToolBarSpacer />
+                <MudIconButton Icon="@Icons.Filled.AddCircle" OnClick="(_) => AddParameter()" />
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Key</MudTh>
+                <MudTh>Value</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Key</MudTd>
+                <MudTd>@context.Value</MudTd>
+            </RowTemplate>
+            <RowEditingTemplate>
+                <MudTd>
+                    <MudTextField @bind-Value="SelectedKey"></MudTextField>
+                </MudTd>
+                <MudTd>
+                    <MudTextField @bind-Value="SelectedValue"></MudTextField>
+                </MudTd>
+                <MudTd Class="pa-0">
+                    <MudTooltip Text="Delete">
+                        <MudIconButton Class="pa-0" Icon="@Icons.Filled.Delete" OnClick="(_) => Delete()" />
+                    </MudTooltip>
+                </MudTd>
+            </RowEditingTemplate>
+        </MudTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Ok">Accept</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public Dictionary<string, string> Parameters { get; set; }
+
+    private string SelectedKey { get; set; }
+    private string ModifiedKey { get; set; }
+    private string SelectedValue { get; set; }
+
+    private void OnRowClicked(TableRowClickEventArgs<KeyValuePair<string,string>> evt)
+    {
+        SelectedKey = evt.Item.Key;
+        ModifiedKey = evt.Item.Key;
+        SelectedValue = evt.Item.Value;
+    }
+
+    private void OnCommitEdit(MouseEventArgs evt)
+    {
+        if (Parameters.ContainsKey(SelectedKey))
+        {
+            Parameters.Remove(SelectedKey);
+        }
+        Parameters.Add(ModifiedKey, SelectedValue);
+    }
+
+    private void Delete()
+    {
+        if (Parameters.ContainsKey(SelectedKey))
+        {
+            Parameters.Remove(SelectedKey);
+        }
+    }
+
+    private void AddParameter()
+    {
+        Parameters.Add($"key_{Parameters.Count}", $"value_{Parameters.Count}");
+    }
+
+    private void DeleteParameter(KeyValuePair<string,string> parameter)
+    {
+        Parameters.Remove(parameter.Key);
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Close(DialogResult.Cancel());
+    }
+
+    private void Ok()
+    {
+        OnCommitEdit(null);
+        MudDialog.Close(DialogResult.Ok(Parameters));
+    }
+}

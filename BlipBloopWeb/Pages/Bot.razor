@@ -2,26 +2,26 @@
 @using Conceptoire.Twitch.Options
 
 <MudContainer>
-    <MudText Typo="Typo.h1"><MudIcon Icon="@Icons.Filled.Psychology"/> Bot</MudText>
+    <MudText Typo="Typo.h3"><MudIcon Icon="@Icons.Filled.Psychology" Size="Size.Large" /> Bot</MudText>
+
+    @if (ServiceContext.IsChannelIntegrationActive)
+    {
+        <BotActivation />
+
+        <BotAccountSelection />
+
+        <MudPaper>
+            <MudText Typo="Typo.h4">Commands configuration</MudText>
+            <BlipBloopWeb.Shared.Commands.CommandGrid />
+        </MudPaper>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Warning">
+            Channel integration is currently inactive.
+        </MudAlert>
+    }
 </MudContainer>
-
-@if (ServiceContext.IsChannelIntegrationActive)
-{
-
-    <BotAccountSelection />
-    <BotActivation />
-
-    <div>
-        <h4>Commands configuration</h4>
-        <BlipBloopWeb.Shared.Commands.CommandGrid />
-    </div>
-}
-else
-{
-    <div class="alert alert-secondary" role="alert">
-        Channel integration is currently inactive.
-    </div>
-}
 
 @code {
     [CascadingParameter(Name = "ServiceContext")]
