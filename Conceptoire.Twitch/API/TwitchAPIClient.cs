@@ -184,9 +184,12 @@ namespace Conceptoire.Twitch.API
         }
 
         public IAsyncEnumerable<HelixCategoriesSearchEntry> EnumerateTwitchCategoriesAsync(CancellationToken cancellationToken = default)
+            => EnumerateTwitchCategoriesAsync("*", cancellationToken);
+
+        public IAsyncEnumerable<HelixCategoriesSearchEntry> EnumerateTwitchCategoriesAsync(string query, CancellationToken cancellationToken = default)
         {
             var baseUri = "https://api.twitch.tv/helix/search/categories";
-            baseUri = QueryHelpers.AddQueryString(baseUri, "query", "*");
+            baseUri = QueryHelpers.AddQueryString(baseUri, "query", query);
             return EnumerateHelixAPIAsync<HelixCategoriesSearchEntry>(baseUri);
         }
 

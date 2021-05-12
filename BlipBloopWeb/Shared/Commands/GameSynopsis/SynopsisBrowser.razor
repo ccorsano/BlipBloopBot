@@ -42,13 +42,10 @@
     private async Task<TableData<(GameInfo info, HelixCategoriesSearchEntry category)>> ServerReload(TableState state)
     {
         List<(GameInfo info, HelixCategoriesSearchEntry category)> categoryList = new List<(GameInfo info, HelixCategoriesSearchEntry category)>();
-        await foreach (var category in TwitchClient.EnumerateTwitchCategoriesAsync())
+        await foreach (var category in TwitchClient.EnumerateTwitchCategoriesAsync(string.IsNullOrEmpty(searchString) ? "*" : searchString.ToLowerInvariant()))
         {
             var info = await LocStore.ResolveLocalizedGameInfoAsync("en", category.Id);
-            if (string.IsNullOrEmpty(searchString) || (info?.Summary?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? category.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)))
-            {
-                categoryList.Add((info, category));
-            }
+            categoryList.Add((info, category));
             if (categoryList.Count >= 10)
                 break;
         }
