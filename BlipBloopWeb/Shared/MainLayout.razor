@@ -9,6 +9,8 @@
 
     <MudLayout>
         <MudAppBar Elevation="1">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="() => { _drawerOpen = !_drawerOpen; }" />
+            <MudAppBarSpacer />
             <TwitchLogin />
         </MudAppBar>
         <MudDrawer @bind-Open="_drawerOpen" Elevation="2">
