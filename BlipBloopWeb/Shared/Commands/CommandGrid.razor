@@ -6,7 +6,7 @@
 @inject IClientProvider ClientProvider
 @inject IDialogService DialogService
 
-<MudTable Items="@Commands" @bind-SelectedItem="SelectedItem" Context="command" OnCommitEditClick="@(c => OnConfirmCommand(c))">
+<MudTable Items="@Commands" @bind-SelectedItem="SelectedItem" Context="command" OnCommitEditClick="@(c => OnConfirmCommand(c))" @ref="Table">
     <ToolBarContent>
         <MudText Typo="Typo.h6">Commands</MudText>
         <MudToolBarSpacer />
@@ -57,12 +57,13 @@
 </MudTable>
 
 @code {
-    [CascadingParameter(Name = "ServiceContext")]
-    public MainLayout ServiceContext { get; set; }
+        [CascadingParameter(Name = "ServiceContext")]
+        public MainLayout ServiceContext { get; set; }
 
     public List<CommandItemModel> Commands { get; set; }
     private CommandItemModel NewItem { get; set; }
     private CommandItemModel SelectedItem { get; set; }
+    private MudTable<CommandItemModel> Table { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -76,16 +77,20 @@
 
     protected async Task EditParameters(CommandItemModel command)
     {
+        DialogOptions options = new DialogOptions() {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
         var dialogParameters = new DialogParameters();
         dialogParameters.Add("Parameters", command.Parameters);
-        var result = await DialogService.Show<ParametersEditDialog>("Parameters", dialogParameters).Result;
+        var result = await DialogService.Show<ParametersEditDialog>("Parameters", dialogParameters, options).Result;
 
         if (result.Cancelled)
         {
             return;
         }
 
-        command.Parameters = ((Dictionary<string, string>) result.Data);
+        command.Parameters = ((List<CommandProperty>) result.Data);
     }
 
     protected void OnAdd()
@@ -93,9 +98,10 @@
         Commands.Add(new CommandItemModel
         {
             Aliases = new List<string>(),
-            Parameters = new Dictionary<string, string>(),
+            Parameters = new List<CommandProperty>(),
         });
         SelectedItem = Commands.Last();
+        Table.SetEditingItem(SelectedItem);
     }
 
     protected async Task Delete(CommandItemModel command)
@@ -131,7 +137,11 @@
         Name = options.Name,
         Aliases = options.Aliases?.ToList() ?? new List<string>(),
         Type = options.Type,
-        Parameters = options.Parameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+        Parameters = options.Parameters.Select(option => new CommandProperty
+        {
+            Key = option.Key,
+            Value = option.Value,
+        }).ToList(),
     };
 
     protected async Task OnConfirmCommand(MouseEventArgs evt)
@@ -146,12 +156,23 @@
 
         if (!SelectedItem.Id.HasValue)
         {
-            var commandStub = new CommandOptions { Name = SelectedItem.Name, Aliases = new string[] { SelectedItem.Name }, Type = SelectedItem.Type, Parameters = SelectedItem.Parameters };
+            var commandStub = new CommandOptions {
+                Name = SelectedItem.Name,
+                Aliases = new string[] { SelectedItem.Name },
+                Type = SelectedItem.Type,
+                Parameters = SelectedItem.Parameters.ToDictionary(p => p.Key, p => p.Value),
+            };
             await channelGrain.AddCommand(commandStub);
         }
         else
         {
-            var commandStub = new CommandOptions { Id = SelectedItem.Id.Value, Name = SelectedItem.Name, Aliases = new string[] { SelectedItem.Name }, Type = SelectedItem.Type, Parameters = SelectedItem.Parameters };
+            var commandStub = new CommandOptions {
+                Id = SelectedItem.Id.Value,
+                Name = SelectedItem.Name,
+                Aliases = new string[] { SelectedItem.Name },
+                Type = SelectedItem.Type,
+                Parameters = SelectedItem.Parameters.ToDictionary(p => p.Key, p => p.Value),
+            };
             await channelGrain.DeleteCommand(SelectedItem.Id.Value);
             await channelGrain.AddCommand(commandStub);
         }

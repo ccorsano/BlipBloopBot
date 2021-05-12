@@ -1,0 +1,59 @@
+﻿<MudTable T="CommandProperty" @bind-SelectedItem="SelectedItem" Items="Parameters" @ref="PropertyTable">
+    <ToolBarContent>
+        <MudText>Parameters</MudText>
+        <MudToolBarSpacer />
+        <MudIconButton Icon="@Icons.Filled.AddCircle" OnClick="(_) => AddParameter()" />
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Key</MudTh>
+        <MudTh>Value</MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Key</MudTd>
+        <MudTd>@context.Value</MudTd>
+        <MudTd></MudTd>
+    </RowTemplate>
+    <RowEditingTemplate>
+        <MudTd>
+            <MudTextField @bind-Value="SelectedItem.Key"></MudTextField>
+        </MudTd>
+        <MudTd>
+            <MudTextField @bind-Value="SelectedItem.Value"></MudTextField>
+        </MudTd>
+        <MudTd Class="pa-0">
+            <MudTooltip Text="Delete">
+                <MudIconButton Class="pa-0" Icon="@Icons.Filled.Delete" OnClick="(_) => Delete()" />
+            </MudTooltip>
+        </MudTd>
+    </RowEditingTemplate>
+</MudTable>
+
+@code {
+    [Parameter]
+    public List<CommandProperty> Parameters { get; set; } = new List<CommandProperty>();
+
+    private CommandProperty SelectedItem { get; set; }
+    private MudTable<CommandProperty> PropertyTable;
+
+    private void Delete()
+    {
+        Parameters.Remove(SelectedItem);
+    }
+
+    private void AddParameter()
+    {
+        Parameters.Add(new CommandProperty
+        {
+            Key = $"key_{Parameters.Count}",
+            Value = $"value_{Parameters.Count}",
+        });
+        SelectedItem = Parameters.Last();
+        PropertyTable.SetEditingItem(SelectedItem);
+    }
+
+    private void DeleteParameter(CommandProperty parameter)
+    {
+        Parameters.Remove(parameter);
+    }
+}

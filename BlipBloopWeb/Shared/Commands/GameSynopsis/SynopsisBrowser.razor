@@ -5,65 +5,64 @@
 @inject TwitchAPIClient TwitchClient
 @inject IGameLocalizationStore LocStore
 
-<table>
-    <thead>
-        <tr>
-            <th></th>
-            <th>Category Name</th>
-            <th>Description</th>
-            <th>Source</th>
-        </tr>
-    </thead>
-    @if (Categories != null)
-    {
-        <tbody>
-            @foreach (var category in Categories)
-            {
-                <tr>
-                    <td><img src="@category.category.BoxArtUri" /></td>
-                    <td>@(category.info?.Name ?? category.category.Name)</td>
-                    <td>@(category.info?.Summary)</td>
-                    <td>@(category.info?.Source)</td>
-                </tr>
-            }
-        </tbody>
-
-    }
-    else
-    {
-        <tbody>
-            <tr>
-                <td colspan="4"><div class="spinner-border"></div></td>
-            </tr>
-        </tbody>
-
-    }
-</table>
+<MudTable Context="category" ServerData="state => ServerReload(state)" @ref="table">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Categories</MudText>
+        <MudToolBarSpacer />
+        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh></MudTh>
+        <MudTh>Category Name</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh>Source</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd><img src="@category.category.BoxArtUri" /></MudTd>
+        <MudTd>@(category.info?.Name ?? category.category.Name)</MudTd>
+        <MudTd>@((MarkupString) category.info?.Summary)</MudTd>
+        <MudTd>@(category.info?.Source)</MudTd>
+    </RowTemplate>
+</MudTable>
 
 @code {
     [CascadingParameter(Name = "ServiceContext")]
     public MainLayout ServiceContext { get; set; }
+
+    private MudTable<(GameInfo info, HelixCategoriesSearchEntry category)> table;
+    private string searchString;
 
     private (GameInfo info, HelixCategoriesSearchEntry category)[] Categories { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-
-        await LoadCategories();
     }
 
-    protected async Task LoadCategories()
+    private async Task<TableData<(GameInfo info, HelixCategoriesSearchEntry category)>> ServerReload(TableState state)
     {
         List<(GameInfo info, HelixCategoriesSearchEntry category)> categoryList = new List<(GameInfo info, HelixCategoriesSearchEntry category)>();
         await foreach (var category in TwitchClient.EnumerateTwitchCategoriesAsync())
         {
             var info = await LocStore.ResolveLocalizedGameInfoAsync("en", category.Id);
-            categoryList.Add((info, category));
+            if (string.IsNullOrEmpty(searchString) || (info?.Summary?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? category.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)))
+            {
+                categoryList.Add((info, category));
+            }
             if (categoryList.Count >= 10)
                 break;
         }
-        Categories = categoryList.ToArray();
+        return new TableData<(GameInfo info, HelixCategoriesSearchEntry category)>
+        {
+            Items = categoryList.ToArray(),
+            TotalItems = categoryList.Count,
+        };
+    }
+
+    private void OnSearch(string text)
+    {
+        searchString = text;
+        table.ReloadServerData();
     }
 
 }
