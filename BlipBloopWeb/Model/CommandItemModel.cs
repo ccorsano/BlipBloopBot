@@ -11,6 +11,6 @@ namespace BlipBloopWeb.Model
         public string Name { get; set; }
         public List<string> Aliases { get; set; }
         public string Type { get; set; }
-        public Dictionary<string,string> Parameters { get; set; }
+        public List<CommandProperty> Parameters { get; set; }
     }
 }

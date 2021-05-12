@@ -2,36 +2,33 @@
 @using BotServiceGrain
 @inject IClientProvider ClientProvider
 
-    <div class="card">
-        <div class="card-header">
-            Channel Activation
-        </div>
-        <div class="card-body">
-            @if (_isLoading)
-            {
-                <div class="spinner-border m-5" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            }
-            else if (ServiceContext.IsChannelIntegrationActive)
-            {
-                <h5>
-                    <i class="bi bi-check2-square bi-lg green" style="font-size: 2rem; color: forestgreen;"></i>
-                    Channel integration is active.
-                </h5>
-
-                <ChannelStaffList ChannelId="@ServiceContext.UserId" />
-            }
-            else
-            {
-                <h5>
-                    <i class="bi bi-x-square bi-lg" style="font-size: 2rem; color: black;"></i>
-                    Channel integration is inactive.
-                </h5>
-                <a class="btn btn-primary btn-lg" @onclick="ActivateChannelAsync">Activate channel integration</a>
-            }
-        </div>
-    </div>
+<MudCard>
+    <MudCardHeader>
+        <MudText>Channel Activation</MudText>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (_isLoading)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        }
+        else if (ServiceContext.IsChannelIntegrationActive)
+        {
+            <MudText Typo="Typo.h5">
+                <MudIcon Icon="@Icons.Outlined.CheckBox" Color="Color.Success"></MudIcon>
+                Channel integration is active.
+            </MudText>
+            <ChannelStaffList ChannelId="@ServiceContext.UserId" />
+        }
+        else
+        {
+            <MudText Typo="Typo.h5">
+                <MudIcon Icon="@Icons.Outlined.CheckBoxOutlineBlank" Color="Color.Dark"></MudIcon>
+                Channel integration is inactive.
+            </MudText>
+            <MudLink @onclick="ActivateChannelAsync">Activate channel integration</MudLink>
+        }
+    </MudCardContent>
+</MudCard>
 
 @code {
     [CascadingParameter(Name = "ServiceContext")]

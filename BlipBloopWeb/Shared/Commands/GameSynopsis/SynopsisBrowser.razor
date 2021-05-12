@@ -1,0 +1,68 @@
+﻿@using System.Linq;
+@using Conceptoire.Twitch.API
+@using Conceptoire.Twitch.Model
+@using BlipBloopBot.Storage
+@inject TwitchAPIClient TwitchClient
+@inject IGameLocalizationStore LocStore
+
+<MudTable Context="category" ServerData="state => ServerReload(state)" @ref="table">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Categories</MudText>
+        <MudToolBarSpacer />
+        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh></MudTh>
+        <MudTh>Category Name</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh>Source</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd><img src="@category.category.BoxArtUri" /></MudTd>
+        <MudTd>@(category.info?.Name ?? category.category.Name)</MudTd>
+        <MudTd>@((MarkupString) category.info?.Summary)</MudTd>
+        <MudTd>@(category.info?.Source)</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+
+    private MudTable<(GameInfo info, HelixCategoriesSearchEntry category)> table;
+    private string searchString;
+
+    private (GameInfo info, HelixCategoriesSearchEntry category)[] Categories { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    private async Task<TableData<(GameInfo info, HelixCategoriesSearchEntry category)>> ServerReload(TableState state)
+    {
+        List<(GameInfo info, HelixCategoriesSearchEntry category)> categoryList = new List<(GameInfo info, HelixCategoriesSearchEntry category)>();
+        await foreach (var category in TwitchClient.EnumerateTwitchCategoriesAsync())
+        {
+            var info = await LocStore.ResolveLocalizedGameInfoAsync("en", category.Id);
+            if (string.IsNullOrEmpty(searchString) || (info?.Summary?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? category.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)))
+            {
+                categoryList.Add((info, category));
+            }
+            if (categoryList.Count >= 10)
+                break;
+        }
+        return new TableData<(GameInfo info, HelixCategoriesSearchEntry category)>
+        {
+            Items = categoryList.ToArray(),
+            TotalItems = categoryList.Count,
+        };
+    }
+
+    private void OnSearch(string text)
+    {
+        searchString = text;
+        table.ReloadServerData();
+    }
+
+}

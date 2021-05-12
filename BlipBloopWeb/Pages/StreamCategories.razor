@@ -1,0 +1,26 @@
+﻿@using BlipBloopWeb.Shared.Commands.GameSynopsis
+@page "/categories"
+
+<MudPaper>
+    <MudText Typo="Typo.h3">
+        <MudIcon Icon="@Icons.Filled.PlaylistPlay" Size="Size.Large" /> Stream Categories
+    </MudText>
+
+    @*<MudContainer>
+        <MudText Typo="Typo.h4">Custom synopsis</MudText>
+
+
+    </MudContainer>*@
+
+    <MudContainer>
+        <MudText Typo="Typo.h4">Synopsis database</MudText>
+
+        <SynopsisBrowser></SynopsisBrowser>
+    </MudContainer>
+
+</MudPaper>
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+}

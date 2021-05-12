@@ -3,75 +3,79 @@
 @inject TwitchAPIClient twitchApiClient
 @inject IClientProvider ClientProvider
 
-<div class="card">
-    <div class="card-header">
+<MudCard>
+    <MudCardHeader>
         Bot Account management
-    </div>
-    <div class="card-body">
-        <h5 class="card-title">Enable as Bot account</h5>
-        <p>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudText Typo="Typo.h5">
+            Enable as Bot account
+        </MudText>
+        <MudText>
             You can allow specific channels to use this account as a bot.
             <br />
             In that case, this account login information will be used to read and post from the enabled chat, if the broadcaster selects this account as bot.
-        </p>
-        <h6>Currently allowed channels</h6>
+        </MudText>
+        <MudText Typo="Typo.h6">Currently allowed channels</MudText>
 
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="4">
+                <MudAutocomplete T="HelixUsersGetResult" Label="Allow channel" @bind-Value="_searchedChannel" SearchFunc="@AutocompleteChannel" ToStringFunc="u => u?.DisplayName" />
+            </MudItem>
+        </MudGrid>
+        <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+        <MudGrid>
+            @if (_searchResults != null)
+            {
+                @foreach (var user in _searchResults)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCard Class="ma-6">
+                            <MudCardMedia Image="@user.ProfileImageUrl.AbsoluteUri" Title="@user.DisplayName" />
+                            <MudCardContent>
+                                <MudText Typo="Typo.h5">@user.DisplayName</MudText>
+                                <MudText Typo="Typo.body1">@user.Description</MudText>
+                            </MudCardContent>
+                            <MudCardActions>
+                                <MudButton OnClick="(_) => SelectChannel(user)" FullWidth="true">Allow</MudButton>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                }
+            }
+        </MudGrid>
         @if (_isLoadingAllowList)
         {
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
+            <MudProgressLinear Indeterminate="true"></MudProgressLinear>
         }
         else if (!_allowedChannels.Any())
         {
-            <div class="alert alert-secondary" role="alert">
+            <MudItem>
                 No channels are allowed to use your account as a bot.
-            </div>
+            </MudItem>
         }
         else
         {
-            <div class="row row-cols-8 row-cols-md-6 g-4">
+            <MudGrid xs="12">
                 @foreach (var channel in _allowedChannels)
                 {
-                    <div class="col">
-                        <div class="card h-100">
-                            <img src="@channel.ProfileImageUrl" class="card-img-top" alt="@channel.DisplayName">
-                            <div class="card-body">
-                                <h5 class="card-title">@channel.DisplayName</h5>
-                                <p class="card-text">@channel.Description</p>
-                                <a href="#" @onclick="(_) =>RevokeChannel(channel.Id)" class="btn btn-primary bi bi-trash-fill">Revoke</a>
-                            </div>
-                        </div>
-                    </div>
+                    <MudItem xs="6" sm="4" md="3">
+                        <MudCard>
+                            <MudCardMedia Image="@channel.ProfileImageUrl.AbsoluteUri" Title="@channel.DisplayName" />
+                            <MudCardContent>
+                                <MudText Typo="Typo.h5">@channel.DisplayName</MudText>
+                                <MudText Typo="Typo.body2">@channel.Description</MudText>
+                            </MudCardContent>
+                            <MudCardActions>
+                                <MudIconButton OnClick="(_) =>RevokeChannel(channel.Id)" Icon="@Icons.Filled.Delete"></MudIconButton>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
                 }
-            </div>
+            </MudGrid>
         }
-        <label for="channelSearch" class="form-label">Search channel to allow</label>
-        <div class="input-group mb-3">
-            <span class="input-group-text" id="basic-addon3">Twitch channel</span>
-            <input type="text" class="form-control" @bind="_channelSearch" @oninput="SearchChannel" id="channelSearch" aria-describedby="basic-addon3" />
-        </div>
-
-        @if (_searchResults != null)
-        {
-            <div class="row row-cols-8 row-cols-md-6 g-4">
-                @foreach (var user in _searchResults)
-                {
-                    <div class="col">
-                        <div class="card" style="width: 18rem;">
-                            <img src="@user.ProfileImageUrl" class="card-img-top" alt="@user.DisplayName">
-                            <div class="card-body">
-                                <h5 class="card-title">@user.DisplayName</h5>
-                                <p class="card-text">@user.Description</p>
-                                <a href="#" @onclick="(_) => SelectChannel(user)" class="btn btn-primary">Allow</a>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-        }
-    </div>
-</div>
+    </MudCardContent>
+</MudCard>
 
 @code{
     [CascadingParameter(Name = "ServiceContext")]
@@ -82,6 +86,7 @@
     private bool _isLoadingAllowList = true;
     private string _channelSearch;
     private HelixUsersGetResult[] _searchResults;
+    private HelixUsersGetResult _searchedChannel;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -101,16 +106,22 @@
             _allowedChannels = new HelixUsersGetResult[0];
         }
         else
-        { 
+        {
             _allowedChannels = await twitchApiClient.GetUsersByIdAsync(allowedChannels.Select(c => c.BroadcasterId));
         }
 
         _isLoadingAllowList = false;
     }
 
-    private async Task SearchChannel(ChangeEventArgs evt)
+    private async Task<IEnumerable<HelixUsersGetResult>> AutocompleteChannel(string searchText)
     {
-        _channelSearch = evt.Value as string;
+        await SearchChannel(searchText ?? "");
+        return _searchResults;
+    }
+
+    private async Task SearchChannel(string searchText)
+    {
+        _channelSearch = searchText as string;
         if (_channelSearch.Length < 3)
         {
             _searchResults = new HelixUsersGetResult[0];
