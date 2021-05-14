@@ -80,7 +80,7 @@
     {
         var client = await ClientProvider.GetConnectedClient();
         var grain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
-        var customCategories = await grain.GetCustomizedCategoryDescription();
+        var customCategories = await grain.GetCustomizedCategoryDescriptions();
 
         List<CustomCategoryViewModel> categoryList = new List<CustomCategoryViewModel>();
 

@@ -221,11 +221,6 @@ namespace BotServiceGrainInterface
             return Task.FromResult(_channelInfo);
         }
 
-        Task IChannelGrain.HandleBotCommand()
-        {
-            throw new NotImplementedException();
-        }
-
         private async Task StartBot(string oauthToken)
         {
             var botChatAuthenticated = Twitch.AuthenticateBot()
@@ -272,8 +267,16 @@ namespace BotServiceGrainInterface
                 ChannelName = info.BroadcasterName,
                 Language = info.BroadcasterLanguage,
                 CategoryId = info.GameId,
-                //CommandOptions = _channelBotState.State.Commands[kvp.Key],
             };
+            var key = new CategoryKey { TwitchCategoryId = info.GameId, Locale = info.BroadcasterLanguage };
+            if (_categoriesState.State.Descriptions.TryGetValue(key, out var customDescription))
+            {
+                botContext.CustomCategoryDescription = customDescription.Description;
+            }
+            else
+            {
+                botContext.CustomCategoryDescription = null;
+            }
             await _chatBot.UpdateContext(botContext);
         }
 
@@ -347,6 +350,11 @@ namespace BotServiceGrainInterface
                 _categoriesState.State.Descriptions.Remove(key);
             }
             await _categoriesState.WriteStateAsync();
+
+            if (twitchCategory == _channelInfo.GameId && locale == _channelInfo.BroadcasterLanguage)
+            {
+                await OnChannelUpdate(_channelInfo);
+            }
         }
 
         public async Task SetCustomizedCategoryDescription(CustomCategoryDescription categoryDescription)
@@ -362,9 +370,24 @@ namespace BotServiceGrainInterface
                 _categoriesState.State.Descriptions.Add(key, category);
             }
             await _categoriesState.WriteStateAsync();
+
+            if (categoryDescription.TwitchCategoryId == _channelInfo.GameId && categoryDescription.Locale == _channelInfo.BroadcasterLanguage)
+            {
+                await OnChannelUpdate(_channelInfo);
+            }
         }
 
-        public Task<CustomCategoryDescription[]> GetCustomizedCategoryDescription()
+        public Task<CustomCategoryDescription> GetCustomizedCategoryDescription(string twitchCategory, string locale)
+        {
+            var key = new CategoryKey { TwitchCategoryId = twitchCategory, Locale = locale };
+            if (_categoriesState.State.Descriptions.TryGetValue(key, out var categoryDescription))
+            {
+                return Task.FromResult(categoryDescription);
+            }
+            return Task.FromResult<CustomCategoryDescription>(null);
+        }
+
+        public Task<CustomCategoryDescription[]> GetCustomizedCategoryDescriptions()
         {
             return Task.FromResult(_categoriesState.State.Descriptions.Values.ToArray());
         }
