@@ -2,17 +2,17 @@
 @using BotServiceGrainInterface.Model
 @inject IClientProvider ClientProvider
 
-<div>
-    <h3>BotAccountSelection</h3>
-
-    <select @onchange="OnSelect" class="form-select" aria-label="Bot command type selection" disabled="@(ServiceContext.IsBotRunning)">
+<MudPaper>
+    <MudText Typo="Typo.h5">
+        Bot Account Selection
+    </MudText>
+    <MudSelect T="BotAccountInfo" Label="Bot command type selection" Disabled="ServiceContext.IsBotRunning">
         @foreach (var botAccount in _botAccounts)
         {
-            <option selected="@botAccount.IsActive" value="@botAccount.UserId">@botAccount.UserLogin</option>
+            <MudSelectItem T="BotAccountInfo" Value="@botAccount">@botAccount.UserLogin</MudSelectItem>
         }
-    </select>
-
-</div>
+    </MudSelect>
+</MudPaper>
 
 @code {
     [CascadingParameter(Name = "ServiceContext")]

@@ -1,22 +1,20 @@
 ﻿<AuthorizeView>
     <Authorized>
-        <div class="btn-group">
-            <a class="nav-link dropdown-toggle btn" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
-                <i class="bi bi-person-circle"></i>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li>
-                    <div class="ms-2 me-auto">
-                        Logged in as
-                        <div class="fw-bold">@ServiceContext.UserName</div>
-                    </div>
-                </li>
-                <li><a class="dropdown-item" href="logout">Logout</a></li>
-            </ul>
-        </div>
+        <MudMenu FullWidth="true" OffsetY="true">
+            <ActivatorContent>
+                <MudChip Icon="@Icons.Material.Rounded.Person" Color="Color.Primary" Variant="Variant.Filled">@ServiceContext.UserName</MudChip>
+            </ActivatorContent>
+            <ChildContent>
+                <MudMenuItem>
+                    Logged in as
+                    <em>@ServiceContext.UserName</em>
+                </MudMenuItem>
+                <MudMenuItem Link="/Logout">Logout</MudMenuItem>
+            </ChildContent>
+        </MudMenu>
     </Authorized>
     <NotAuthorized>
-        <a href="login?redirectUri=/">Log in</a>
+        <MudButton Color="Color.Secondary" Variant="Variant.Filled" Link="Login?redirectUri=/">Log in</MudButton>
     </NotAuthorized>
 </AuthorizeView>
 

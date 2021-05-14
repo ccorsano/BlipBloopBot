@@ -1,0 +1,48 @@
+﻿<MudDialog>
+    <DialogContent>
+        <ParameterGrid Parameters="Parameters" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Ok">Accept</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public List<CommandProperty> Parameters { get; set; } = new List<CommandProperty>();
+
+    private CommandProperty SelectedItem { get; set; }
+
+    private void Delete()
+    {
+        Parameters.Remove(SelectedItem);
+    }
+
+    private void AddParameter()
+    {
+        Parameters.Add(new CommandProperty
+        {
+            Key = $"key_{Parameters.Count}",
+            Value = $"value_{Parameters.Count}",
+        });
+        SelectedItem = Parameters.Last();
+    }
+
+    private void DeleteParameter(CommandProperty parameter)
+    {
+        Parameters.Remove(parameter);
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Close(DialogResult.Cancel());
+    }
+
+    private void Ok()
+    {
+        MudDialog.Close(DialogResult.Ok(Parameters));
+    }
+}

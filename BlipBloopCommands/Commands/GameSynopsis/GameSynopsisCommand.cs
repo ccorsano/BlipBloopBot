@@ -20,6 +20,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
         private bool _asReply;
         private string _channelId;
         private GameInfo _gameInfo;
+        private string _customDescription;
 
         private GameSynopsisCommandSettings _settings;
 
@@ -102,6 +103,8 @@ namespace BlipBloopCommands.Commands.GameSynopsis
                 _logger.LogWarning($"Connecting to {context.ChannelName}, currently live");
             }
 
+            _customDescription = context.CustomCategoryDescription;
+
             _twitchCategoryProvider.OnUpdate += (sender, gameInfo) =>
             {
                 _gameInfo = gameInfo;
@@ -116,7 +119,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
             var reply = new OutgoingMessage
             {
                 ReplyParentMessage = msgId,
-                Message = _gameInfo?.Summary ?? "Not playing, we are just chilling at the moment !"
+                Message = _customDescription ?? _gameInfo?.Summary ?? "Not playing, we are just chilling at the moment !"
             };
             sendResponse(reply);
         }

@@ -1,4 +1,5 @@
 ﻿using CsvHelper.Configuration.Attributes;
+using System;
 
 namespace Conceptoire.Twitch.Model
 {

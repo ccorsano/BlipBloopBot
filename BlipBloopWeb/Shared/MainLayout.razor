@@ -2,27 +2,27 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @using System.Security.Claims
 @using BotServiceGrain
+@using Conceptoire.Twitch.API
 @using Conceptoire.Twitch.Commands
 @inject IClientProvider ClientProvider
+@inject TwitchAPIClient TwitchClient
 
 <CascadingValue Name="ServiceContext" Value="this">
 
-    <div class="page">
-        <div class="sidebar">
+    <MudLayout>
+        <MudAppBar Elevation="1">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="() => { _drawerOpen = !_drawerOpen; }" />
+            <MudAppBarSpacer />
+            <ChannelSelection />
+            <TwitchLogin />
+        </MudAppBar>
+        <MudDrawer @bind-Open="_drawerOpen" Elevation="2">
             <NavMenu />
-        </div>
-
-        <div class="main">
-            <div class="top-row px-4">
-                <ChannelSelection />
-                <TwitchLogin />
-            </div>
-
-            <div class="content px-4">
-                @Body
-            </div>
-        </div>
-    </div>
+        </MudDrawer>
+        <MudMainContent>
+            @Body
+        </MudMainContent>
+    </MudLayout>
 
 </CascadingValue>
 
@@ -36,7 +36,10 @@
     public string OAuthToken { get; private set; }
     public AvailableChannel ActiveChannel { get; private set; }
     public AvailableChannel[] AvailableChannels { get; private set; }
+    public HelixChannelInfo ActiveChannelInfo { get; private set; }
     public CommandMetadata[] AvailableCommands { get; private set; }
+
+    private bool _drawerOpen = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -65,6 +68,7 @@
             if (AvailableChannels.Any())
             {
                 ActiveChannel = AvailableChannels[0];
+                ActiveChannelInfo = await TwitchClient.GetChannelInfoAsync(ActiveChannel.BroadcasterId);
             }
             else
             {
@@ -77,11 +81,12 @@
         await base.OnInitializedAsync();
     }
 
-    public void SetActiveChannel(string activeChannel)
+    public async Task SetActiveChannel(string activeChannel)
     {
         if (ActiveChannel.BroadcasterName != activeChannel)
         {
             ActiveChannel = AvailableChannels.First(a => a.BroadcasterName == activeChannel);
+            ActiveChannelInfo = await TwitchClient.GetChannelInfoAsync(ActiveChannel.BroadcasterId);
             StateHasChanged();
         }
     }

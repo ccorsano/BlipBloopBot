@@ -14,7 +14,6 @@ namespace BotServiceGrain
         public Task Activate(string userToken);
         public Task OnChannelUpdate(HelixChannelInfo info);
         public Task<HelixChannelInfo> GetChannelInfo();
-        public Task HandleBotCommand();
         public Task<bool> IsBotActive();
         public Task<bool> SetBotActivation(bool isActive);
         public Task<ChannelStaff> GetStaff();
@@ -27,5 +26,9 @@ namespace BotServiceGrain
         public Task AllowBotAccount(BotAccountInfo accountInfo);
         public Task DisallowBotAccount(string userId);
         public Task<BotAccountInfo[]> GetAllowedBotAccounts();
+        public Task ClearCustomizedCategoryDescription(string twitchCategory, string locale);
+        public Task SetCustomizedCategoryDescription(CustomCategoryDescription categoryDescription);
+        public Task<CustomCategoryDescription> GetCustomizedCategoryDescription(string twitchCategory, string locale);
+        public Task<CustomCategoryDescription[]> GetCustomizedCategoryDescriptions();
     }
 }

@@ -4,39 +4,34 @@
     <Authorized>
         @if (ServiceContext.ActiveChannel != null)
         {
-            <div class="btn-group">
-                <a class="nav-link dropdown-toggle btn" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
-                    <i class="bi bi-play-btn"></i>
-                    @ServiceContext.ActiveChannel.BroadcasterName
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li class="list-group-item">
+            <MudMenu FullWidth="true" OffsetY="true">
+                <ActivatorContent>
+                    <MudChip Icon="@Icons.Material.Rounded.PlayCircleFilled" Color="Color.Primary" Variant="Variant.Filled">@ServiceContext.ActiveChannel.BroadcasterName</MudChip>
+                </ActivatorContent>
+                <ChildContent>
+                    <MudMenuItem>
                         Managing
-                        <div class="fw-bold">@ServiceContext.ActiveChannel.BroadcasterName</div>
-                    </li>
-                    <li class="list-group-item">
-                        Other channels
-                    </li>
+                        <b>@ServiceContext.ActiveChannel.BroadcasterName</b>
+                    </MudMenuItem>
+                    <MudMenuItem Disabled="true">Other channels</MudMenuItem>
                     @foreach (var channel in ServiceContext.AvailableChannels)
                     {
                         if (channel != ServiceContext.ActiveChannel)
                         {
-                            <li class="list-group-item list-group-item-action">
-                                <a class="ms-0 text-decoration-none" @onclick="() => SelectChannel(channel.BroadcasterId)">
-                                    <i class="bi @(
+                            <MudMenuItem OnClick="() => SelectChannel(channel.BroadcasterId)">
+                                <MudIcon Icon="@(
                                 channel.UserRole switch {
-                                    ChannelRole.Broadcaster => "bi-broadcast bi-red",
-                                    ChannelRole.Editor => "bi-pen",
-                                    ChannelRole.Moderator => "bi-shield",
+                                    ChannelRole.Broadcaster => Icons.Outlined.PlaylistPlay,
+                                    ChannelRole.Editor => Icons.Outlined.Edit,
+                                    ChannelRole.Moderator => Icons.Outlined.Security,
                                     _ => ""
-                                } )"></i>
-                                    @channel.BroadcasterName
-                                </a>
-                            </li>
+                                } )" />
+                                @channel.BroadcasterName
+                            </MudMenuItem>
                         }
                     }
-                </ul>
-            </div>
+                </ChildContent>
+            </MudMenu>
         }
     </Authorized>
     <NotAuthorized>
@@ -47,8 +42,8 @@
     [CascadingParameter(Name = "ServiceContext")]
     public MainLayout ServiceContext { get; set; }
 
-    private void SelectChannel(string channelId)
+    private async Task SelectChannel(string channelId)
     {
-        ServiceContext.SetActiveChannel(channelId);
+        await ServiceContext.SetActiveChannel(channelId);
     }
 }
