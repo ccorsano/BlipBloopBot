@@ -1,0 +1,56 @@
+﻿@using Conceptoire.Twitch.Model
+@using BotServiceGrainInterface.Model
+
+<MudDialog>
+    <DialogContent>
+        <MudForm>
+            <MudText>@Category.helixCategory.Name</MudText>
+            <LanguageSelect DefaultValue="@_locale" OnSelectLocale="OnSelectLocale"/>
+            <MudTextFieldString Label="Description" Required="true" @bind-Value="@_description" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Ok">Accept</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public CustomCategoryViewModel Category { get; set; }
+
+    private string _description;
+    private string _locale;
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        _description = Category.customCategory?.Description ?? "";
+        _locale = Category.gameInfo?.Language ?? "en";
+    }
+
+    private void OnSelectLocale(string locale)
+    {
+        _locale = locale;
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Close(DialogResult.Cancel());
+    }
+
+    private void Ok()
+    {
+        MudDialog.Close(DialogResult.Ok(
+            new CustomCategoryDescription
+            {
+                TwitchCategoryId = Category.helixCategory.Id,
+                Locale = _locale,
+                Description = _description,
+            }
+        ));
+    }
+}

@@ -23,6 +23,7 @@ namespace BotServiceGrainInterface
     {
         private readonly IPersistentState<ChannelState> _channelState;
         private readonly IPersistentState<ChannelBotSettingsState> _channelBotState;
+        private readonly IPersistentState<CategoryDescriptionState> _categoriesState;
         private readonly TwitchAPIClient _appClient;
         private readonly TwitchChatClientOptions _options;
         private readonly TwitchApplicationOptions _twitchOptions;
@@ -41,6 +42,7 @@ namespace BotServiceGrainInterface
         public ChannelGrain(
             [PersistentState("channel", "channelStore")] IPersistentState<ChannelState> channelState,
             [PersistentState("botsettings", "botSettingsStore")] IPersistentState<ChannelBotSettingsState> botSettingsState,
+            [PersistentState("customcategories", "customCategoriesStore")] IPersistentState<CategoryDescriptionState> customCategoriesState,
             TwitchAPIClient appClient,
             IOptions<TwitchChatClientOptions> botOptions,
             IOptions<TwitchApplicationOptions> appOptions,
@@ -49,6 +51,7 @@ namespace BotServiceGrainInterface
         {
             _channelState = channelState;
             _channelBotState = botSettingsState;
+            _categoriesState = customCategoriesState;
             _appClient = appClient;
             _options = botOptions.Value;
             _twitchOptions = appOptions.Value;
@@ -334,6 +337,36 @@ namespace BotServiceGrainInterface
         Task<BotAccountInfo[]> IChannelGrain.GetAllowedBotAccounts()
         {
             return Task.FromResult(_channelBotState.State.AllowedBotAccounts.ToArray());
+        }
+
+        public async Task ClearCustomizedCategoryDescription(string twitchCategory, string locale)
+        {
+            var key = new CategoryKey { TwitchCategoryId = twitchCategory, Locale = locale };
+            if (_categoriesState.State.Descriptions.TryGetValue(key, out var category))
+            {
+                _categoriesState.State.Descriptions.Remove(key);
+            }
+            await _categoriesState.WriteStateAsync();
+        }
+
+        public async Task SetCustomizedCategoryDescription(CustomCategoryDescription categoryDescription)
+        {
+            var key = new CategoryKey { TwitchCategoryId = categoryDescription.TwitchCategoryId, Locale = categoryDescription.Locale };
+            if (_categoriesState.State.Descriptions.TryGetValue(key, out var category))
+            {
+                category.Description = categoryDescription.Description;
+            }
+            else
+            {
+                category = categoryDescription;
+                _categoriesState.State.Descriptions.Add(key, category);
+            }
+            await _categoriesState.WriteStateAsync();
+        }
+
+        public Task<CustomCategoryDescription[]> GetCustomizedCategoryDescription()
+        {
+            return Task.FromResult(_categoriesState.State.Descriptions.Values.ToArray());
         }
     }
 }

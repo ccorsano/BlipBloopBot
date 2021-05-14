@@ -27,6 +27,7 @@ using Orleans.Persistence;
 using BlipBloopCommands.Storage;
 using System.Net.Http;
 using BlipBloopCommands.Commands;
+using BotServiceGrain.Storage;
 
 namespace BotWorkerService
 {
@@ -92,12 +93,18 @@ namespace BotWorkerService
                     options.UseJson = true;
                     options.IndentJson = false;
                 });
+                builder.AddCustomCategoriesStorage("customCategoriesStore", (CustomCategoriesStorageOptions options) =>
+                {
+                    options.ConnectionString = azureStorageConnectionString;
+                    options.TableName = "customcategories";
+                });
             }
             else
             {
                 builder.AddMemoryGrainStorage("profileStore");
                 builder.AddMemoryGrainStorage("channelStore");
                 builder.AddMemoryGrainStorage("botSettingsStore");
+                builder.AddMemoryGrainStorage("customCategoriesStore");
             }
 
             if (!string.IsNullOrEmpty(redisClusteringUrl))

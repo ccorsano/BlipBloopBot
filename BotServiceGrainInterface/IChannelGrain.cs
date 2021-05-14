@@ -27,5 +27,8 @@ namespace BotServiceGrain
         public Task AllowBotAccount(BotAccountInfo accountInfo);
         public Task DisallowBotAccount(string userId);
         public Task<BotAccountInfo[]> GetAllowedBotAccounts();
+        public Task ClearCustomizedCategoryDescription(string twitchCategory, string locale);
+        public Task SetCustomizedCategoryDescription(CustomCategoryDescription categoryDescription);
+        public Task<CustomCategoryDescription[]> GetCustomizedCategoryDescription();
     }
 }
