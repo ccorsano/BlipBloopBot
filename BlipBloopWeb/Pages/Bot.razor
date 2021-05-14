@@ -2,7 +2,7 @@
 @using Conceptoire.Twitch.Options
 
 <MudContainer>
-    <MudText Typo="Typo.h3"><MudIcon Icon="@Icons.Filled.Psychology" Size="Size.Large" /> Bot</MudText>
+    <MudText Typo="Typo.h4"><MudIcon Icon="@Icons.Filled.Psychology" Size="Size.Large" /> @ServiceContext.ActiveChannel?.BroadcasterName : Bot</MudText>
 
     @if (ServiceContext.IsChannelIntegrationActive)
     {
@@ -11,7 +11,7 @@
         <BotAccountSelection />
 
         <MudPaper>
-            <MudText Typo="Typo.h4">Commands configuration</MudText>
+            <MudText Typo="Typo.h5">Commands configuration</MudText>
             <BlipBloopWeb.Shared.Commands.CommandGrid />
         </MudPaper>
     }

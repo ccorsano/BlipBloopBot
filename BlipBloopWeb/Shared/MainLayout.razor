@@ -39,6 +39,8 @@
     public HelixChannelInfo ActiveChannelInfo { get; private set; }
     public CommandMetadata[] AvailableCommands { get; private set; }
 
+    public bool IsOwnChannel => IsAuthenticated && ActiveChannel?.BroadcasterId == UserId;
+
     private bool _drawerOpen = true;
 
     protected override async Task OnInitializedAsync()
@@ -83,9 +85,9 @@
 
     public async Task SetActiveChannel(string activeChannel)
     {
-        if (ActiveChannel.BroadcasterName != activeChannel)
+        if (ActiveChannel.BroadcasterId != activeChannel)
         {
-            ActiveChannel = AvailableChannels.First(a => a.BroadcasterName == activeChannel);
+            ActiveChannel = AvailableChannels.First(a => a.BroadcasterId == activeChannel);
             ActiveChannelInfo = await TwitchClient.GetChannelInfoAsync(ActiveChannel.BroadcasterId);
             StateHasChanged();
         }

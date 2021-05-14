@@ -2,12 +2,12 @@
 @page "/categories"
 
 <MudContainer>
-    <MudText Typo="Typo.h3">
-        <MudIcon Icon="@Icons.Filled.PlaylistPlay" Size="Size.Large" /> Stream Categories
+    <MudText Typo="Typo.h4">
+        <MudIcon Icon="@Icons.Filled.PlaylistPlay" Size="Size.Large" /> @ServiceContext.ActiveChannel?.BroadcasterName : Stream Categories
     </MudText>
 
     <MudContainer>
-        <MudText Typo="Typo.h4">Synopsis database</MudText>
+        <MudText Typo="Typo.h5">Synopsis database</MudText>
 
         <SynopsisBrowser></SynopsisBrowser>
     </MudContainer>

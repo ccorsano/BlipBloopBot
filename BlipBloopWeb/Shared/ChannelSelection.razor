@@ -4,9 +4,9 @@
     <Authorized>
         @if (ServiceContext.ActiveChannel != null)
         {
-            <MudMenu FullWidth="true" OffsetY="true">
+            <MudMenu OffsetY="true">
                 <ActivatorContent>
-                    <MudChip Icon="@Icons.Material.Rounded.PlayCircleFilled" Color="Color.Primary" Variant="Variant.Filled">@ServiceContext.ActiveChannel.BroadcasterName</MudChip>
+                    <MudChip Icon="@Icons.Material.Rounded.Cast" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Large">@ServiceContext.ActiveChannel.BroadcasterName</MudChip>
                 </ActivatorContent>
                 <ChildContent>
                     <MudMenuItem>
@@ -18,7 +18,7 @@
                     {
                         if (channel != ServiceContext.ActiveChannel)
                         {
-                            <MudMenuItem OnClick="() => SelectChannel(channel.BroadcasterId)">
+                            <MudMenuItem OnClick="(e) => SelectChannel(channel.BroadcasterId)">
                                 <MudIcon Icon="@(
                                 channel.UserRole switch {
                                     ChannelRole.Broadcaster => Icons.Outlined.PlaylistPlay,

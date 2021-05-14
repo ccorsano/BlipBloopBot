@@ -57,8 +57,8 @@
 </MudTable>
 
 @code {
-        [CascadingParameter(Name = "ServiceContext")]
-        public MainLayout ServiceContext { get; set; }
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
 
     public List<CommandItemModel> Commands { get; set; }
     private CommandItemModel NewItem { get; set; }
@@ -68,7 +68,7 @@
     protected override async Task OnParametersSetAsync()
     {
         var client = await ClientProvider.GetConnectedClient();
-        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
 
         Commands = (await channelGrain.GetBotCommands()).Select(ToCommandItem).ToList();
 
@@ -109,7 +109,7 @@
         if (command.Id.HasValue)
         {
             var client = await ClientProvider.GetConnectedClient();
-            var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+            var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
             await channelGrain.DeleteCommand(command.Id.Value);
         }
         Commands.Remove(command);
@@ -118,7 +118,7 @@
     protected async Task OnDelete(MouseEventArgs evt)
     {
         var client = await ClientProvider.GetConnectedClient();
-        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
 
         Commands = (await channelGrain.GetBotCommands()).Select(ToCommandItem).ToList();
     }
@@ -126,7 +126,7 @@
     protected async Task OnValidate(MouseEventArgs evt)
     {
         var client = await ClientProvider.GetConnectedClient();
-        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
 
         Commands = (await channelGrain.GetBotCommands()).Select(ToCommandItem).ToList();
     }
@@ -152,7 +152,7 @@
         }
 
         var client = await ClientProvider.GetConnectedClient();
-        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
 
         if (!SelectedItem.Id.HasValue)
         {
