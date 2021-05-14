@@ -79,7 +79,7 @@
     private async Task<TableData<CustomCategoryViewModel>> ServerReload(TableState state)
     {
         var client = await ClientProvider.GetConnectedClient();
-        var grain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+        var grain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
         var customCategories = await grain.GetCustomizedCategoryDescriptions();
 
         List<CustomCategoryViewModel> categoryList = new List<CustomCategoryViewModel>();
@@ -154,7 +154,7 @@
     private async Task Clear(CustomCategoryViewModel info)
     {
         var client = await ClientProvider.GetConnectedClient();
-        var grain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+        var grain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
         await grain.ClearCustomizedCategoryDescription(info.customCategory.TwitchCategoryId, info.customCategory.Locale);
         await table.ReloadServerData();
     }
@@ -178,7 +178,7 @@
 
         var description = (CustomCategoryDescription)result.Data;
         var client = await ClientProvider.GetConnectedClient();
-        var grain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+        var grain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
         await grain.SetCustomizedCategoryDescription(description);
         await table.ReloadServerData();
     }

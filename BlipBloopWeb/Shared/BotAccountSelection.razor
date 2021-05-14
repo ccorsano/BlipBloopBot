@@ -26,7 +26,7 @@
     protected override async Task OnParametersSetAsync()
     {
         var client = await ClientProvider.GetConnectedClient();
-        _channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+        _channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
 
         _botAccounts = await _channelGrain.GetAllowedBotAccounts();
 
@@ -38,7 +38,7 @@
         _botUserId = evt.Value as string;
 
         var client = await ClientProvider.GetConnectedClient();
-        _channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
+        _channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
 
         await _channelGrain.SetActiveBotAccount(_botUserId);
     }

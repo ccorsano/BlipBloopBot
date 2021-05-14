@@ -1,0 +1,49 @@
+﻿@using BotServiceGrainInterface.Model
+
+<AuthorizeView>
+    <Authorized>
+        @if (ServiceContext.ActiveChannel != null)
+        {
+            <MudMenu OffsetY="true">
+                <ActivatorContent>
+                    <MudChip Icon="@Icons.Material.Rounded.Cast" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Large">@ServiceContext.ActiveChannel.BroadcasterName</MudChip>
+                </ActivatorContent>
+                <ChildContent>
+                    <MudMenuItem>
+                        Managing
+                        <b>@ServiceContext.ActiveChannel.BroadcasterName</b>
+                    </MudMenuItem>
+                    <MudMenuItem Disabled="true">Other channels</MudMenuItem>
+                    @foreach (var channel in ServiceContext.AvailableChannels)
+                    {
+                        if (channel != ServiceContext.ActiveChannel)
+                        {
+                            <MudMenuItem OnClick="(e) => SelectChannel(channel.BroadcasterId)">
+                                <MudIcon Icon="@(
+                                channel.UserRole switch {
+                                    ChannelRole.Broadcaster => Icons.Outlined.PlaylistPlay,
+                                    ChannelRole.Editor => Icons.Outlined.Edit,
+                                    ChannelRole.Moderator => Icons.Outlined.Security,
+                                    _ => ""
+                                } )" />
+                                @channel.BroadcasterName
+                            </MudMenuItem>
+                        }
+                    }
+                </ChildContent>
+            </MudMenu>
+        }
+    </Authorized>
+    <NotAuthorized>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+
+    private async Task SelectChannel(string channelId)
+    {
+        await ServiceContext.SetActiveChannel(channelId);
+    }
+}

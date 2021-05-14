@@ -149,6 +149,27 @@ namespace BotServiceGrainInterface
             _channelState.State.Moderators = moderators.ToList();
             await _channelState.WriteStateAsync();
 
+            var editorsTasks = _channelState.State.Editors.Select(editor =>
+                GrainFactory.GetGrain<IUserGrain>(editor.UserId).SetRole(new UserRole
+                {
+                    Role = ChannelRole.Editor,
+                    ChannelId = _channelId,
+                    ChannelName = _channelInfo.BroadcasterName,
+                })
+            );
+
+            var modsTasks = _channelState.State.Moderators.Select(moderator =>
+                GrainFactory.GetGrain<IUserGrain>(moderator.UserId).SetRole(new UserRole
+                {
+                    Role = ChannelRole.Moderator,
+                    ChannelId = _channelId,
+                    ChannelName = _channelInfo.BroadcasterName,
+                })
+            );
+
+            await Task.WhenAll(editorsTasks);
+            await Task.WhenAll(modsTasks);
+
             _channelInfo = await channelInfoTask;
             await RegisterEventSubSubscriptions(CancellationToken.None);
         }

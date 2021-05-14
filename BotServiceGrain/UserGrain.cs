@@ -1,4 +1,5 @@
 ﻿using BotServiceGrainInterface;
+using BotServiceGrainInterface.Model;
 using Conceptoire.Twitch.API;
 using Conceptoire.Twitch.Authentication;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,7 +42,20 @@ namespace BotServiceGrain
                     .Build();
                 _twitchAPIClient = new TwitchAPIClient(authenticated, _httpClientFactory, ServiceProvider.GetRequiredService<ILogger<TwitchAPIClient>>());
                 _tokenInfo = await _twitchAPIClient.ValidateToken();
+
+                if (_profile.State.HasActiveChannel)
+                {
+                    await SetRole(new UserRole
+                    {
+                        Role = ChannelRole.Broadcaster,
+                        ChannelId = _tokenInfo.UserId,
+                        ChannelName = _tokenInfo.Login,
+                    });
+                    var channelGrain = GrainFactory.GetGrain<IChannelGrain>(UserId);
+                    await channelGrain.Activate(_profile.State.OAuthToken);
+                }
             }
+
             await base.OnActivateAsync();
         }
 
@@ -86,6 +100,15 @@ namespace BotServiceGrain
 
             var channelGrain = GrainFactory.GetGrain<IChannelGrain>(UserId);
             await channelGrain.Activate(_profile.State.OAuthToken);
+
+            var channelInfo = await channelGrain.GetChannelInfo();
+
+            await SetRole(new UserRole
+            {
+                Role = ChannelRole.Broadcaster,
+                ChannelId = UserId,
+                ChannelName = channelInfo.BroadcasterName,
+            });
 
             _profile.State.HasActiveChannel = true;
             await _profile.WriteStateAsync();
@@ -142,6 +165,20 @@ namespace BotServiceGrain
         public Task<bool> HasActiveChannel()
         {
             return Task.FromResult(_profile.State.HasActiveChannel);
+        }
+
+        public Task SetRole(UserRole userRole)
+        {
+            if (! _profile.State.Roles.Contains(userRole))
+            {
+                _profile.State.Roles.Add(userRole);
+            }
+            return Task.CompletedTask;
+        }
+
+        public Task<UserRole[]> GetRoles()
+        {
+            return Task.FromResult(_profile.State.Roles.ToArray());
         }
     }
 }

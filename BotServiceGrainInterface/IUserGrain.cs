@@ -1,9 +1,6 @@
-﻿using Conceptoire.Twitch.API;
+﻿using BotServiceGrainInterface.Model;
+using Conceptoire.Twitch.API;
 using Orleans;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace BotServiceGrain
@@ -23,5 +20,9 @@ namespace BotServiceGrain
         public Task RevokeAsBot(string channelId);
 
         public Task<HelixChannelInfo[]> GetChannelBotAllowList();
+
+        public Task SetRole(UserRole userRole);
+
+        public Task<UserRole[]> GetRoles();
     }
 }

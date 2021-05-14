@@ -1,4 +1,5 @@
-﻿using Conceptoire.Twitch.API;
+﻿using BotServiceGrainInterface.Model;
+using Conceptoire.Twitch.API;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,5 +14,6 @@ namespace BotServiceGrainInterface
         public bool HasActiveChannel { get; set; } = false;
         public string OAuthToken { get; set; }
         public List<HelixChannelInfo> CanBeBotOnChannels { get; set; } = new List<HelixChannelInfo>();
+        public HashSet<UserRole> Roles { get; set; } = new HashSet<UserRole>();
     }
 }

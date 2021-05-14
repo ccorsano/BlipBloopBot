@@ -13,6 +13,7 @@
         <MudAppBar Elevation="1">
             <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="() => { _drawerOpen = !_drawerOpen; }" />
             <MudAppBarSpacer />
+            <ChannelSelection />
             <TwitchLogin />
         </MudAppBar>
         <MudDrawer @bind-Open="_drawerOpen" Elevation="2">
@@ -33,9 +34,12 @@
     public string UserName { get; private set; }
     public string UserId { get; private set; }
     public string OAuthToken { get; private set; }
-    public string ActiveChannel { get; private set; }
+    public AvailableChannel ActiveChannel { get; private set; }
+    public AvailableChannel[] AvailableChannels { get; private set; }
     public HelixChannelInfo ActiveChannelInfo { get; private set; }
     public CommandMetadata[] AvailableCommands { get; private set; }
+
+    public bool IsOwnChannel => IsAuthenticated && ActiveChannel?.BroadcasterId == UserId;
 
     private bool _drawerOpen = true;
 
@@ -47,13 +51,31 @@
             UserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
             UserName = authState.User.FindFirstValue("preferred_username");
             OAuthToken = authState.User.FindFirstValue("access_token");
-            ActiveChannel = UserId;
-            ActiveChannelInfo = await TwitchClient.GetChannelInfoAsync(ActiveChannel);
+
             IsAuthenticated = true;
 
             var client = await ClientProvider.GetConnectedClient();
             var channelGrain = client.GetGrain<IChannelGrain>(UserId);
             AvailableCommands = (await channelGrain.GetSupportedCommandTypes()).ToArray();
+
+            var userGrain = client.GetGrain<IUserGrain>(UserId);
+            var roles = await userGrain.GetRoles();
+
+            AvailableChannels = roles.Select(r => new AvailableChannel
+            {
+                BroadcasterId = r.ChannelId,
+                UserRole = r.Role,
+                BroadcasterName = r.ChannelName,
+            }).ToArray();
+            if (AvailableChannels.Any())
+            {
+                ActiveChannel = AvailableChannels[0];
+                ActiveChannelInfo = await TwitchClient.GetChannelInfoAsync(ActiveChannel.BroadcasterId);
+            }
+            else
+            {
+                ActiveChannel = null;
+            }
 
             StateHasChanged();
         }
@@ -61,11 +83,12 @@
         await base.OnInitializedAsync();
     }
 
-    public void SetActiveChannel(string activeChannel)
+    public async Task SetActiveChannel(string activeChannel)
     {
-        if (ActiveChannel != activeChannel)
+        if (ActiveChannel.BroadcasterId != activeChannel)
         {
-            ActiveChannel = activeChannel;
+            ActiveChannel = AvailableChannels.First(a => a.BroadcasterId == activeChannel);
+            ActiveChannelInfo = await TwitchClient.GetChannelInfoAsync(ActiveChannel.BroadcasterId);
             StateHasChanged();
         }
     }

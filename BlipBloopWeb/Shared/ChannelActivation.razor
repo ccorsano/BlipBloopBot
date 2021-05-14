@@ -4,9 +4,12 @@
 
 <MudCard>
     <MudCardHeader>
-        <MudText>Channel Activation</MudText>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h4">Channel Activation</MudText>
+        </CardHeaderContent>
     </MudCardHeader>
     <MudCardContent>
+        <MudText>Twitch id @ServiceContext.UserId</MudText>
         @if (_isLoading)
         {
             <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
@@ -17,7 +20,7 @@
                 <MudIcon Icon="@Icons.Outlined.CheckBox" Color="Color.Success"></MudIcon>
                 Channel integration is active.
             </MudText>
-            <ChannelStaffList ChannelId="@ServiceContext.UserId" />
+            <ChannelStaffList ChannelId="@ServiceContext.ActiveChannel.BroadcasterId" />
         }
         else
         {
@@ -25,7 +28,7 @@
                 <MudIcon Icon="@Icons.Outlined.CheckBoxOutlineBlank" Color="Color.Dark"></MudIcon>
                 Channel integration is inactive.
             </MudText>
-            <MudLink @onclick="ActivateChannelAsync">Activate channel integration</MudLink>
+            <MudButton @onclick="ActivateChannelAsync">Activate channel integration</MudButton>
         }
     </MudCardContent>
 </MudCard>
