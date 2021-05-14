@@ -1,7 +1,7 @@
 ﻿@using Conceptoire.Twitch.Constants
 
 <MudItem xs="1">
-    <MudSelect Label="Language" T="string" ValueChanged="OnValueChanged" Value="DefaultValue" Dense="true">
+    <MudSelect Label="Language" T="string" @bind-Value="@Value" Dense="true">
         @foreach (var locale in TwitchConstants.SupportedLanguages)
         {
             <MudSelectItem Value="locale">@locale</MudSelectItem>
@@ -14,16 +14,21 @@
     public MainLayout ServiceContext { get; set; }
 
     [Parameter]
-    public EventCallback<string> OnSelectLocale { get; set; }
+    public EventCallback<string> ValueChanged { get; set; }
+
+    private string _value = "en";
 
     [Parameter]
-    public string DefaultValue { get; set; } = "en";
-
-    private void OnValueChanged(string changedValue)
+    public string Value
     {
-        if (OnSelectLocale.HasDelegate)
-        {
-            OnSelectLocale.InvokeAsync(changedValue);
+        get => _value;
+        set{
+            if (_value == value) return;
+            _value = value;
+            if (ValueChanged.HasDelegate)
+            {
+                ValueChanged.InvokeAsync(_value);
+            }
         }
     }
 }

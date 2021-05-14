@@ -5,7 +5,7 @@
     <DialogContent>
         <MudForm>
             <MudText>@Category.helixCategory.Name</MudText>
-            <LanguageSelect DefaultValue="@_locale" OnSelectLocale="OnSelectLocale"/>
+            <LanguageSelect @bind-Value="@Locale" />
             <MudTextFieldString Label="Description" Required="true" @bind-Value="@_description" />
         </MudForm>
     </DialogContent>
@@ -21,20 +21,16 @@
     [Parameter]
     public CustomCategoryViewModel Category { get; set; }
 
+    [Parameter]
+    public string Locale { get; set; }
+
     private string _description;
-    private string _locale;
 
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
 
         _description = Category.customCategory?.Description ?? "";
-        _locale = Category.gameInfo?.Language ?? "en";
-    }
-
-    private void OnSelectLocale(string locale)
-    {
-        _locale = locale;
     }
 
     private void Cancel()
@@ -48,7 +44,7 @@
             new CustomCategoryDescription
             {
                 TwitchCategoryId = Category.helixCategory.Id,
-                Locale = _locale,
+                Locale = Locale,
                 Description = _description,
             }
         ));

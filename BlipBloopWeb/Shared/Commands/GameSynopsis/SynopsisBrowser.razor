@@ -14,8 +14,8 @@
     <ToolBarContent>
         <MudText Typo="Typo.h6">Categories</MudText>
         <MudToolBarSpacer />
-        <MudSwitch Label="Customized only" T="bool" CheckedChanged="@OnToggleCustomized" />
-        <LanguageSelect DefaultValue="@selectedLocale" OnSelectLocale="@(s => OnSelectLocale(s))" />
+        <MudSwitch Label="Customized only" T="bool" CheckedChanged="@OnToggleCustomized" Color="Color.Info" />
+        <LanguageSelect @bind-Value="@SelectedLocale" />
         <MudTextField Label="Filter" T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
     </ToolBarContent>
     <HeaderContent>
@@ -26,7 +26,7 @@
         <MudTh></MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd><img src="@category.helixCategory.BoxArtUri" /></MudTd>
+        <MudTd><img src="@GetSizedUri(category.helixCategory.BoxArtUri.ToString())" /></MudTd>
         <MudTd>@(category.gameInfo?.Name ?? category.helixCategory.Name)</MudTd>
         <MudTd>@if (category.customCategory != null) { <MudIcon Icon="@Icons.Outlined.Edit"/> } @((MarkupString) (category.customCategory?.Description ?? category.gameInfo?.Summary))</MudTd>
         <MudTd>@(category.gameInfo?.Source)</MudTd>
@@ -51,9 +51,29 @@
 
     private CustomCategoryViewModel[] Categories { get; set; }
 
+    private string SelectedLocale
+    {
+        get => selectedLocale;
+        set
+        {
+            if (selectedLocale == value) return;
+            selectedLocale = value;
+            table.ReloadServerData();
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        if (ServiceContext.ActiveChannelInfo != null)
+        {
+            selectedLocale = ServiceContext.ActiveChannelInfo.BroadcasterLanguage;
+        }
+    }
+
+    private string GetSizedUri(string boxArtTemplate)
+    {
+        return boxArtTemplate.Replace("{width}", "143").Replace("{height}", "198");
     }
 
     private async Task<TableData<CustomCategoryViewModel>> ServerReload(TableState state)
@@ -63,16 +83,53 @@
         var customCategories = await grain.GetCustomizedCategoryDescription();
 
         List<CustomCategoryViewModel> categoryList = new List<CustomCategoryViewModel>();
-        await foreach (var category in TwitchClient.EnumerateTwitchCategoriesAsync(string.IsNullOrEmpty(searchString) ? "*" : searchString.ToLowerInvariant()))
+
+        if (filterCustomized)
         {
-            var info = await LocStore.ResolveLocalizedGameInfoAsync(selectedLocale, category.Id);
-            categoryList.Add(new CustomCategoryViewModel{
-                gameInfo = info,
-                helixCategory = category,
-                customCategory = customCategories.FirstOrDefault(c => c.TwitchCategoryId == category.Id && c.Locale == selectedLocale)
-            });
-            if (categoryList.Count >= 10)
-                break;
+            var categoryIds = customCategories.Where(c => c.Locale == selectedLocale).Take(100).Select(c => c.TwitchCategoryId).Distinct().ToArray();
+            if (categoryIds.Length != 0)
+            {
+                var gamesInfo = await TwitchClient.GetGamesInfo(categoryIds);
+                foreach (var game in gamesInfo)
+                {
+                    categoryList.Add(new CustomCategoryViewModel
+                    {
+                        gameInfo = null,
+                        helixCategory = game,
+                        customCategory = customCategories.FirstOrDefault(c => c.TwitchCategoryId == game.Id && c.Locale == selectedLocale)
+                    });
+                }
+            }
+        }
+        else if (!string.IsNullOrEmpty(searchString))
+        {
+            await foreach (var category in TwitchClient.EnumerateTwitchCategoriesAsync(searchString.ToLowerInvariant()))
+            {
+                var info = await LocStore.ResolveLocalizedGameInfoAsync(selectedLocale, category.Id);
+                categoryList.Add(new CustomCategoryViewModel
+                {
+                    gameInfo = info,
+                    helixCategory = category,
+                    customCategory = customCategories.FirstOrDefault(c => c.TwitchCategoryId == category.Id && c.Locale == selectedLocale)
+                });
+                if (categoryList.Count >= 10)
+                    break;
+            }
+        }
+        else
+        {
+            await foreach (var category in TwitchClient.EnumerateTopGamesAsync())
+            {
+                var info = await LocStore.ResolveLocalizedGameInfoAsync(selectedLocale, category.Id);
+                categoryList.Add(new CustomCategoryViewModel
+                {
+                    gameInfo = info,
+                    helixCategory = category,
+                    customCategory = customCategories.FirstOrDefault(c => c.TwitchCategoryId == category.Id && c.Locale == selectedLocale)
+                });
+                if (categoryList.Count >= 10)
+                    break;
+            }
         }
 
         return new TableData<CustomCategoryViewModel>
@@ -88,12 +145,6 @@
         table.ReloadServerData();
     }
 
-    private void OnSelectLocale(string twitchLocale)
-    {
-        selectedLocale = twitchLocale;
-        table.ReloadServerData();
-    }
-
     private void OnToggleCustomized(bool toggle)
     {
         filterCustomized = toggle;
@@ -105,6 +156,7 @@
         var client = await ClientProvider.GetConnectedClient();
         var grain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
         await grain.ClearCustomizedCategoryDescription(info.customCategory.TwitchCategoryId, info.customCategory.Locale);
+        await table.ReloadServerData();
     }
 
     private async Task Customize(CustomCategoryViewModel info)
@@ -116,6 +168,7 @@
         };
         var dialogParameters = new DialogParameters();
         dialogParameters.Add("Category", info);
+        dialogParameters.Add("Locale", SelectedLocale);
         var result = await DialogService.Show<CustomSynopsisEditDialog>("Customize", dialogParameters, options).Result;
 
         if (result.Cancelled)
@@ -127,6 +180,7 @@
         var client = await ClientProvider.GetConnectedClient();
         var grain = client.GetGrain<IChannelGrain>(ServiceContext.UserId);
         await grain.SetCustomizedCategoryDescription(description);
+        await table.ReloadServerData();
     }
 
 }
