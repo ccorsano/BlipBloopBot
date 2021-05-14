@@ -2,8 +2,10 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @using System.Security.Claims
 @using BotServiceGrain
+@using Conceptoire.Twitch.API
 @using Conceptoire.Twitch.Commands
 @inject IClientProvider ClientProvider
+@inject TwitchAPIClient TwitchClient
 
 <CascadingValue Name="ServiceContext" Value="this">
 
@@ -32,6 +34,7 @@
     public string UserId { get; private set; }
     public string OAuthToken { get; private set; }
     public string ActiveChannel { get; private set; }
+    public HelixChannelInfo ActiveChannelInfo { get; private set; }
     public CommandMetadata[] AvailableCommands { get; private set; }
 
     private bool _drawerOpen = true;
@@ -45,6 +48,7 @@
             UserName = authState.User.FindFirstValue("preferred_username");
             OAuthToken = authState.User.FindFirstValue("access_token");
             ActiveChannel = UserId;
+            ActiveChannelInfo = await TwitchClient.GetChannelInfoAsync(ActiveChannel);
             IsAuthenticated = true;
 
             var client = await ClientProvider.GetConnectedClient();

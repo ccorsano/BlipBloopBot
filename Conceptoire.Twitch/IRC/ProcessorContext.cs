@@ -17,6 +17,8 @@ namespace Conceptoire.Twitch.IRC
 
         public string CategoryId { get; set; }
 
+        public string CustomCategoryDescription { get; set; }
+
         private Dictionary<Guid, IProcessorState> _components;
 
         public TState GetState<TState>(Guid processorId) where TState : class, IProcessorState

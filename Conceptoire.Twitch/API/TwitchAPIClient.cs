@@ -193,6 +193,38 @@ namespace Conceptoire.Twitch.API
             return EnumerateHelixAPIAsync<HelixCategoriesSearchEntry>(baseUri);
         }
 
+        public IAsyncEnumerable<HelixCategoriesSearchEntry> EnumerateTopGamesAsync(CancellationToken cancellationToken = default)
+        {
+            var baseUri = "https://api.twitch.tv/helix/games/top";
+            return EnumerateHelixAPIAsync<HelixCategoriesSearchEntry>(baseUri);
+        }
+
+        public async Task<HelixCategoriesSearchEntry[]> GetGamesInfo(string[] categoryIds, CancellationToken cancellationToken = default)
+        {
+            var uri = "https://api.twitch.tv/helix/games";
+            foreach(var id in categoryIds)
+            {
+                uri = QueryHelpers.AddQueryString(uri, "id", id);
+            }
+            var httpMessage = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(uri)
+            };
+            await _authenticated.AuthenticateMessageAsync(httpMessage, cancellationToken);
+            var result = await _httpClient.SendAsync(httpMessage, cancellationToken);
+            if (result.IsSuccessStatusCode)
+            {
+                var response = await JsonSerializer.DeserializeAsync<HelixGamesResponse>(await result.Content.ReadAsStreamAsync(), null, cancellationToken);
+                return response.Data;
+            }
+
+            var errorMessage = await result.Content.ReadAsStringAsync();
+            _logger.LogError(errorMessage);
+            result.EnsureSuccessStatusCode(); // throws
+            throw new Exception("Unexpected error: Unreachable exception.");
+        }
+
         public async Task<HelixChannelEditor[]> GetHelixChannelEditorsAsync(string broadcasterId, CancellationToken cancellationToken = default)
         {
             var httpMessage = new HttpRequestMessage
