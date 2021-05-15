@@ -9,6 +9,10 @@
         <ChannelActivation />
         <BotAccountActivation />
     }
+    else if (!ServiceContext.IsChannelIntegrationActive)
+    {
+        <ChannelActivation />
+    }
 }
 else
 {
