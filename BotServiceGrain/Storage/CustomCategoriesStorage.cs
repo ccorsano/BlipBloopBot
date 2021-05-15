@@ -161,6 +161,11 @@ namespace BotServiceGrain.Storage
                 {
                     entity = new CustomCategoryEntity(grainReference.GetPrimaryKeyString(), description.TwitchCategoryId, description.Locale);
                 }
+                if (entity.Description == description.Description)
+                {
+                    continue;
+                }
+                entity.Description = description.Description;
                 batchOp.InsertOrReplace(entity);
             }
             await _table.ExecuteBatchAsync(batchOp);

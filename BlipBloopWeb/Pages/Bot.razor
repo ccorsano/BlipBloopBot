@@ -2,10 +2,12 @@
 @using Conceptoire.Twitch.Options
 
 <MudContainer>
-    <MudText Typo="Typo.h4"><MudIcon Icon="@Icons.Filled.Psychology" Size="Size.Large" /> @ServiceContext.ActiveChannel?.BroadcasterName : Bot</MudText>
-
-    @if (ServiceContext.IsChannelIntegrationActive)
+    @if (ServiceContext.ActiveChannel != null)
     {
+        <MudText Typo="Typo.h4">
+            <MudIcon Icon="@Icons.Filled.Psychology" Size="Size.Large" /> @ServiceContext.ActiveChannel.BroadcasterName : Bot
+        </MudText>
+
         <BotActivation />
 
         <BotAccountSelection />
@@ -18,7 +20,7 @@
     else
     {
         <MudAlert Severity="Severity.Warning">
-            Channel integration is currently inactive.
+            No active channel to manage.
         </MudAlert>
     }
 </MudContainer>

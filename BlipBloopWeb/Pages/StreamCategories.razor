@@ -2,15 +2,23 @@
 @page "/categories"
 
 <MudContainer>
-    <MudText Typo="Typo.h4">
-        <MudIcon Icon="@Icons.Filled.PlaylistPlay" Size="Size.Large" /> @ServiceContext.ActiveChannel?.BroadcasterName : Stream Categories
-    </MudText>
+    @if (ServiceContext.ActiveChannel != null)
+    {
+        <MudText Typo="Typo.h4">
+            <MudIcon Icon="@Icons.Filled.PlaylistPlay" Size="Size.Large" /> @ServiceContext.ActiveChannel.BroadcasterName : Stream Categories
+        </MudText>
+        <MudContainer>
+            <MudText Typo="Typo.h5">Synopsis database</MudText>
 
-    <MudContainer>
-        <MudText Typo="Typo.h5">Synopsis database</MudText>
-
-        <SynopsisBrowser></SynopsisBrowser>
-    </MudContainer>
+            <SynopsisBrowser></SynopsisBrowser>
+        </MudContainer>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Warning">
+            No active channel to manage.
+        </MudAlert>
+    }
 
 </MudContainer>
 
