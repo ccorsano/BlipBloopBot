@@ -59,6 +59,7 @@
             AvailableCommands = (await channelGrain.GetSupportedCommandTypes()).ToArray();
 
             var userGrain = client.GetGrain<IUserGrain>(UserId);
+
             var roles = await userGrain.GetRoles();
 
             AvailableChannels = roles.Select(r => new AvailableChannel
@@ -76,8 +77,9 @@
             {
                 ActiveChannel = null;
             }
-
             StateHasChanged();
+
+            SetChannelIntegrationActive(await userGrain.HasActiveChannel());
         }
 
         await base.OnInitializedAsync();
