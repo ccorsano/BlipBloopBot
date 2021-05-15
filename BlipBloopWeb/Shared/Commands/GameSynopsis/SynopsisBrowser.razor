@@ -20,16 +20,33 @@
     </ToolBarContent>
     <HeaderContent>
         <MudTh></MudTh>
-        <MudTh>Category Name</MudTh>
-        <MudTh>Description</MudTh>
-        <MudTh>Source</MudTh>
         <MudTh></MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd><img src="@GetSizedUri(category.helixCategory.BoxArtUri.ToString())" /></MudTd>
-        <MudTd>@(category.gameInfo?.Name ?? category.helixCategory.Name)</MudTd>
-        <MudTd>@if (category.customCategory != null) { <MudIcon Icon="@Icons.Outlined.Edit"/> } @((MarkupString) (category.customCategory?.Description ?? category.gameInfo?.Summary))</MudTd>
-        <MudTd>@(category.gameInfo?.Source)</MudTd>
+        <MudTd>
+            <MudContainer Class="d-flex align-self-stretch">
+                <MudPaper Class="flex-grow-0">
+                    <img src="@GetSizedUri(category.helixCategory.BoxArtUri.ToString())" />
+                </MudPaper>
+                <MudContainer Class="d-flex flex-column flex-grow-1">
+                    <MudPaper Class="my-3 flex-grow-0" Elevation="0">
+                        <MudText Typo="Typo.h5">@(category.gameInfo?.Name ?? category.helixCategory.Name)</MudText>
+                    </MudPaper>
+                    <MudPaper Class="flex-grow-1" Elevation="0">
+                        <MudText Typo="Typo.body1">
+                            @if (category.customCategory != null){<MudIcon Icon="@Icons.Outlined.Edit" />}
+                            @((MarkupString) (category.customCategory?.Description ?? category.gameInfo?.Summary))
+                        </MudText>
+                    </MudPaper>
+                    <MudPaper Class="align-self-end flex-grow-0" Elevation="0">
+                        @if (category.gameInfo != null)
+                        {
+                            <MudText Typo="Typo.caption">Source: @(category.gameInfo.Source)</MudText>
+                        }
+                    </MudPaper>
+                </MudContainer>
+            </MudContainer>
+        </MudTd>
         <MudTd>
             @if (category.customCategory != null)
             {
