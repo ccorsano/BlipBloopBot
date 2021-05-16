@@ -6,7 +6,12 @@
 @inject IClientProvider ClientProvider
 @inject IDialogService DialogService
 
-<MudTable Items="@Commands" @bind-SelectedItem="SelectedItem" Context="command" OnCommitEditClick="@(c => OnConfirmCommand(c))" @ref="Table">
+<MudTable Items="@Commands"
+          @bind-SelectedItem="SelectedItem"
+          Context="command"
+          OnCommitEditClick="@(c => OnConfirmCommand(c))"
+          @ref="Table"
+          Hover="true">
     <ToolBarContent>
         <MudText Typo="Typo.h6">Commands</MudText>
         <MudToolBarSpacer />
@@ -19,7 +24,14 @@
         <MudTh></MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Trigger">@command.Name</MudTd>
+        <MudTd DataLabel="Trigger">
+            <MudChipSet AllClosable="false">
+                @foreach(var trigger in command.Aliases)
+                { 
+                    <MudChip Text="@trigger" />
+                }
+            </MudChipSet>
+        </MudTd>
         <MudTd DataLabel="Type">@command.Type</MudTd>
         <MudTd DataLabel="Parameters">
             <MudList>
@@ -35,7 +47,19 @@
     </RowTemplate>
     <RowEditingTemplate>
         <MudTd DataLabel="Trigger">
-            <MudTextField @bind-Value="@command.Name" />
+            <MudContainer Class="d-flex px-0">
+                <MudPaper Class="flex-shrink-0 flex-grow-1 px-0" Elevation="0">
+                    <MudChipSet AllClosable="true" Mandatory="true" OnClose="c => RemoveAlias(command, c.Text)">
+                        @foreach (var trigger in command.Aliases)
+                        {
+                            <MudChip Text="@trigger" />
+                        }
+                    </MudChipSet>
+                </MudPaper>
+                <MudPaper Class="flex-shrink-1 flex-grow-0 align-end px-0" Elevation="0">
+                    <AddAliasField Command="command" AliasAdded="a => AddAlias(command, a)" />
+                </MudPaper>
+            </MudContainer>
         </MudTd>
         <MudTd DataLabel="Type">
             <MudSelect @bind-Value="@command.Type" T="string" Label="Bot command type selection">
@@ -134,7 +158,6 @@
     protected CommandItemModel ToCommandItem(CommandOptions options) => new CommandItemModel
     {
         Id = options.Id,
-        Name = options.Name,
         Aliases = options.Aliases?.ToList() ?? new List<string>(),
         Type = options.Type,
         Parameters = options.Parameters.Select(option => new CommandProperty
@@ -143,6 +166,20 @@
             Value = option.Value,
         }).ToList(),
     };
+
+    protected void AddAlias(CommandItemModel command, string alias)
+    {
+        if (string.IsNullOrEmpty(alias))
+        {
+            return;
+        }
+        command.Aliases.Add(alias);
+    }
+
+    protected void RemoveAlias(CommandItemModel command, string alias)
+    {
+        command.Aliases.Remove(alias);
+    }
 
     protected async Task OnConfirmCommand(MouseEventArgs evt)
     {
@@ -157,8 +194,7 @@
         if (!SelectedItem.Id.HasValue)
         {
             var commandStub = new CommandOptions {
-                Name = SelectedItem.Name,
-                Aliases = new string[] { SelectedItem.Name },
+                Aliases = SelectedItem.Aliases.ToArray(),
                 Type = SelectedItem.Type,
                 Parameters = SelectedItem.Parameters.ToDictionary(p => p.Key, p => p.Value),
             };
@@ -168,13 +204,14 @@
         {
             var commandStub = new CommandOptions {
                 Id = SelectedItem.Id.Value,
-                Name = SelectedItem.Name,
-                Aliases = new string[] { SelectedItem.Name },
+                Aliases = SelectedItem.Aliases.ToArray(),
                 Type = SelectedItem.Type,
                 Parameters = SelectedItem.Parameters.ToDictionary(p => p.Key, p => p.Value),
             };
             await channelGrain.DeleteCommand(SelectedItem.Id.Value);
             await channelGrain.AddCommand(commandStub);
         }
+
+        Commands = (await channelGrain.GetBotCommands()).Select(ToCommandItem).ToList();
     }
 }

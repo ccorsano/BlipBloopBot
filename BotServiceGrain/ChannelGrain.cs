@@ -102,20 +102,24 @@ namespace BotServiceGrainInterface
         public async Task AddCommand(CommandOptions options)
         {
             options.Id = Guid.NewGuid();
-            _logger.LogInformation("Adding bot command {commandId} ({commandName} - {commandType})", options.Id, options.Name, options.Type);
+            _logger.LogInformation("Adding bot command {commandId} ({commandAliases} - {commandType})", options.Id, string.Join(",", options.Aliases ?? new string[0]), options.Type);
             _channelBotState.State.Commands.Add(options.Id, options);
             var command = _registeredCommands[options.Type].Processor();
 
             var registration = _registeredCommands[options.Type];
             await _chatBot.RegisterMessageProcessor(registration.ProcessorType, options);
+
+            await _channelBotState.WriteStateAsync();
         }
 
         public async Task DeleteCommand(Guid commandId)
         {
             var command = _channelBotState.State.Commands.GetValueOrDefault(commandId);
-            _logger.LogInformation("Removing bot command {commandId} ({commandName} - )", commandId, command?.Name, command?.Type);
+            _logger.LogInformation("Removing bot command {commandId} ({commandAliases} - )", commandId, string.Join(",", command?.Aliases ?? new string[0]), command?.Type);
             _channelBotState.State.Commands.Remove(commandId);
             await _chatBot.RemoveMessageProcessor(commandId);
+
+            await _channelBotState.WriteStateAsync();
         }
 
         public override Task OnDeactivateAsync()

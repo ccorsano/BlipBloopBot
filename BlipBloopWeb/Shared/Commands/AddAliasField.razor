@@ -1,0 +1,64 @@
+﻿@using System.Text.RegularExpressions
+
+<MudContainer Class="px-0">
+    @if (IsEditing)
+    {
+        <MudContainer Class="px-0">
+            <MudTextFieldString
+                                ValueChanged="AddAlias"
+                                Validation="@(new Func<string,bool>(ValidateAliasFormat))"
+                                OnKeyUp="OnKeyUp"
+                                Margin="Margin.Dense"
+                                Variant="Variant.Outlined"
+                                Label="Trigger" />
+        </MudContainer>
+    }
+    else
+    {
+        <MudContainer Class="px-0">
+            <MudIconButton Icon="@Icons.Outlined.AddCircle" OnClick="OnEdit" />
+        </MudContainer>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public CommandItemModel Command { get; set; }
+
+    [Parameter]
+    public EventCallback<string> AliasAdded { get; set; }
+
+    private bool IsEditing { get; set; }
+
+    protected bool ValidateAliasFormat(string alias)
+    {
+        var regex = new Regex("^[^\\s\\!]+$");
+        return string.IsNullOrEmpty(alias) || (regex.IsMatch(alias) && !Command.Aliases.Contains(alias));
+    }
+
+    protected void OnEdit()
+    {
+        IsEditing = true;
+    }
+
+    protected void AddAlias(string alias)
+    {
+        if (string.IsNullOrEmpty(alias))
+        {
+            return;
+        }
+        if (AliasAdded.HasDelegate)
+        {
+            AliasAdded.InvokeAsync(alias);
+        }
+        IsEditing = false;
+    }
+
+    protected void OnKeyUp(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            IsEditing = false;
+        }
+    }
+}

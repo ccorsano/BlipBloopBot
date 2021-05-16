@@ -7,9 +7,7 @@ namespace Conceptoire.Twitch.Commands
     public class CommandOptions
     {
         public Guid Id { get; set; } = new Guid();
-        public string Name { get; set; }
         public string[] Aliases { get; set; }
-        public string Trigger { get; set; }
         public string Type { get; set; }
         public Dictionary<string, string> Parameters { get; set; } = new Dictionary<string, string>();
     }
