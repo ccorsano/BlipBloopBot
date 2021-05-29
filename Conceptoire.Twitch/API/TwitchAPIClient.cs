@@ -193,6 +193,32 @@ namespace Conceptoire.Twitch.API
             return EnumerateHelixAPIAsync<HelixCategoriesSearchEntry>(baseUri);
         }
 
+        public IAsyncEnumerable<HelixVideoInfo> EnumerateTwitchChannelVideosAsync(string channelId, string videoType = null, CancellationToken cancellationToken = default)
+        {
+            var baseUri = "https://api.twitch.tv/helix/videos";
+            baseUri = QueryHelpers.AddQueryString(baseUri, "user_id", channelId);
+            if (! string.IsNullOrEmpty(videoType))
+            {
+                baseUri = QueryHelpers.AddQueryString(baseUri, "type", videoType);
+            }
+            return EnumerateHelixAPIAsync<HelixVideoInfo>(baseUri);
+        }
+
+        public IAsyncEnumerable<HelixClip> EnumerateTwitchChannelClipsAsync(string channelId, DateTime? startedAt = null, DateTime? endedAt = null, CancellationToken cancellationToken = default)
+        {
+            var baseUri = "https://api.twitch.tv/helix/clips";
+            baseUri = QueryHelpers.AddQueryString(baseUri, "broadcaster_id", channelId);
+            if (startedAt != null)
+            {
+                baseUri = $"{baseUri}&started_at={startedAt.Value.ToString("yyyy-MM-dd'T'HH:mm:ssZ")}";
+            }
+            if (endedAt != null)
+            {
+                baseUri = $"{baseUri}&ended_at={endedAt.Value.ToString("yyyy-MM-dd'T'HH:mm:ssZ")}";
+            }
+            return EnumerateHelixAPIAsync<HelixClip>(baseUri);
+        }
+
         public IAsyncEnumerable<HelixCategoriesSearchEntry> EnumerateTopGamesAsync(CancellationToken cancellationToken = default)
         {
             var baseUri = "https://api.twitch.tv/helix/games/top";

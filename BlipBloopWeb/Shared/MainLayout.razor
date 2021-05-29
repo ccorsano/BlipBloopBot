@@ -1,8 +1,12 @@
 @inherits LayoutComponentBase
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
 @using System.Security.Claims
+@using System.Linq 
 @using BotServiceGrain
+@using Conceptoire.Twitch
 @using Conceptoire.Twitch.API
+@using Conceptoire.Twitch.Constants
 @using Conceptoire.Twitch.Commands
 @inject IClientProvider ClientProvider
 @inject TwitchAPIClient TwitchClient
@@ -28,12 +32,15 @@
 
 @code
 {
+    public bool IsLoading { get; private set; } = true;
     public bool IsAuthenticated { get; private set; }
     public bool IsChannelIntegrationActive { get; private set; }
     public bool IsBotRunning { get; private set; }
+    public bool CanPostOnChat { get; private set; }
     public string UserName { get; private set; }
     public string UserId { get; private set; }
     public string OAuthToken { get; private set; }
+    public Conceptoire.Twitch.Constants.TwitchConstants.TwitchOAuthScopes[] TokenScopes { get; private set; }
     public AvailableChannel ActiveChannel { get; private set; }
     public AvailableChannel[] AvailableChannels { get; private set; }
     public HelixChannelInfo ActiveChannelInfo { get; private set; }
@@ -42,6 +49,11 @@
     public bool IsOwnChannel => IsAuthenticated && ActiveChannel?.BroadcasterId == UserId;
 
     private bool _drawerOpen = true;
+
+    protected override Task OnParametersSetAsync()
+    {
+        return base.OnParametersSetAsync();
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -77,12 +89,41 @@
             {
                 ActiveChannel = null;
             }
+
+            var savedToken = await userGrain.GetOAuthToken();
+            if (savedToken == null)
+            {
+                await userGrain.SetOAuthToken(OAuthToken);
+                savedToken = OAuthToken;
+            }
+
+            var authenticated = Twitch.Authenticate().FromOAuthToken(savedToken).Build();
+            var oauthClient = TwitchAPIClient.CreateFromBase(TwitchClient, authenticated);
+
+            var tokenValidation = await oauthClient.ValidateToken();
+
+            if (authState.User.HasClaim(c => c.Type == "scope" && c.Value == TwitchConstants.SCOPE_CHAT_EDIT) && !tokenValidation.Scopes.Contains(TwitchConstants.SCOPE_CHAT_EDIT))
+            {
+                await userGrain.SetOAuthToken(OAuthToken);
+                savedToken = OAuthToken;
+            }
+
+            CanPostOnChat = tokenValidation?.Scopes?.Contains(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChatEdit]) ?? false;
+
+            if (tokenValidation == null)
+            {
+                NavigationManager.NavigateTo("/Logout");
+                return;
+            }
+
             StateHasChanged();
 
             SetChannelIntegrationActive(await userGrain.HasActiveChannel());
         }
 
         await base.OnInitializedAsync();
+
+        IsLoading = false;
     }
 
     public async Task SetActiveChannel(string activeChannel)

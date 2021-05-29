@@ -24,6 +24,9 @@ using Microsoft.Extensions.Options;
 using BlipBloopBot.Storage;
 using BlipBloopCommands.Storage;
 using MudBlazor.Services;
+using System;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using System.Net.Http;
 
 namespace BlipBloopWeb
 {
@@ -105,6 +108,41 @@ namespace BlipBloopWeb
             services.AddSingleton<IGameLocalizationStore, AzureStorageGameLocalizationStore>();
             services.AddHttpClient();
 
+            Action<TwitchConstants.TwitchOAuthScopes[], string, OpenIdConnectOptions>  configureTwitchOpenId = (scopes, callbackPath, options) =>
+            {
+                options.Authority = "https://id.twitch.tv/oauth2";
+                //options.MetadataAddress = "https://id.twitch.tv/oauth2/.well-known/openid-configuration";
+                options.ClientId = twitchOptions.ClientId;
+                options.ClientSecret = twitchOptions.ClientSecret;
+                options.ResponseType = "token id_token";
+                options.ResponseMode = "form_post";
+                options.CallbackPath = callbackPath;
+                options.Events.OnRedirectToIdentityProvider = (context) =>
+                {
+                    context.ProtocolMessage.RedirectUri = context.ProtocolMessage.RedirectUri + "-fragment";
+                    return Task.CompletedTask;
+                };
+                options.Events.OnTokenValidated = (context) =>
+                {
+                    ClaimsIdentity identity = context.Principal.Identity as ClaimsIdentity;
+                    identity.AddClaim(new Claim("access_token", context.ProtocolMessage.AccessToken));
+                    identity.AddClaim(new Claim("id_token", context.ProtocolMessage.IdToken));
+
+                    foreach (var scope in scopes)
+                    {
+                        identity.AddClaim(new Claim("scope", TwitchConstants.ScopesValues[scope]));
+                    }
+
+                    return Task.CompletedTask;
+                };
+                options.Scope.Remove("profile");
+
+                foreach(var scope in scopes)
+                {
+                    options.Scope.Add(TwitchConstants.ScopesValues[scope]);
+                }
+            };
+
             // Identity
             services
                 .AddAuthentication(options =>
@@ -128,38 +166,23 @@ namespace BlipBloopWeb
                         return Task.CompletedTask;
                     };
                 })
-                .AddOpenIdConnect("twitch", "Twitch", options =>
-                {
-                    options.Authority = "https://id.twitch.tv/oauth2";
-                    //options.MetadataAddress = "https://id.twitch.tv/oauth2/.well-known/openid-configuration";
-                    options.ClientId = twitchOptions.ClientId;
-                    options.ClientSecret = twitchOptions.ClientSecret;
-                    options.ResponseType = "token id_token";
-                    options.ResponseMode = "form_post";
-                    options.Events.OnRedirectToIdentityProvider = (context) =>
-                    {
-                        context.ProtocolMessage.RedirectUri = context.ProtocolMessage.RedirectUri + "-fragment";
-                        return Task.CompletedTask;
-                    };
-                    options.Events.OnTokenValidated = (context) =>
-                    {
-                        ClaimsIdentity identity = context.Principal.Identity as ClaimsIdentity;
-                        identity.AddClaim(new Claim("access_token", context.ProtocolMessage.AccessToken));
-                        identity.AddClaim(new Claim("id_token", context.ProtocolMessage.IdToken));
-                        return Task.CompletedTask;
-                    };
-                    options.Scope.Remove("profile");
-                    options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChannelReadEditors]);
-                    options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChannelReadHypeTrain]);
-                    options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChannelReadRedemptions]);
-                    options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChannelReadSubscriptions]);
-                    options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ModerationRead]);
-                    options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.UserReadBlockedUsers]);
-                    options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.UserReadBroadcast]);
-                    options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.UserReadSubscriptions]);
-                    options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChatRead]);
-                    options.Scope.Add(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChatEdit]);
-                });
+                .AddOpenIdConnect("twitch", "Twitch", options => configureTwitchOpenId(new TwitchConstants.TwitchOAuthScopes[]{
+                    TwitchConstants.TwitchOAuthScopes.ChannelReadEditors,
+                    TwitchConstants.TwitchOAuthScopes.ModerationRead,
+                    TwitchConstants.TwitchOAuthScopes.UserReadBlockedUsers,
+                    TwitchConstants.TwitchOAuthScopes.UserReadBroadcast,
+                    TwitchConstants.TwitchOAuthScopes.UserReadSubscriptions,
+                    TwitchConstants.TwitchOAuthScopes.ChatRead,
+                }, "/signin-oidc", options))
+                .AddOpenIdConnect("twitchBot", "Twitch - Bot Account", options => configureTwitchOpenId(new TwitchConstants.TwitchOAuthScopes[]{
+                    TwitchConstants.TwitchOAuthScopes.ChannelReadEditors,
+                    TwitchConstants.TwitchOAuthScopes.ModerationRead,
+                    TwitchConstants.TwitchOAuthScopes.UserReadBlockedUsers,
+                    TwitchConstants.TwitchOAuthScopes.UserReadBroadcast,
+                    TwitchConstants.TwitchOAuthScopes.ChatRead,
+                    TwitchConstants.TwitchOAuthScopes.ChatEdit,
+                    TwitchConstants.TwitchOAuthScopes.UserEditFollows,
+                }, "/signin-oidc-bot", options));
 
             services.AddRazorPages();
             services.AddServerSideBlazor();

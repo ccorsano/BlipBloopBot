@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Conceptoire.Twitch.Constants
 {
@@ -129,6 +130,7 @@ namespace Conceptoire.Twitch.Constants
             { TwitchOAuthScopes.ChannelReadSubscriptions, SCOPE_CHANNEL_READ_SUBSCRIPTIONS },
             { TwitchOAuthScopes.ClipsEdit, SCOPE_CLIPS_EDIT },
             { TwitchOAuthScopes.ModerationRead, SCOPE_MODERATION_READ },
+            { TwitchOAuthScopes.OpenId, SCOPE_OPENID },
             { TwitchOAuthScopes.UserEdit, SCOPE_USER_EDIT },
             { TwitchOAuthScopes.UserEditFollows, SCOPE_USER_EDIT_FOLLOWS },
             { TwitchOAuthScopes.UserReadBlockedUsers, SCOPE_USER_READ_BLOCKEDUSERS },
@@ -142,6 +144,8 @@ namespace Conceptoire.Twitch.Constants
             { TwitchOAuthScopes.WhispersRead, SCOPE_WHISPERS_READ },
             { TwitchOAuthScopes.WhispersEdit, SCOPE_WHISPERS_EDIT },
         };
+
+        public static readonly Dictionary<string, TwitchOAuthScopes> ValuesToScopes = ScopesValues.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
 
         public enum TwitchOAuthScopes
         {
@@ -160,6 +164,7 @@ namespace Conceptoire.Twitch.Constants
             ChannelReadSubscriptions,
             ClipsEdit,
             ModerationRead,
+            OpenId,
             UserEdit,
             UserEditFollows,
             UserReadBlockedUsers,
@@ -184,6 +189,7 @@ namespace Conceptoire.Twitch.Constants
         public const string SCOPE_USER_EDIT_FOLLOWS = "user:edit:follows";
         public const string SCOPE_USER_EDIT = "user:edit";
         public const string SCOPE_MODERATION_READ = "moderation:read";
+        public const string SCOPE_OPENID = "openid";
         public const string SCOPE_CLIPS_EDIT = "clips:edit";
         public const string SCOPE_CHANNEL_READ_SUBSCRIPTIONS = "channel:read:subscriptions";
         public const string SCOPE_CHANNEL_READ_STREAMKEY = "channel:read:stream_key";

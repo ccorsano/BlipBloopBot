@@ -21,7 +21,7 @@
                             <MudMenuItem OnClick="(e) => SelectChannel(channel.BroadcasterId)">
                                 <MudIcon Icon="@(
                                 channel.UserRole switch {
-                                    ChannelRole.Broadcaster => Icons.Outlined.PlaylistPlay,
+                                    ChannelRole.Broadcaster => Icons.Outlined.Cast,
                                     ChannelRole.Editor => Icons.Outlined.Edit,
                                     ChannelRole.Moderator => Icons.Outlined.Security,
                                     _ => ""

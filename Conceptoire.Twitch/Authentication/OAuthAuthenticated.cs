@@ -75,9 +75,12 @@ namespace Conceptoire.Twitch.Authentication
 
             _clientId = response.ClientId;
             _tokenExpirationTime = DateTimeOffset.UtcNow.Add(TimeSpan.FromSeconds(response.ExpiresIn));
-            _scopes = response.Scopes
-                .Where(s => TwitchConstants.ScopesValues.ContainsValue(s))
-                .Select(s => TwitchConstants.ScopesValues.First(kvp => kvp.Value == s).Key).ToArray();
+            if (response.Scopes != null)
+            {
+                _scopes = response.Scopes
+                    .Where(s => TwitchConstants.ScopesValues.ContainsValue(s))
+                    .Select(s => TwitchConstants.ScopesValues.First(kvp => kvp.Value == s).Key).ToArray();
+            }
             _login = response.Login;
         }
 

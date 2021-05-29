@@ -2,6 +2,7 @@
 using BotServiceGrainInterface.Model;
 using Conceptoire.Twitch.API;
 using Conceptoire.Twitch.Authentication;
+using Conceptoire.Twitch.Constants;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Orleans;
@@ -37,29 +38,13 @@ namespace BotServiceGrain
         {
             if (_profile.RecordExists)
             {
-                var authenticated = new AuthenticationBuilder()
-                    .FromOAuthToken(_profile.State.OAuthToken)
-                    .Build();
-                _twitchAPIClient = new TwitchAPIClient(authenticated, _httpClientFactory, ServiceProvider.GetRequiredService<ILogger<TwitchAPIClient>>());
-                _tokenInfo = await _twitchAPIClient.ValidateToken();
-
-                if (_profile.State.HasActiveChannel)
-                {
-                    await SetRole(new UserRole
-                    {
-                        Role = ChannelRole.Broadcaster,
-                        ChannelId = _tokenInfo.UserId,
-                        ChannelName = _tokenInfo.Login,
-                    });
-                    var channelGrain = GrainFactory.GetGrain<IChannelGrain>(UserId);
-                    await channelGrain.Activate(_profile.State.OAuthToken);
-                }
+                await SetOAuthToken(_profile.State.OAuthToken);
             }
 
             await base.OnActivateAsync();
         }
 
-        async Task<bool> IUserGrain.SetOAuthToken(string oauthToken)
+        public async Task<bool> SetOAuthToken(string oauthToken)
         {
             _profile.State.OAuthToken = oauthToken;
 
@@ -75,11 +60,23 @@ namespace BotServiceGrain
 
                 if (_profile.State.HasActiveChannel)
                 {
+                    await SetRole(new UserRole
+                    {
+                        Role = ChannelRole.Broadcaster,
+                        ChannelId = _tokenInfo.UserId,
+                        ChannelName = _tokenInfo.Login,
+                    });
                     var channelGrain = GrainFactory.GetGrain<IChannelGrain>(UserId);
                     await channelGrain.Activate(_profile.State.OAuthToken);
                 }
 
+                _profile.State.CurrentScopes = validated.Scopes.Where(s => TwitchConstants.ScopesValues.ContainsValue(s)).Select(s => TwitchConstants.ScopesValues.FirstOrDefault(kvp => kvp.Value == s).Key).ToArray();
+
                 await _profile.WriteStateAsync();
+            }
+            else
+            {
+                _profile.State.CurrentScopes = new TwitchConstants.TwitchOAuthScopes[0];
             }
 
             return validated != null;
@@ -122,6 +119,11 @@ namespace BotServiceGrain
                 throw new InvalidOperationException("Missing active user token");
             }
 
+            if (!_profile.State.CurrentScopes.Contains(TwitchConstants.TwitchOAuthScopes.ChatEdit))
+            {
+                throw new Exception("Missing chat permission, authorize bot account first.");
+            }
+
             var channel = await _twitchAPIClient.GetChannelInfoAsync(channelId);
             if (channel == null)
             {
@@ -159,6 +161,10 @@ namespace BotServiceGrain
 
         Task<HelixChannelInfo[]> IUserGrain.GetChannelBotAllowList()
         {
+            if (! _profile.State.CurrentScopes.Contains(TwitchConstants.TwitchOAuthScopes.ChatEdit))
+            {
+                return Task.FromResult(new HelixChannelInfo[0]);
+            }
             return Task.FromResult(_profile.State.CanBeBotOnChannels.ToArray());
         }
 

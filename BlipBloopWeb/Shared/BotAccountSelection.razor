@@ -3,15 +3,26 @@
 @inject IClientProvider ClientProvider
 
 <MudPaper>
-    <MudText Typo="Typo.h5">
-        Bot Account Selection
-    </MudText>
-    <MudSelect T="BotAccountInfo" Label="Bot command type selection" Disabled="ServiceContext.IsBotRunning">
-        @foreach (var botAccount in _botAccounts)
-        {
-            <MudSelectItem T="BotAccountInfo" Value="@botAccount">@botAccount.UserLogin</MudSelectItem>
-        }
-    </MudSelect>
+    @if (ServiceContext.IsBotRunning)
+    {
+    <MudContainer>
+        Using
+        <MudChip>@_selectedBotAccount?.UserLogin</MudChip>
+        as a bot. Stop the bot service to change.
+    </MudContainer>
+    }
+    else
+    {
+        <MudText Typo="Typo.h5">
+            Bot Account Selection
+        </MudText>
+        <MudSelect T="BotAccountInfo" Label="Bot account selection" Value="_selectedBotAccount" ValueChanged="OnSelect">
+            @foreach (var botAccount in _botAccounts)
+            {
+                <MudSelectItem T="BotAccountInfo" Value="@botAccount">@botAccount.UserLogin</MudSelectItem>
+            }
+        </MudSelect>
+    }
 </MudPaper>
 
 @code {
@@ -19,6 +30,7 @@
     public MainLayout ServiceContext { get; set; }
 
     private BotAccountInfo[] _botAccounts = new BotAccountInfo[0];
+    private BotAccountInfo _selectedBotAccount;
     private string _botUserId;
 
     private IChannelGrain _channelGrain;
@@ -29,18 +41,18 @@
         _channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
 
         _botAccounts = await _channelGrain.GetAllowedBotAccounts();
-
+        _selectedBotAccount = _botAccounts.FirstOrDefault(b => b.IsActive) ?? _botAccounts.First();
+        
         await base.OnParametersSetAsync();
     }
 
-    protected async Task OnSelect(ChangeEventArgs evt)
+    protected async Task OnSelect(BotAccountInfo selectedBot)
     {
-        _botUserId = evt.Value as string;
-
         var client = await ClientProvider.GetConnectedClient();
         _channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
 
-        await _channelGrain.SetActiveBotAccount(_botUserId);
+        await _channelGrain.SetActiveBotAccount(selectedBot.UserId);
+        _selectedBotAccount = selectedBot;
     }
 
 }

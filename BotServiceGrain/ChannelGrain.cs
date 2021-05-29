@@ -68,6 +68,7 @@ namespace BotServiceGrainInterface
             {
                 var defaultBotInfo = new BotAccountInfo
                 {
+                    IsActive = true,
                     UserId = _options.TokenInfo.UserId,
                     UserLogin = _options.TokenInfo.Login,
                 };
@@ -342,6 +343,7 @@ namespace BotServiceGrainInterface
                 _logger.LogError("Trying to set a bot account not allowed on the channel {userId}", userId);
                 throw new InvalidOperationException("Trying to set a bot account not allowed on the channel");
             }
+
             _logger.LogInformation("Setting {botAccountName}({botAccountId}) as active bot on channel {channelName}", accountInfo.UserLogin, accountInfo.UserId, _channelInfo.BroadcasterName);
             foreach (var bot in _channelBotState.State.AllowedBotAccounts)
             {
