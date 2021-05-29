@@ -16,9 +16,13 @@
             <br />
             In that case, this account login information will be used to read and post from the enabled chat, if the broadcaster selects this account as bot.
         </MudText>
-        @if (!ServiceContext.CanPostOnChat)
+        @if (ServiceContext.IsLoading)
         {
-            <MudButton Link="/BotLogin?redirectUri=/">Authorize bot account</MudButton>
+            <MudProgressLinear Indeterminate="true"></MudProgressLinear>
+        }
+        else if (!ServiceContext.CanPostOnChat)
+        {
+            <MudButton Link="/BotLogin?redirectUri=/" Variant="Variant.Filled" Color="Color.Primary">Authorize bot account</MudButton>
         }
         else
         {

@@ -32,82 +32,83 @@
 
 @code
 {
-        public bool IsAuthenticated { get; private set; }
-        public bool IsChannelIntegrationActive { get; private set; }
-        public bool IsBotRunning { get; private set; }
-        public bool CanPostOnChat { get; private set; }
-        public string UserName { get; private set; }
-        public string UserId { get; private set; }
-        public string OAuthToken { get; private set; }
-        public Conceptoire.Twitch.Constants.TwitchConstants.TwitchOAuthScopes[] TokenScopes { get; private set; }
-        public AvailableChannel ActiveChannel { get; private set; }
-        public AvailableChannel[] AvailableChannels { get; private set; }
-        public HelixChannelInfo ActiveChannelInfo { get; private set; }
-        public CommandMetadata[] AvailableCommands { get; private set; }
+    public bool IsLoading { get; private set; } = true;
+    public bool IsAuthenticated { get; private set; }
+    public bool IsChannelIntegrationActive { get; private set; }
+    public bool IsBotRunning { get; private set; }
+    public bool CanPostOnChat { get; private set; }
+    public string UserName { get; private set; }
+    public string UserId { get; private set; }
+    public string OAuthToken { get; private set; }
+    public Conceptoire.Twitch.Constants.TwitchConstants.TwitchOAuthScopes[] TokenScopes { get; private set; }
+    public AvailableChannel ActiveChannel { get; private set; }
+    public AvailableChannel[] AvailableChannels { get; private set; }
+    public HelixChannelInfo ActiveChannelInfo { get; private set; }
+    public CommandMetadata[] AvailableCommands { get; private set; }
 
-        public bool IsOwnChannel => IsAuthenticated && ActiveChannel?.BroadcasterId == UserId;
+    public bool IsOwnChannel => IsAuthenticated && ActiveChannel?.BroadcasterId == UserId;
 
-        private bool _drawerOpen = true;
+    private bool _drawerOpen = true;
 
-        protected override Task OnParametersSetAsync()
+    protected override Task OnParametersSetAsync()
+    {
+        return base.OnParametersSetAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.HasClaim(c => c.Type == ClaimTypes.NameIdentifier))
         {
-            return base.OnParametersSetAsync();
-        }
+            UserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            UserName = authState.User.FindFirstValue("preferred_username");
+            OAuthToken = authState.User.FindFirstValue("access_token");
 
-        protected override async Task OnInitializedAsync()
-        {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            if (authState.User.HasClaim(c => c.Type == ClaimTypes.NameIdentifier))
+            IsAuthenticated = true;
+
+            var client = await ClientProvider.GetConnectedClient();
+            var channelGrain = client.GetGrain<IChannelGrain>(UserId);
+            AvailableCommands = (await channelGrain.GetSupportedCommandTypes()).ToArray();
+
+            var userGrain = client.GetGrain<IUserGrain>(UserId);
+
+            var roles = await userGrain.GetRoles();
+
+            AvailableChannels = roles.Select(r => new AvailableChannel
             {
-                UserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                UserName = authState.User.FindFirstValue("preferred_username");
-                OAuthToken = authState.User.FindFirstValue("access_token");
+                BroadcasterId = r.ChannelId,
+                UserRole = r.Role,
+                BroadcasterName = r.ChannelName,
+            }).ToArray();
+            if (AvailableChannels.Any())
+            {
+                ActiveChannel = AvailableChannels[0];
+                ActiveChannelInfo = await TwitchClient.GetChannelInfoAsync(ActiveChannel.BroadcasterId);
+            }
+            else
+            {
+                ActiveChannel = null;
+            }
 
-                IsAuthenticated = true;
+            var savedToken = await userGrain.GetOAuthToken();
+            if (savedToken == null)
+            {
+                await userGrain.SetOAuthToken(OAuthToken);
+                savedToken = OAuthToken;
+            }
 
-                var client = await ClientProvider.GetConnectedClient();
-                var channelGrain = client.GetGrain<IChannelGrain>(UserId);
-                AvailableCommands = (await channelGrain.GetSupportedCommandTypes()).ToArray();
+            var authenticated = Twitch.Authenticate().FromOAuthToken(savedToken).Build();
+            var oauthClient = TwitchAPIClient.CreateFromBase(TwitchClient, authenticated);
 
-                var userGrain = client.GetGrain<IUserGrain>(UserId);
+            var tokenValidation = await oauthClient.ValidateToken();
 
-                var roles = await userGrain.GetRoles();
+            if (authState.User.HasClaim(c => c.Type == "scope" && c.Value == TwitchConstants.SCOPE_CHAT_EDIT) && !tokenValidation.Scopes.Contains(TwitchConstants.SCOPE_CHAT_EDIT))
+            {
+                await userGrain.SetOAuthToken(OAuthToken);
+                savedToken = OAuthToken;
+            }
 
-                AvailableChannels = roles.Select(r => new AvailableChannel
-                {
-                    BroadcasterId = r.ChannelId,
-                    UserRole = r.Role,
-                    BroadcasterName = r.ChannelName,
-                }).ToArray();
-                if (AvailableChannels.Any())
-                {
-                    ActiveChannel = AvailableChannels[0];
-                    ActiveChannelInfo = await TwitchClient.GetChannelInfoAsync(ActiveChannel.BroadcasterId);
-                }
-                else
-                {
-                    ActiveChannel = null;
-                }
-
-                var savedToken = await userGrain.GetOAuthToken();
-                if (savedToken == null)
-                {
-                    await userGrain.SetOAuthToken(OAuthToken);
-                    savedToken = OAuthToken;
-                }
-
-                var authenticated = Twitch.Authenticate().FromOAuthToken(savedToken).Build();
-                var oauthClient = TwitchAPIClient.CreateFromBase(TwitchClient, authenticated);
-
-                var tokenValidation = await oauthClient.ValidateToken();
-
-                if (authState.User.HasClaim(c => c.Type == "scope" && c.Value == TwitchConstants.SCOPE_CHAT_EDIT) && !tokenValidation.Scopes.Contains(TwitchConstants.SCOPE_CHAT_EDIT))
-                {
-                    await userGrain.SetOAuthToken(OAuthToken);
-                    savedToken = OAuthToken;
-                }
-
-                CanPostOnChat = tokenValidation?.Scopes?.Contains(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChatEdit]) ?? false;
+            CanPostOnChat = tokenValidation?.Scopes?.Contains(TwitchConstants.ScopesValues[TwitchConstants.TwitchOAuthScopes.ChatEdit]) ?? false;
 
             if (tokenValidation == null)
             {
@@ -121,6 +122,8 @@
         }
 
         await base.OnInitializedAsync();
+
+        IsLoading = false;
     }
 
     public async Task SetActiveChannel(string activeChannel)
