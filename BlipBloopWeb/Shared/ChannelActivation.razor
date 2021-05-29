@@ -1,0 +1,67 @@
+﻿@using BlipBloopWeb
+@using BotServiceGrain
+@inject IClientProvider ClientProvider
+
+<MudCard>
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h4">Channel Activation</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudText>Twitch id @ServiceContext.UserId</MudText>
+        @if (_isLoading)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        }
+        else if (ServiceContext.IsChannelIntegrationActive)
+        {
+            <MudText Typo="Typo.h5">
+                <MudIcon Icon="@Icons.Outlined.CheckBox" Color="Color.Success"></MudIcon>
+                Channel integration is active.
+            </MudText>
+            <ChannelStaffList ChannelId="@ServiceContext.ActiveChannel.BroadcasterId" />
+        }
+        else
+        {
+            <MudText Typo="Typo.h5">
+                <MudIcon Icon="@Icons.Outlined.CheckBoxOutlineBlank" Color="Color.Dark"></MudIcon>
+                Channel integration is inactive.
+            </MudText>
+            <MudButton @onclick="ActivateChannelAsync">Activate channel integration</MudButton>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+
+    private bool _isLoading = true;
+    private IUserGrain _userGrain;
+
+    protected override Task OnInitializedAsync()
+    {
+
+        return base.OnInitializedAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var client = await ClientProvider.GetConnectedClient();
+
+        _userGrain = client.GetGrain<IUserGrain>(ServiceContext.UserId);
+        await _userGrain.SetOAuthToken(ServiceContext.OAuthToken);
+        ServiceContext.SetChannelIntegrationActive(await _userGrain.HasActiveChannel());
+
+        _isLoading = false;
+
+        await base.OnParametersSetAsync();
+    }
+
+    protected async Task ActivateChannelAsync()
+    {
+        await _userGrain.ActivateChannel();
+        ServiceContext.SetChannelIntegrationActive(await _userGrain.HasActiveChannel());
+    }
+}

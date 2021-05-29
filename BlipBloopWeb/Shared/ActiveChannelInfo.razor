@@ -1,0 +1,50 @@
+﻿@using System.Security.Claims
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@if (ServiceContext.IsAuthenticated && ServiceContext.ActiveChannel != null)
+{
+    <MudCard>
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="@Typo.h3">@ServiceContext.ActiveChannel?.BroadcasterName</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            @switch (ServiceContext.ActiveChannel.UserRole)
+            {
+                case BotServiceGrainInterface.Model.ChannelRole.Broadcaster:
+                    <MudText Typo="Typo.h4">
+                        <MudIcon Icon="@Icons.Outlined.Cast" Size="Size.Large" /> Broadcaster
+                    </MudText>
+                    <MudText>
+                        You are managing your own channel.
+                    </MudText>
+                    break;
+                case BotServiceGrainInterface.Model.ChannelRole.Editor:
+                    <MudText Typo="Typo.h4">
+                        <MudIcon Icon="@Icons.Rounded.Edit" Size="Size.Large" /> Editor
+                    </MudText>
+                    <MudText>
+                        You are editor on this channel.
+                    </MudText>
+                    break;
+                case BotServiceGrainInterface.Model.ChannelRole.Moderator:
+                    <MudText Typo="Typo.h4">
+                        <MudIcon Icon="@Icons.Outlined.LocalPolice" Size="Size.Large" /> Moderator
+                    </MudText>
+                    <MudText>
+                        You are moderator on this channel.
+                    </MudText>
+                    break;
+                case BotServiceGrainInterface.Model.ChannelRole.None:
+                default:
+                    break;
+            }
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+}

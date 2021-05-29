@@ -1,0 +1,26 @@
+version: '3.4'
+
+services:
+  blipbloopweb:
+    build:
+      context: .
+      dockerfile: BlipBloopWeb/Dockerfile
+    ports:
+      - 80
+      - 443
+    environment:
+      REDIS_URL: redis_db
+  blipbloopbackend:
+    build:
+      context: .
+      dockerfile: BotWorkerService/Dockerfile
+    ports:
+      - 11111
+      - 30000
+    environment:
+      REDIS_URL: redis_db
+      HOSTNAME: blipbloopbackend
+  redis_db:
+    image: redis:alpine
+
+    

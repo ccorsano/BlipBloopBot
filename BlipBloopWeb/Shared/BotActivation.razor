@@ -1,0 +1,48 @@
+﻿@using BotServiceGrain
+@inject IClientProvider ClientProvider
+
+@if (ServiceContext.IsBotRunning)
+{
+    <MudButton FullWidth="true" Color="Color.Primary" OnClick="DeactivateBotAsync" Variant="Variant.Filled">Stop bot service</MudButton>
+}
+else
+{
+    <MudButton FullWidth="true" Color="Color.Primary" OnClick="ActivateBotAsync" Variant="Variant.Filled">Start bot service</MudButton>
+}
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+
+    private IChannelGrain _channelGrain;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        _channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
+
+        bool isBotRunning = await _channelGrain.IsBotActive();
+        if (isBotRunning ^ ServiceContext.IsBotRunning)
+        {
+            ServiceContext.SetBotRunning(isBotRunning);
+        }
+
+        await base.OnParametersSetAsync();
+    }
+
+    protected async Task ActivateBotAsync()
+    {
+        if (await _channelGrain.SetBotActivation(true))
+        {
+            ServiceContext.SetBotRunning(true);
+        }
+    }
+
+    protected async Task DeactivateBotAsync()
+    {
+        if (await _channelGrain.SetBotActivation(false))
+        {
+            ServiceContext.SetBotRunning(false);
+        }
+    }
+}

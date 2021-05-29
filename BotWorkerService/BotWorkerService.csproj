@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <UserSecretsId>802346a7-6e9e-42fa-acb4-521215802b93</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.17.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.AI" Version="3.4.2" />
+    <PackageReference Include="Microsoft.Orleans.Persistence.AzureStorage" Version="3.4.2" />
+    <PackageReference Include="Microsoft.Orleans.Server" Version="3.4.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="5.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.13" />
+    <PackageReference Include="Orleans.Clustering.Redis" Version="3.1.0" />
+    <PackageReference Include="Orleans.Persistence.Redis" Version="3.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlipBloopCommands\BlipBloopCommands.csproj" />
+    <ProjectReference Include="..\BotServiceGrain\BotServiceGrain.csproj" />
+    <ProjectReference Include="..\Conceptoire.Twitch\Conceptoire.Twitch.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="channels.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

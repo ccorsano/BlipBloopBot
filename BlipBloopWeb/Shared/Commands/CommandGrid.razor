@@ -1,0 +1,217 @@
+﻿@using System.Linq
+@using BotServiceGrain
+@using Conceptoire.Twitch.Commands
+@using Conceptoire.Twitch.Options
+@using Microsoft.Extensions.DependencyInjection
+@inject IClientProvider ClientProvider
+@inject IDialogService DialogService
+
+<MudTable Items="@Commands"
+          @bind-SelectedItem="SelectedItem"
+          Context="command"
+          OnCommitEditClick="@(c => OnConfirmCommand(c))"
+          @ref="Table"
+          Hover="true">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Commands</MudText>
+        <MudToolBarSpacer />
+        <MudIconButton Icon="@Icons.Filled.AddCircle" OnClick="OnAdd" />
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Trigger</MudTh>
+        <MudTh>Command type</MudTh>
+        <MudTh>Parameters</MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Trigger">
+            <MudChipSet AllClosable="false">
+                @foreach(var trigger in command.Aliases)
+                { 
+                    <MudChip Text="@trigger" />
+                }
+            </MudChipSet>
+        </MudTd>
+        <MudTd DataLabel="Type">@command.Type</MudTd>
+        <MudTd DataLabel="Parameters">
+            <MudList>
+                @foreach (var keyvaluePair in command.Parameters)
+                {
+                    <MudListItem>
+                        <MudText Typo="Typo.body2">@keyvaluePair.Key :  @keyvaluePair.Value</MudText>
+                    </MudListItem>
+                }
+            </MudList>
+        </MudTd>
+        <MudTd></MudTd>
+    </RowTemplate>
+    <RowEditingTemplate>
+        <MudTd DataLabel="Trigger">
+            <MudContainer Class="d-flex px-0">
+                <MudPaper Class="flex-shrink-0 flex-grow-1 px-0" Elevation="0">
+                    <MudChipSet AllClosable="true" Mandatory="true" OnClose="c => RemoveAlias(command, c.Text)">
+                        @foreach (var trigger in command.Aliases)
+                        {
+                            <MudChip Text="@trigger" />
+                        }
+                    </MudChipSet>
+                </MudPaper>
+                <MudPaper Class="flex-shrink-1 flex-grow-0 align-end px-0" Elevation="0">
+                    <AddAliasField Command="command" AliasAdded="a => AddAlias(command, a)" />
+                </MudPaper>
+            </MudContainer>
+        </MudTd>
+        <MudTd DataLabel="Type">
+            <MudSelect @bind-Value="@command.Type" T="string" Label="Bot command type selection">
+                @foreach (var commandType in ServiceContext.AvailableCommands)
+                {
+                    <MudSelectItem Value="@commandType.Name">@commandType.Name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudTd>
+        <MudTd DataLabel="Parameters">
+            <MudButton OnClick="(_) => EditParameters(command)" Variant="Variant.Filled" Color="Color.Primary">Edit parameters</MudButton>
+        </MudTd>
+        <MudTd Class="pa-0">
+            <MudTooltip Text="Delete">
+                <MudIconButton Class="pa-0" Icon="@Icons.Filled.Delete" OnClick="(_) => Delete(command)" />
+            </MudTooltip>
+        </MudTd>
+    </RowEditingTemplate>
+</MudTable>
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+
+    public List<CommandItemModel> Commands { get; set; }
+    private CommandItemModel NewItem { get; set; }
+    private CommandItemModel SelectedItem { get; set; }
+    private MudTable<CommandItemModel> Table { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
+
+        Commands = (await channelGrain.GetBotCommands()).Select(ToCommandItem).ToList();
+
+        await base.OnParametersSetAsync();
+    }
+
+    protected async Task EditParameters(CommandItemModel command)
+    {
+        DialogOptions options = new DialogOptions() {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
+        var dialogParameters = new DialogParameters();
+        dialogParameters.Add("Parameters", command.Parameters);
+        var result = await DialogService.Show<ParametersEditDialog>("Parameters", dialogParameters, options).Result;
+
+        if (result.Cancelled)
+        {
+            return;
+        }
+
+        command.Parameters = ((List<CommandProperty>) result.Data);
+    }
+
+    protected void OnAdd()
+    {
+        Commands.Add(new CommandItemModel
+        {
+            Aliases = new List<string>(),
+            Parameters = new List<CommandProperty>(),
+        });
+        SelectedItem = Commands.Last();
+        Table.SetEditingItem(SelectedItem);
+    }
+
+    protected async Task Delete(CommandItemModel command)
+    {
+        if (command.Id.HasValue)
+        {
+            var client = await ClientProvider.GetConnectedClient();
+            var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
+            await channelGrain.DeleteCommand(command.Id.Value);
+        }
+        Commands.Remove(command);
+    }
+
+    protected async Task OnDelete(MouseEventArgs evt)
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
+
+        Commands = (await channelGrain.GetBotCommands()).Select(ToCommandItem).ToList();
+    }
+
+    protected async Task OnValidate(MouseEventArgs evt)
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
+
+        Commands = (await channelGrain.GetBotCommands()).Select(ToCommandItem).ToList();
+    }
+
+    protected CommandItemModel ToCommandItem(CommandOptions options) => new CommandItemModel
+    {
+        Id = options.Id,
+        Aliases = options.Aliases?.ToList() ?? new List<string>(),
+        Type = options.Type,
+        Parameters = options.Parameters.Select(option => new CommandProperty
+        {
+            Key = option.Key,
+            Value = option.Value,
+        }).ToList(),
+    };
+
+    protected void AddAlias(CommandItemModel command, string alias)
+    {
+        if (string.IsNullOrEmpty(alias))
+        {
+            return;
+        }
+        command.Aliases.Add(alias);
+    }
+
+    protected void RemoveAlias(CommandItemModel command, string alias)
+    {
+        command.Aliases.Remove(alias);
+    }
+
+    protected async Task OnConfirmCommand(MouseEventArgs evt)
+    {
+        if (string.IsNullOrEmpty(SelectedItem.Type))
+        {
+            return;
+        }
+
+        var client = await ClientProvider.GetConnectedClient();
+        var channelGrain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
+
+        if (!SelectedItem.Id.HasValue)
+        {
+            var commandStub = new CommandOptions {
+                Aliases = SelectedItem.Aliases.ToArray(),
+                Type = SelectedItem.Type,
+                Parameters = SelectedItem.Parameters.ToDictionary(p => p.Key, p => p.Value),
+            };
+            await channelGrain.AddCommand(commandStub);
+        }
+        else
+        {
+            var commandStub = new CommandOptions {
+                Id = SelectedItem.Id.Value,
+                Aliases = SelectedItem.Aliases.ToArray(),
+                Type = SelectedItem.Type,
+                Parameters = SelectedItem.Parameters.ToDictionary(p => p.Key, p => p.Value),
+            };
+            await channelGrain.DeleteCommand(SelectedItem.Id.Value);
+            await channelGrain.AddCommand(commandStub);
+        }
+
+        Commands = (await channelGrain.GetBotCommands()).Select(ToCommandItem).ToList();
+    }
+}

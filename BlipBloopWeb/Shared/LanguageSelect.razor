@@ -1,0 +1,34 @@
+﻿@using Conceptoire.Twitch.Constants
+
+<MudItem xs="1">
+    <MudSelect Label="Language" T="string" @bind-Value="@Value" Dense="true">
+        @foreach (var locale in TwitchConstants.SupportedLanguages)
+        {
+            <MudSelectItem Value="locale">@locale</MudSelectItem>
+        }
+    </MudSelect>
+</MudItem>
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    private string _value = "en";
+
+    [Parameter]
+    public string Value
+    {
+        get => _value;
+        set{
+            if (_value == value) return;
+            _value = value;
+            if (ValueChanged.HasDelegate)
+            {
+                ValueChanged.InvokeAsync(_value);
+            }
+        }
+    }
+}

@@ -2,7 +2,7 @@
   "profiles": {
     "TwitchCategoriesCrawler": {
       "commandName": "Project",
-      "commandLineArgs": "clips -c lexitvz --start=\"2021-03-12\" --end=\"2021-03-15\""
+      "commandLineArgs": "-l fr"
     }
   }
 }

@@ -5,9 +5,12 @@ WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0-buster-slim AS build
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
 COPY ["BlipBloopWeb/BlipBloopWeb.csproj", "BlipBloopWeb/"]
+COPY ["BotServiceGrainInterface/BotServiceGrainInterface.csproj", "BotServiceGrainInterface/"]
+COPY ["Conceptoire.Twitch/Conceptoire.Twitch.csproj", "Conceptoire.Twitch/"]
+COPY ["Conceptoire.Twitch.Abstractions/Conceptoire.Twitch.Abstractions.csproj", "Conceptoire.Twitch.Abstractions/"]
 RUN dotnet restore "BlipBloopWeb/BlipBloopWeb.csproj"
 COPY . .
 WORKDIR "/src/BlipBloopWeb"
@@ -22,5 +25,6 @@ COPY --from=publish /app/publish .
 
 # WebHook secret used for Twitch EventSub webhook registration & security
 ENV Twitch__EventSub__WebHookSecret=""
-
+# Redis endpoint for clustering
+ENV REDIS_URL "redis://redis:6379"
 ENTRYPOINT ["dotnet", "BlipBloopWeb.dll"]

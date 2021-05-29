@@ -1,0 +1,203 @@
+﻿@using System.Linq;
+@using Conceptoire.Twitch.API
+@using Conceptoire.Twitch.Model
+@using BlipBloopBot.Storage
+@using BotServiceGrain
+@using BotServiceGrainInterface.Model
+
+@inject TwitchAPIClient TwitchClient
+@inject IGameLocalizationStore LocStore
+@inject IDialogService DialogService
+@inject IClientProvider ClientProvider
+
+<MudTable Context="category" ServerData="state => ServerReload(state)" @ref="table">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Categories</MudText>
+        <MudToolBarSpacer />
+        <MudSwitch Label="Customized only" T="bool" CheckedChanged="@OnToggleCustomized" Color="Color.Info" />
+        <LanguageSelect @bind-Value="@SelectedLocale" />
+        <MudTextField Label="Filter" T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh></MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>
+            <MudContainer Class="d-flex align-self-stretch">
+                <MudPaper Class="flex-grow-0">
+                    <img src="@GetSizedUri(category.helixCategory.BoxArtUri.ToString())" />
+                </MudPaper>
+                <MudContainer Class="d-flex flex-column flex-grow-1">
+                    <MudPaper Class="my-3 flex-grow-0" Elevation="0">
+                        <MudText Typo="Typo.h5">@(category.gameInfo?.Name ?? category.helixCategory.Name)</MudText>
+                    </MudPaper>
+                    <MudPaper Class="flex-grow-1" Elevation="0">
+                        <MudText Typo="Typo.body1">
+                            @if (category.customCategory != null){<MudIcon Icon="@Icons.Outlined.Edit" />}
+                            @((MarkupString) (category.customCategory?.Description ?? category.gameInfo?.Summary))
+                        </MudText>
+                    </MudPaper>
+                    <MudPaper Class="align-self-end flex-grow-0" Elevation="0">
+                        @if (category.gameInfo != null)
+                        {
+                            <MudText Typo="Typo.caption">Source: @(category.gameInfo.Source)</MudText>
+                        }
+                    </MudPaper>
+                </MudContainer>
+            </MudContainer>
+        </MudTd>
+        <MudTd>
+            @if (category.customCategory != null)
+            {
+                <MudIconButton Icon="@Icons.Rounded.Clear" OnClick="() => Clear(category)" />
+            }
+            <MudIconButton Icon="@Icons.Rounded.Edit" OnClick="() => Customize(category)" />
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+
+    private MudTable<CustomCategoryViewModel> table;
+    private string searchString;
+    private string selectedLocale = "en";
+    private bool filterCustomized = false;
+
+    private CustomCategoryViewModel[] Categories { get; set; }
+
+    private string SelectedLocale
+    {
+        get => selectedLocale;
+        set
+        {
+            if (selectedLocale == value) return;
+            selectedLocale = value;
+            table.ReloadServerData();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        if (ServiceContext.ActiveChannelInfo != null)
+        {
+            selectedLocale = ServiceContext.ActiveChannelInfo.BroadcasterLanguage;
+        }
+    }
+
+    private string GetSizedUri(string boxArtTemplate)
+    {
+        return boxArtTemplate.Replace("{width}", "143").Replace("{height}", "198");
+    }
+
+    private async Task<TableData<CustomCategoryViewModel>> ServerReload(TableState state)
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var grain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
+        var customCategories = await grain.GetCustomizedCategoryDescriptions();
+
+        List<CustomCategoryViewModel> categoryList = new List<CustomCategoryViewModel>();
+
+        if (filterCustomized)
+        {
+            var categoryIds = customCategories.Where(c => c.Locale == selectedLocale).Take(100).Select(c => c.TwitchCategoryId).Distinct().ToArray();
+            if (categoryIds.Length != 0)
+            {
+                var gamesInfo = await TwitchClient.GetGamesInfo(categoryIds);
+                foreach (var game in gamesInfo)
+                {
+                    categoryList.Add(new CustomCategoryViewModel
+                    {
+                        gameInfo = null,
+                        helixCategory = game,
+                        customCategory = customCategories.FirstOrDefault(c => c.TwitchCategoryId == game.Id && c.Locale == selectedLocale)
+                    });
+                }
+            }
+        }
+        else if (!string.IsNullOrEmpty(searchString))
+        {
+            await foreach (var category in TwitchClient.EnumerateTwitchCategoriesAsync(searchString.ToLowerInvariant()))
+            {
+                var info = await LocStore.ResolveLocalizedGameInfoAsync(selectedLocale, category.Id);
+                categoryList.Add(new CustomCategoryViewModel
+                {
+                    gameInfo = info,
+                    helixCategory = category,
+                    customCategory = customCategories.FirstOrDefault(c => c.TwitchCategoryId == category.Id && c.Locale == selectedLocale)
+                });
+                if (categoryList.Count >= 10)
+                    break;
+            }
+        }
+        else
+        {
+            await foreach (var category in TwitchClient.EnumerateTopGamesAsync())
+            {
+                var info = await LocStore.ResolveLocalizedGameInfoAsync(selectedLocale, category.Id);
+                categoryList.Add(new CustomCategoryViewModel
+                {
+                    gameInfo = info,
+                    helixCategory = category,
+                    customCategory = customCategories.FirstOrDefault(c => c.TwitchCategoryId == category.Id && c.Locale == selectedLocale)
+                });
+                if (categoryList.Count >= 10)
+                    break;
+            }
+        }
+
+        return new TableData<CustomCategoryViewModel>
+        {
+            Items = categoryList.ToArray(),
+            TotalItems = categoryList.Count,
+        };
+    }
+
+    private void OnSearch(string text)
+    {
+        searchString = text;
+        table.ReloadServerData();
+    }
+
+    private void OnToggleCustomized(bool toggle)
+    {
+        filterCustomized = toggle;
+        table.ReloadServerData();
+    }
+
+    private async Task Clear(CustomCategoryViewModel info)
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var grain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
+        await grain.ClearCustomizedCategoryDescription(info.customCategory.TwitchCategoryId, info.customCategory.Locale);
+        await table.ReloadServerData();
+    }
+
+    private async Task Customize(CustomCategoryViewModel info)
+    {
+        DialogOptions options = new DialogOptions()
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
+        var dialogParameters = new DialogParameters();
+        dialogParameters.Add("Category", info);
+        dialogParameters.Add("Locale", SelectedLocale);
+        var result = await DialogService.Show<CustomSynopsisEditDialog>("Customize", dialogParameters, options).Result;
+
+        if (result.Cancelled)
+        {
+            return;
+        }
+
+        var description = (CustomCategoryDescription)result.Data;
+        var client = await ClientProvider.GetConnectedClient();
+        var grain = client.GetGrain<IChannelGrain>(ServiceContext.ActiveChannel.BroadcasterId);
+        await grain.SetCustomizedCategoryDescription(description);
+        await table.ReloadServerData();
+    }
+
+}

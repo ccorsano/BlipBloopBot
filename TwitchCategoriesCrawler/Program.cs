@@ -1,15 +1,16 @@
-﻿using BlipBloopBot.Twitch;
-using BlipBloopBot.Twitch.API;
-using BlipBloopBot.Twitch.Authentication;
+﻿using Conceptoire.Twitch.Authentication;
+using Conceptoire.Twitch.Steam;
+using Conceptoire.Twitch;
+using Conceptoire.Twitch.API;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
-using System.Threading.Channels;
 using System.Threading.Tasks;
+using BlipBloopCommands.Storage;
+using BlipBloopBot.Storage;
 
 namespace TwitchCategoriesCrawler
 {
@@ -35,6 +36,7 @@ namespace TwitchCategoriesCrawler
                     // Configure services
                     services.AddHttpClient();
                     services.Configure<TwitchApplicationOptions>(configuration.GetSection("twitch"));
+                    services.Configure<AzureGameLocalizationStoreOptions>(configuration.GetSection("loc:azure"));
                     services.AddTransient<TwitchAPIClient>();
                     services.AddTransient<IGDBClient>();
                     services.AddSingleton<IMemoryCache, MemoryCache>();
@@ -46,14 +48,20 @@ namespace TwitchCategoriesCrawler
                                 s.GetService<IOptions<TwitchApplicationOptions>>().Value.ClientSecret)
                             .Build()
                     );
-
-                    services.AddHostedService<TwitchCategoriesCrawlerService>();
+                    services.AddTransient<IGameLocalizationStore>(services =>
+                    {
+                        var options = services.GetRequiredService<IOptions<AzureGameLocalizationStoreOptions>>();
+                        if (string.IsNullOrEmpty(options.Value.StorageConnectionString) || string.IsNullOrEmpty(options.Value.TableName))
+                        {
+                            return null;
+                        }
+                        return services.GetRequiredService<AzureStorageGameLocalizationStore>();
+                    });
+                    services.AddSingleton<AzureStorageGameLocalizationStore>();
                 })
                 .UseConsoleLifetime();
 
-            var host = builder.Build();
-
-            await host.RunAsync();
+            await builder.RunCommandLineApplicationAsync<Tool>(args);
         }
     }
 }

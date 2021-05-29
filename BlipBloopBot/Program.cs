@@ -1,20 +1,22 @@
 ﻿using Microsoft.Extensions.Configuration;
-using BlipBloopBot.Twitch.IRC;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using BlipBloopBot.Twitch.API;
 using Microsoft.Extensions.Logging;
-using BlipBloopBot.Options;
 using Microsoft.Extensions.Caching.Memory;
 using BlipBloopBot.Commands;
-using BlipBloopBot.Extensions;
-using BlipBloopBot.Twitch;
 using BlipBloopBot.Storage;
 using BlipBloopCommands.Commands.GameSynopsis;
-using BlipBloopBot.Twitch.Authentication;
 using Microsoft.Extensions.Options;
+using Conceptoire.Twitch.Extensions;
+using Conceptoire.Twitch.Options;
+using Conceptoire.Twitch.Steam;
+using Conceptoire.Twitch;
+using Conceptoire.Twitch.IRC;
+using Conceptoire.Twitch.API;
+using Conceptoire.Twitch.Authentication;
+using Conceptoire.Twitch.Commands;
 
 namespace BlipBloopBot
 {
@@ -30,12 +32,12 @@ namespace BlipBloopBot
                 })
                 .ConfigureAppConfiguration(configure =>
                 {
-                    configure.AddUserSecrets<Program>();
                     configure.AddJsonFile("appsettings.json", true);
 #if DEBUG
                     configure.AddJsonFile("appsettings.Debug.json", true);
 #endif
                     configure.AddEnvironmentVariables();
+                    configure.AddUserSecrets<Program>();
                     configuration = configure.Build();
                 })
                 .ConfigureServices((hostContext, services) =>
@@ -57,13 +59,25 @@ namespace BlipBloopBot
                     services.AddSingleton<IMemoryCache, MemoryCache>();
                     services.AddSingleton<SteamStoreClient>();
                     services.AddSingleton<IGameLocalizationStore, EmbeddedGameLocalizationDb>();
-                    services.AddTransient<ITwitchCategoryProvider, PollingTwitchCategoryProvider>();
-                    services.AddSingleton<IAuthenticated>(s => 
-                        Twitch.Twitch.Authenticate()
+                    services.AddTransient<ITwitchCategoryProvider>(s => s.GetRequiredService<PollingTwitchCategoryProvider>());
+                    services.AddScoped<PollingTwitchCategoryProvider>();
+                    services.AddSingleton<IAuthenticated>(s =>
+                        Twitch.Authenticate()
                             .FromAppCredentials(
                                 s.GetService<IOptions<TwitchApplicationOptions>>().Value.ClientId,
                                 s.GetService<IOptions<TwitchApplicationOptions>>().Value.ClientSecret)
                             .Build()
+                    );
+                    services.AddSingleton<IBotAuthenticated>(s =>
+                        Twitch.AuthenticateBot()
+                            .FromOAuthToken(
+                                s.GetService<IOptions<TwitchApplicationOptions>>().Value.IrcOptions.OAuthToken)
+                            .Build()
+                    );
+                    services.AddTransient<ITwitchChatClientBuilder>(s =>
+                        TwitchChatClientBuilder.Create()
+                            .WithOAuthToken(s.GetRequiredService<IOptions<TwitchApplicationOptions>>().Value.IrcOptions.OAuthToken)
+                            .WithLoggerFactory(s.GetRequiredService<ILoggerFactory>())
                     );
 
                     // Configure commands
@@ -71,11 +85,41 @@ namespace BlipBloopBot
                     services.AddCommand<TracingMessageProcessor>("MessageTracer");
 
                     // Add hosted chatbot service
-                    services.AddHostedService<BotHostedService>();
+                    services.AddSingleton<TwitchChatBot>();
+                    services.AddHostedService<TwitchChatBot>(s => s.GetRequiredService<TwitchChatBot>());
+                    services.AddHostedService(services => services.GetRequiredService<PollingTwitchCategoryProvider>());
                 })
                 .UseConsoleLifetime();
 
             var host = builder.Build();
+
+
+            var categoryProvider = host.Services.GetRequiredService<PollingTwitchCategoryProvider>();
+            categoryProvider.CheckAndSchedule("miekyld");
+
+            var twitchBot = host.Services.GetRequiredService<TwitchChatBot>();
+            twitchBot.SetChannel("158511925");
+            await twitchBot.RegisterMessageProcessor<GameSynopsisCommand>(new CommandOptions
+            {
+                Aliases = new string[] { "jeu", "game" },
+                Parameters = new Dictionary<string, string>
+                {
+                    { "AsReply", bool.TrueString },
+                }
+            });
+
+            categoryProvider.OnUpdate += async (sender, gameinfo) =>
+            {
+                var context = new ProcessorContext
+                {
+                    CategoryId = gameinfo.TwitchCategoryId,
+                    ChannelId = "158511925",
+                    ChannelName = gameinfo.Name,
+                    Language = gameinfo.Language,
+                };
+                await twitchBot.UpdateContext(context);
+            };
+
 
             await host.RunAsync();
         }

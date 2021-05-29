@@ -1,14 +1,17 @@
-﻿using BlipBloopBot.Model;
+﻿using Conceptoire.Twitch.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BlipBloopBot.Storage
 {
     public interface IGameLocalizationStore
     {
-        Task<GameInfo> ResolveLocalizedGameInfo(string language, string twitchCategoryId);
+        Task SaveGameInfoAsync(GameInfo gameInfo, CancellationToken cancellationToken = default);
+        Task<GameInfo> ResolveLocalizedGameInfoAsync(string language, string twitchCategoryId, CancellationToken cancellationToken = default);
+        IAsyncEnumerable<GameInfo> EnumerateGameInfoAsync(string language, CancellationToken cancellationToken = default);
     }
 }

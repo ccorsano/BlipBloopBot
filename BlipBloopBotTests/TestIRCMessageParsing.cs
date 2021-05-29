@@ -1,9 +1,4 @@
-﻿using BlipBloopBot.Twitch.IRC.Parsing;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Conceptoire.Twitch.IRC.Parsing;
 using Xunit;
 
 namespace BlipBloopBotTests

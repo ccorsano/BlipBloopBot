@@ -1,4 +1,4 @@
-﻿using BlipBloopBot.Model;
+﻿using Conceptoire.Twitch.Model;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Microsoft.Extensions.Logging;
@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BlipBloopBot.Storage
@@ -50,7 +52,7 @@ namespace BlipBloopBot.Storage
             }
         }
 
-        public async Task<GameInfo> ResolveLocalizedGameInfo(string language, string twitchCategoryId)
+        async Task<GameInfo> IGameLocalizationStore.ResolveLocalizedGameInfoAsync(string language, string twitchCategoryId, CancellationToken cancellationToken)
         {
             await _loaderTask;
 
@@ -60,6 +62,21 @@ namespace BlipBloopBot.Storage
             }
 
             return null;
+        }
+
+        Task IGameLocalizationStore.SaveGameInfoAsync(GameInfo gameInfo, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async IAsyncEnumerable<GameInfo> EnumerateGameInfoAsync(string language, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            await _loaderTask;
+
+            foreach(var entry in _localizedInfo)
+            {
+                yield return entry.Value;
+            }
         }
     }
 }

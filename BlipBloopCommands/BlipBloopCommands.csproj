@@ -13,11 +13,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BlipBloopFramework\BlipBloopFramework.csproj" />
+    <PackageReference Include="CsvHelper" Version="26.1.0" />
+    <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CsvHelper" Version="26.0.1" />
+    <ProjectReference Include="..\Conceptoire.Twitch\Conceptoire.Twitch.csproj" />
   </ItemGroup>
 
 </Project>

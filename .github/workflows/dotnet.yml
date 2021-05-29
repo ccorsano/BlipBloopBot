@@ -18,11 +18,11 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore ./BlipBloopBot.sln
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build --no-restore ./BlipBloopBot.sln
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test --no-build --verbosity normal ./BlipBloopBot.sln
   package:
     runs-on: ubuntu-latest
     steps:

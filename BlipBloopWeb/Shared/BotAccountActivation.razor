@@ -1,0 +1,159 @@
+﻿@using BotServiceGrain
+@using Conceptoire.Twitch.API
+@inject TwitchAPIClient twitchApiClient
+@inject IClientProvider ClientProvider
+
+<MudCard>
+    <MudCardHeader>
+        Bot Account management
+    </MudCardHeader>
+    <MudCardContent>
+        <MudText Typo="Typo.h5">
+            Enable as Bot account
+        </MudText>
+        <MudText>
+            You can allow specific channels to use <b>@ServiceContext.UserName</b> as a bot.
+            <br />
+            In that case, this account login information will be used to read and post from the enabled chat, if the broadcaster selects this account as bot.
+        </MudText>
+        @if (!ServiceContext.CanPostOnChat)
+        {
+            <MudButton Link="/BotLogin?redirectUri=/">Authorize bot account</MudButton>
+        }
+        else
+        {
+            <MudText Typo="Typo.h6">Currently allowed channels</MudText>
+
+            <MudGrid>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudAutocomplete T="HelixUsersGetResult" Label="Allow channel" @bind-Value="_searchedChannel" SearchFunc="@AutocompleteChannel" ToStringFunc="u => u?.DisplayName" />
+                </MudItem>
+            </MudGrid>
+            <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+            <MudGrid>
+                @if (_searchResults != null)
+                {
+                    @foreach (var user in _searchResults)
+                    {
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudCard Class="ma-6">
+                                <MudCardMedia Image="@user.ProfileImageUrl.AbsoluteUri" Title="@user.DisplayName" />
+                                <MudCardContent>
+                                    <MudText Typo="Typo.h5">@user.DisplayName</MudText>
+                                    <MudText Typo="Typo.body1">@user.Description</MudText>
+                                </MudCardContent>
+                                <MudCardActions>
+                                    <MudButton OnClick="(_) => SelectChannel(user)" FullWidth="true">Allow</MudButton>
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+                    }
+                }
+            </MudGrid>
+            @if (_isLoadingAllowList)
+            {
+                <MudProgressLinear Indeterminate="true"></MudProgressLinear>
+            }
+            else if (!_allowedChannels.Any())
+            {
+                <MudItem>
+                    No channels are allowed to use your account as a bot.
+                </MudItem>
+            }
+            else
+            {
+                <MudGrid xs="12">
+                    @foreach (var channel in _allowedChannels)
+                    {
+                        <MudItem xs="6" sm="4" md="3">
+                            <MudCard>
+                                <MudCardMedia Image="@channel.ProfileImageUrl.AbsoluteUri" Title="@channel.DisplayName" />
+                                <MudCardContent>
+                                    <MudText Typo="Typo.h5">@channel.DisplayName</MudText>
+                                    <MudText Typo="Typo.body2">@channel.Description</MudText>
+                                </MudCardContent>
+                                <MudCardActions>
+                                    <MudIconButton OnClick="(_) =>RevokeChannel(channel.Id)" Icon="@Icons.Filled.Delete"></MudIconButton>
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+        }
+    </MudCardContent>
+</MudCard>
+
+@code{
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+
+    private HelixUsersGetResult[] _allowedChannels = new HelixUsersGetResult[0];
+
+    private bool _isLoadingAllowList = true;
+    private string _channelSearch;
+    private HelixUsersGetResult[] _searchResults;
+    private HelixUsersGetResult _searchedChannel;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var grain = client.GetGrain<IUserGrain>(ServiceContext.UserId);
+        await RefreshChannels(grain);
+        await base.OnParametersSetAsync();
+    }
+
+    private async Task RefreshChannels(IUserGrain grain)
+    {
+        _isLoadingAllowList = true;
+        var allowedChannels = await grain.GetChannelBotAllowList();
+
+        if (allowedChannels.Length == 0)
+        {
+            _allowedChannels = new HelixUsersGetResult[0];
+        }
+        else
+        {
+            _allowedChannels = await twitchApiClient.GetUsersByIdAsync(allowedChannels.Select(c => c.BroadcasterId));
+        }
+
+        _isLoadingAllowList = false;
+    }
+
+    private async Task<IEnumerable<HelixUsersGetResult>> AutocompleteChannel(string searchText)
+    {
+        await SearchChannel(searchText ?? "");
+        return _searchResults;
+    }
+
+    private async Task SearchChannel(string searchText)
+    {
+        _channelSearch = searchText as string;
+        if (_channelSearch.Length < 3)
+        {
+            _searchResults = new HelixUsersGetResult[0];
+            return;
+        }
+        _searchResults = await twitchApiClient.GetUsersByLoginAsync(new string[] { _channelSearch });
+    }
+
+    private async Task SelectChannel(HelixUsersGetResult channel)
+    {
+        _searchResults = null;
+        _channelSearch = "";
+
+        var client = await ClientProvider.GetConnectedClient();
+        var grain = client.GetGrain<IUserGrain>(ServiceContext.UserId);
+        await grain.AllowAsBot(channel.Id);
+        await RefreshChannels(grain);
+    }
+
+    private async Task RevokeChannel(string channelId)
+    {
+        var client = await ClientProvider.GetConnectedClient();
+        var grain = client.GetGrain<IUserGrain>(ServiceContext.UserId);
+        await grain.RevokeAsBot(channelId);
+        await RefreshChannels(grain);
+    }
+
+}

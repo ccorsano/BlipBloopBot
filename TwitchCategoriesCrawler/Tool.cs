@@ -11,9 +11,7 @@ namespace TwitchCategoriesCrawler
     [Subcommand(
         typeof(TwitchCategoriesCrawlerCommand),
         typeof(TwitchCategoriesSynchronizationService),
-        typeof(ExportCommand),
-        typeof(TwitchVideosSearchCommand),
-        typeof(TwitchClipsSearchCommand))]
+        typeof(ExportCommand))]
     public class Tool
     {
         protected int OnExecute(CommandLineApplication app)

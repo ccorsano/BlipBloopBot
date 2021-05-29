@@ -1,0 +1,33 @@
+﻿@page "/bot"
+@using Conceptoire.Twitch.Options
+
+<MudContainer>
+    @if (ServiceContext.ActiveChannel != null)
+    {
+        <MudText Typo="Typo.h4">
+            <MudIcon Icon="@Icons.Filled.Memory" Size="Size.Large" /> @ServiceContext.ActiveChannel.BroadcasterName : Bot
+        </MudText>
+
+        <BotActivation />
+
+        <BotAccountSelection />
+
+        <MudPaper>
+            <MudText Typo="Typo.h5">Commands configuration</MudText>
+            <BlipBloopWeb.Shared.Commands.CommandGrid />
+        </MudPaper>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Warning">
+            No active channel to manage.
+        </MudAlert>
+    }
+</MudContainer>
+
+@code {
+    [CascadingParameter(Name = "ServiceContext")]
+    public MainLayout ServiceContext { get; set; }
+
+    //private Dictionary<string, CommandOptions> _botCommands = new Dictionary<string, CommandOptions>();
+}
