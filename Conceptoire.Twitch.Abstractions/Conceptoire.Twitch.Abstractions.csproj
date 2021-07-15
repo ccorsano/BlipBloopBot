@@ -3,11 +3,26 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>Conceptoire.Twitch</RootNamespace>
+    <Version>0.1.0-alpha</Version>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <RepositoryUrl>https://github.com/ccorsano/BlipBloopBot</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Description>WIP: Twitch client library abstractions</Description>
+    <Authors>Christian Corsano</Authors>
+    <PackageProjectUrl>https://github.com/ccorsano/BlipBloopBot</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
   
 </Project>
