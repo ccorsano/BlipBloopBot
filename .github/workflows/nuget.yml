@@ -32,8 +32,7 @@ jobs:
         PROJECT_FILE_PATH: Conceptoire.Twitch.Abstractions/Conceptoire.Twitch.Abstractions.csproj
         NUGET_KEY: ${{ secrets.NUGET_KEY }}
         # Flag to toggle pushing symbols along with nuget package to the server, disabled by default
-        INCLUDE_SYMBOLS: true
-
+        INCLUDE_SYMBOLS: false
     - name: Publish Conceptoire.Twitch
       # You may pin to the exact commit or the version.
       # uses: brandedoutcast/publish-nuget@c12b8546b67672ee38ac87bea491ac94a587f7cc
@@ -43,4 +42,4 @@ jobs:
         PROJECT_FILE_PATH: Conceptoire.Twitch/Conceptoire.Twitch.csproj
         NUGET_KEY: ${{ secrets.NUGET_KEY }}
         # Flag to toggle pushing symbols along with nuget package to the server, disabled by default
-        INCLUDE_SYMBOLS: true
+        INCLUDE_SYMBOLS: false
