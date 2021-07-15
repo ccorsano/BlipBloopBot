@@ -5,12 +5,13 @@
     <RootNamespace>Conceptoire.Twitch</RootNamespace>
     <Version>0.1.0-alpha</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageLicenseFile></PackageLicenseFile>
     <RepositoryUrl>https://github.com/ccorsano/BlipBloopBot</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Description>WIP: Twitch client library</Description>
     <Authors>Christian Corsano</Authors>
     <PackageProjectUrl>https://github.com/ccorsano/BlipBloopBot</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,13 +39,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Conceptoire.Twitch.Abstractions\Conceptoire.Twitch.Abstractions.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
   </ItemGroup>
 
 </Project>
