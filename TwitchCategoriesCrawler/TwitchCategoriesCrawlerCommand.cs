@@ -19,6 +19,7 @@ using McMaster.Extensions.CommandLineUtils;
 using System;
 using BlipBloopCommands.Storage;
 using BlipBloopBot.Storage;
+using BlipBloopCommands;
 
 namespace TwitchCategoriesCrawler
 {
@@ -80,6 +81,7 @@ namespace TwitchCategoriesCrawler
                 using (var textReader = new StreamReader("gamedb.csv"))
                 using (var csvReader = new CsvReader(textReader, configuration))
                 {
+                    csvReader.Context.RegisterClassMap<GameInfoCsvClassMap>();
                     foreach (var gameRecord in csvReader.GetRecords<GameInfo>())
                     {
                         if (gameDb.ContainsKey((gameRecord.TwitchCategoryId, gameRecord.Language)))
@@ -99,6 +101,7 @@ namespace TwitchCategoriesCrawler
             using (var textWriter = new StreamWriter("gamedb.csv", true))
             using (var csvWriter = new CsvWriter(textWriter, configuration))
             {
+                csvWriter.Context.RegisterClassMap<GameInfoCsvClassMap>();
                 var steamLanguage = SteamConstants.TwitchLanguageMapping.First(tlm => tlm.Key == TargetLanguage);
                 //foreach (var steamLanguage in SteamConstants.TwitchLanguageMapping)
                 {

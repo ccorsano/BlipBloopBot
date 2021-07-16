@@ -1,4 +1,5 @@
-﻿using Conceptoire.Twitch.Model;
+﻿using BlipBloopCommands;
+using Conceptoire.Twitch.Model;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Microsoft.Extensions.Logging;
@@ -42,6 +43,7 @@ namespace BlipBloopBot.Storage
             using (var streamReader = new StreamReader(file))
             using (var csvReader = new CsvReader(streamReader, configuration))
             {
+                csvReader.Context.RegisterClassMap<GameInfoCsvClassMap>();
                 await foreach (var gameRecord in csvReader.GetRecordsAsync<GameInfo>())
                 {
                     if (!_localizedInfo.TryAdd((gameRecord.Language, gameRecord.TwitchCategoryId), gameRecord))

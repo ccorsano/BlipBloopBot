@@ -1,4 +1,5 @@
 ﻿using BlipBloopBot.Storage;
+using BlipBloopCommands;
 using Conceptoire.Twitch.API;
 using Conceptoire.Twitch.Constants;
 using Conceptoire.Twitch.Model;
@@ -56,6 +57,7 @@ namespace TwitchCategoriesCrawler
             using (var textWriter = new StreamWriter(OutFile, false))
             using (var csvWriter = new CsvWriter(textWriter, configuration))
             {
+                csvWriter.Context.RegisterClassMap<GameInfoCsvClassMap>();
                 csvWriter.WriteHeader<GameInfo>();
                 csvWriter.NextRecord();
                 foreach (var targetLanguage in TargetLanguages)
