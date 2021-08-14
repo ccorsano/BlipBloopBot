@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>Conceptoire.Twitch</RootNamespace>
-    <Version>0.1.2-alpha</Version>
+    <Version>0.1.2-alpha2</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseFile></PackageLicenseFile>
     <RepositoryUrl>https://github.com/ccorsano/BlipBloopBot</RepositoryUrl>
@@ -12,7 +12,6 @@
     <Authors>Christian Corsano</Authors>
     <PackageProjectUrl>https://github.com/ccorsano/BlipBloopBot</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
 
   <ItemGroup>
@@ -39,6 +38,17 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Conceptoire.Twitch.Abstractions\Conceptoire.Twitch.Abstractions.csproj" />
+  </ItemGroup>
+  
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+      <PublishRepositoryUrl>true</PublishRepositoryUrl>
+      <EmbedUntrackedSources>true</EmbedUntrackedSources>
+      <IncludeSymbols>true</IncludeSymbols>
+      <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+      <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
   </ItemGroup>
 
 </Project>
