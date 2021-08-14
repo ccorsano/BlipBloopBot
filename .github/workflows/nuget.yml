@@ -36,7 +36,7 @@ jobs:
     - name: Publish Conceptoire.Twitch
       # You may pin to the exact commit or the version.
       # uses: brandedoutcast/publish-nuget@c12b8546b67672ee38ac87bea491ac94a587f7cc
-      uses: brandedoutcast/publish-nuget@v2.5.5
+      uses: waldosax/publish-nuget@95f8e50d8df92e9bafae7188c5345a3534774d94
       with:
         # Filepath of the project to be packaged, relative to root of repository
         PROJECT_FILE_PATH: Conceptoire.Twitch/Conceptoire.Twitch.csproj
