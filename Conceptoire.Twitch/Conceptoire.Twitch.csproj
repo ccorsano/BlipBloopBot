@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>Conceptoire.Twitch</RootNamespace>
-    <Version>0.1.2-alpha2</Version>
+    <Version>0.1.2-alpha3</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseFile></PackageLicenseFile>
     <RepositoryUrl>https://github.com/ccorsano/BlipBloopBot</RepositoryUrl>
