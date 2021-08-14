@@ -14,10 +14,10 @@ COPY ["Conceptoire.Twitch.Abstractions/Conceptoire.Twitch.Abstractions.csproj", 
 RUN dotnet restore "BotWorkerService/BotWorkerService.csproj"
 COPY . .
 WORKDIR "/src/BotWorkerService"
-RUN dotnet build "BotWorkerService.csproj" -c Release -o /app/build
+RUN dotnet build "BotWorkerService.csproj" -c Release -o /app/build -p:ContinuousIntegrationBuild=true
 
 FROM build AS publish
-RUN dotnet publish "BotWorkerService.csproj" -c Release -o /app/publish
+RUN dotnet publish "BotWorkerService.csproj" -c Release -o /app/publish -p:ContinuousIntegrationBuild=true
 
 FROM base AS final
 WORKDIR /app

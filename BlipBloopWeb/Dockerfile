@@ -14,10 +14,10 @@ COPY ["Conceptoire.Twitch.Abstractions/Conceptoire.Twitch.Abstractions.csproj", 
 RUN dotnet restore "BlipBloopWeb/BlipBloopWeb.csproj"
 COPY . .
 WORKDIR "/src/BlipBloopWeb"
-RUN dotnet build "BlipBloopWeb.csproj" -c Release -o /app/build
+RUN dotnet build "BlipBloopWeb.csproj" -c Release -o /app/build -p:ContinuousIntegrationBuild=true
 
 FROM build AS publish
-RUN dotnet publish "BlipBloopWeb.csproj" -c Release -o /app/publish
+RUN dotnet publish "BlipBloopWeb.csproj" -c Release -o /app/publish -p:ContinuousIntegrationBuild=true
 
 FROM base AS final
 WORKDIR /app

@@ -20,7 +20,7 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore ./BlipBloopBot.sln
     - name: Build
-      run: dotnet build --no-restore ./BlipBloopBot.sln
+      run: dotnet build --no-restore -p:ContinuousIntegrationBuild=true ./BlipBloopBot.sln
     - name: Test
       run: dotnet test --no-build --verbosity normal ./BlipBloopBot.sln
   package:
@@ -36,10 +36,10 @@ jobs:
       run: dotnet restore
     - name: Build
       working-directory: ./BlipBloopBot
-      run: dotnet build --no-restore
+      run: dotnet build --no-restore -p:ContinuousIntegrationBuild=true
     - name: Publish
       working-directory: ./BlipBloopBot
-      run: dotnet publish --self-contained true -r win10-x64 -o publish
+      run: dotnet publish --self-contained true -r win10-x64 -o publish -p:ContinuousIntegrationBuild=true
     - name: Upload build artifacts
       uses: actions/upload-artifact@v2
       with:
