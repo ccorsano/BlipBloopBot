@@ -14,14 +14,14 @@ using static Conceptoire.Twitch.Constants.TwitchConstants;
 
 namespace Conceptoire.Twitch.API
 {
-    public class TwitchAPIClient : IDisposable
+    public class TwitchAPIClient : IDisposable, ITwitchAPIClient
     {
         private readonly IAuthenticated _authenticated;
         private readonly HttpClient _httpClient;
         private readonly ILogger _logger;
 
         public TwitchAPIClient(IAuthenticated authenticated, IHttpClientFactory factory, ILogger<TwitchAPIClient> logger)
-            :this(authenticated, factory.CreateClient(), logger) {}
+            : this(authenticated, factory.CreateClient(), logger) { }
 
         internal TwitchAPIClient(IAuthenticated authenticated, HttpClient httpClient, ILogger<TwitchAPIClient> logger)
         {
@@ -106,7 +106,7 @@ namespace Conceptoire.Twitch.API
         public async Task<HelixUsersGetResult[]> GetUsersAsync(IEnumerable<string> ids, IEnumerable<string> logins, CancellationToken cancellationToken = default)
         {
             var uri = "https://api.twitch.tv/helix/users";
-            foreach(var id in ids)
+            foreach (var id in ids)
             {
                 uri = QueryHelpers.AddQueryString(uri, "id", id);
             }
@@ -197,7 +197,7 @@ namespace Conceptoire.Twitch.API
         {
             var baseUri = "https://api.twitch.tv/helix/videos";
             baseUri = QueryHelpers.AddQueryString(baseUri, "user_id", channelId);
-            if (! string.IsNullOrEmpty(videoType))
+            if (!string.IsNullOrEmpty(videoType))
             {
                 baseUri = QueryHelpers.AddQueryString(baseUri, "type", videoType);
             }
@@ -228,7 +228,7 @@ namespace Conceptoire.Twitch.API
         public async Task<HelixCategoriesSearchEntry[]> GetGamesInfo(string[] categoryIds, CancellationToken cancellationToken = default)
         {
             var uri = "https://api.twitch.tv/helix/games";
-            foreach(var id in categoryIds)
+            foreach (var id in categoryIds)
             {
                 uri = QueryHelpers.AddQueryString(uri, "id", id);
             }
@@ -294,8 +294,8 @@ namespace Conceptoire.Twitch.API
         /// <param name="baseUri">Formatted GET Uri, with base arguments in query string</param>
         /// <returns>Async enumeration through the HTTP Get response</returns>
         private async IAsyncEnumerable<TEntry> EnumerateHelixAPIAsync<TResponse, TEntry>(string baseUri, [EnumeratorCancellation] CancellationToken cancellationToken = default)
-            where TEntry:class
-            where TResponse: HelixPaginatedResponse<TEntry>
+            where TEntry : class
+            where TResponse : HelixPaginatedResponse<TEntry>
         {
             HelixPaginatedResponse<TEntry> response = null;
             uint paginationRound = 1;
