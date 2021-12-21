@@ -337,7 +337,7 @@ namespace Conceptoire.Twitch.API
                 }
 
                 ++paginationRound;
-            } while (response.Pagination.Cursor != null);
+            } while (response?.Pagination?.Cursor != null);
         }
 
         // TODO: this is going to be a large region, take it out when refactoring the API
