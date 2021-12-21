@@ -279,6 +279,13 @@ namespace Conceptoire.Twitch.API
             return EnumerateHelixAPIAsync<HelixChannelModerator>(baseUri);
         }
 
+        public IAsyncEnumerable<HelixExtensionLiveChannel> EnumerateExtensionLiveChannelsAsync(string extensionId, CancellationToken cancellationToken = default)
+        {
+            var baseUri = "https://api.twitch.tv/helix/extensions/live";
+            baseUri = QueryHelpers.AddQueryString(baseUri, "extension_id", extensionId);
+            return EnumerateHelixAPIAsync<HelixExtensionLiveChannel>(baseUri);
+        }
+
         private IAsyncEnumerable<TEntry> EnumerateHelixAPIAsync<TEntry>(string baseUri, CancellationToken cancellationToken = default)
             where TEntry : class
             => EnumerateHelixAPIAsync<HelixPaginatedResponse<TEntry>, TEntry>(baseUri, cancellationToken);
