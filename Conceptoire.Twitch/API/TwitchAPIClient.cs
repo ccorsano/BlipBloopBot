@@ -23,7 +23,7 @@ namespace Conceptoire.Twitch.API
         public TwitchAPIClient(IAuthenticated authenticated, IHttpClientFactory factory, ILogger<TwitchAPIClient> logger)
             : this(authenticated, factory.CreateClient(), logger) { }
 
-        public TwitchAPIClient(IAuthenticated authenticated, HttpClient httpClient, ILogger<TwitchAPIClient> logger)
+        internal TwitchAPIClient(IAuthenticated authenticated, HttpClient httpClient, ILogger<TwitchAPIClient> logger)
         {
             _authenticated = authenticated;
             _httpClient = httpClient;

@@ -52,14 +52,16 @@ namespace BlipBloopBotTests
                 .WithScope(TwitchConstants.TwitchOAuthScopes.ChatRead)
                 .WithHttpMessageHandler(authHandlerMock.Object)
                 .Build();
-            
+
+            var httpFactoryMock = new Mock<IHttpClientFactory>();
+            httpFactoryMock.Setup<HttpClient>(f => f.CreateClient(It.IsAny<string>()))
+                .Returns(new HttpClient(handlerMock.Object));
 
             var message = new HttpRequestMessage();
             await authenticated.AuthenticateMessageAsync(message);
 
             var mockLogger = new Mock<ILogger<TwitchAPIClient>>();
-            var httpClient = new HttpClient(handlerMock.Object);
-            var apiClient = new TwitchAPIClient(authenticated, httpClient, mockLogger.Object);
+            var apiClient = new TwitchAPIClient(authenticated, httpFactoryMock.Object, mockLogger.Object);
 
             List<HelixExtensionLiveChannel> liveChannels = new();
             await foreach(var liveChannel in apiClient.EnumerateExtensionLiveChannelsAsync("test"))
