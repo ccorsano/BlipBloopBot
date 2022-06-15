@@ -23,7 +23,7 @@ namespace Conceptoire.Twitch.API
         public TwitchAPIClient(IAuthenticated authenticated, IHttpClientFactory factory, ILogger<TwitchAPIClient> logger)
             : this(authenticated, factory.CreateClient(), logger) { }
 
-        internal TwitchAPIClient(IAuthenticated authenticated, HttpClient httpClient, ILogger<TwitchAPIClient> logger)
+        public TwitchAPIClient(IAuthenticated authenticated, HttpClient httpClient, ILogger<TwitchAPIClient> logger)
         {
             _authenticated = authenticated;
             _httpClient = httpClient;
@@ -337,7 +337,7 @@ namespace Conceptoire.Twitch.API
                 }
 
                 ++paginationRound;
-            } while (response?.Pagination?.Cursor != null);
+            } while (! string.IsNullOrEmpty(response?.Pagination?.Cursor));
         }
 
         // TODO: this is going to be a large region, take it out when refactoring the API
