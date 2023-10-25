@@ -20,7 +20,7 @@ namespace Conceptoire.Twitch.API
                     Cursor = System.Text.Encoding.UTF8.GetString(reader.ValueSpan)
                 };
             }
-            return JsonSerializer.Deserialize<HelixResponsePagination>(ref reader, options);
+            return new HelixResponsePagination(JsonSerializer.Deserialize<HelixResponsePaginationInner>(ref reader, HelixResponsePaginationInnerContext.Default.HelixResponsePaginationInner));
         }
 
         public override void Write(Utf8JsonWriter writer, HelixResponsePagination value, JsonSerializerOptions options)
@@ -32,7 +32,22 @@ namespace Conceptoire.Twitch.API
     [JsonConverter(typeof(HelixResponsePaginationConverter))]
     public class HelixResponsePagination
     {
+        public HelixResponsePagination() {}
+
+        internal HelixResponsePagination(HelixResponsePaginationInner inner)
+        {
+            Cursor = inner.Cursor;
+        }
+
+        public string Cursor { get; set; }
+    }
+
+    internal class HelixResponsePaginationInner
+    {
         [JsonPropertyName("cursor")]
         public string Cursor { get; set; }
     }
+
+    [JsonSerializable(typeof(HelixResponsePaginationInner))]
+    internal partial class HelixResponsePaginationInnerContext : JsonSerializerContext { }
 }

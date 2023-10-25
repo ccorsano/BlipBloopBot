@@ -16,6 +16,7 @@ namespace Conceptoire.Twitch.API
         IAsyncEnumerable<HelixCategoriesSearchEntry> EnumerateTopGamesAsync(CancellationToken cancellationToken = default);
         IAsyncEnumerable<HelixCategoriesSearchEntry> EnumerateTwitchCategoriesAsync(CancellationToken cancellationToken = default);
         IAsyncEnumerable<HelixCategoriesSearchEntry> EnumerateTwitchCategoriesAsync(string query, CancellationToken cancellationToken = default);
+        IAsyncEnumerable<HelixGetStreamsEntry> EnumerateStreamsAsync(CancellationToken cancellationToken = default);
         IAsyncEnumerable<HelixClip> EnumerateTwitchChannelClipsAsync(string channelId, DateTime? startedAt = null, DateTime? endedAt = null, CancellationToken cancellationToken = default);
         IAsyncEnumerable<HelixVideoInfo> EnumerateTwitchChannelVideosAsync(string channelId, string videoType = null, CancellationToken cancellationToken = default);
         Task<HelixChannelInfo> GetChannelInfoAsync(string broadcasterId, CancellationToken cancellationToken = default);

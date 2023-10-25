@@ -12,4 +12,7 @@ namespace Conceptoire.Twitch.API
         [JsonPropertyName("data")]
         public HelixCategoriesSearchEntry[] Data { get; set; }
     }
+
+    [JsonSerializable(typeof(HelixGamesResponse))]
+    internal partial class HelixGamesResponseContext : JsonSerializerContext { }
 }

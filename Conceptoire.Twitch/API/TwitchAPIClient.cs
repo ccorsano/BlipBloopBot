@@ -3,6 +3,7 @@ using Conceptoire.Twitch.Authentication;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -124,7 +125,7 @@ namespace Conceptoire.Twitch.API
             var result = await _httpClient.SendAsync(httpMessage, cancellationToken);
             if (result.IsSuccessStatusCode)
             {
-                var response = await JsonSerializer.DeserializeAsync<HelixUsersGetResponse>(await result.Content.ReadAsStreamAsync(), null, cancellationToken);
+                var response = await JsonSerializer.DeserializeAsync(await result.Content.ReadAsStreamAsync(), HelixUsersGetResponseJsonContext.Default.HelixUsersGetResponse, cancellationToken);
                 return response.Data;
             }
             else
@@ -148,7 +149,7 @@ namespace Conceptoire.Twitch.API
             var result = await _httpClient.SendAsync(httpMessage, cancellationToken);
             if (result.IsSuccessStatusCode)
             {
-                var response = await JsonSerializer.DeserializeAsync<HelixChannelsSearchResponse>(await result.Content.ReadAsStreamAsync(), null, cancellationToken);
+                var response = await JsonSerializer.DeserializeAsync(await result.Content.ReadAsStreamAsync(), HelixChannelsSearchResponseContext.Default.HelixChannelsSearchResponse, cancellationToken);
                 return response.Data;
             }
             else
@@ -171,7 +172,7 @@ namespace Conceptoire.Twitch.API
             var result = await _httpClient.SendAsync(httpMessage, cancellationToken);
             if (result.IsSuccessStatusCode)
             {
-                var response = await JsonSerializer.DeserializeAsync<HelixChannelGetInfoResponse>(await result.Content.ReadAsStreamAsync(), null, cancellationToken);
+                var response = await JsonSerializer.DeserializeAsync(await result.Content.ReadAsStreamAsync(), HelixChannelGetInfoResponseContext.Default.HelixChannelGetInfoResponse, cancellationToken);
                 return response.Data?[0] ?? null;
             }
             else
@@ -181,6 +182,12 @@ namespace Conceptoire.Twitch.API
             }
 
             return null;
+        }
+
+        public IAsyncEnumerable<HelixGetStreamsEntry> EnumerateStreamsAsync(CancellationToken cancellationToken = default)
+        {
+            var baseUri = "https://api.twitch.tv/helix/streams";
+            return EnumerateHelixAPIAsync<HelixGetStreamsEntry>(baseUri);
         }
 
         public IAsyncEnumerable<HelixCategoriesSearchEntry> EnumerateTwitchCategoriesAsync(CancellationToken cancellationToken = default)
@@ -241,7 +248,7 @@ namespace Conceptoire.Twitch.API
             var result = await _httpClient.SendAsync(httpMessage, cancellationToken);
             if (result.IsSuccessStatusCode)
             {
-                var response = await JsonSerializer.DeserializeAsync<HelixGamesResponse>(await result.Content.ReadAsStreamAsync(), null, cancellationToken);
+                var response = await JsonSerializer.DeserializeAsync(await result.Content.ReadAsStreamAsync(), HelixGamesResponseContext.Default.HelixGamesResponse, cancellationToken);
                 return response.Data;
             }
 
@@ -262,7 +269,7 @@ namespace Conceptoire.Twitch.API
             var result = await _httpClient.SendAsync(httpMessage, cancellationToken);
             if (result.IsSuccessStatusCode)
             {
-                var response = await JsonSerializer.DeserializeAsync<HelixChannelGetEditorsResponse>(await result.Content.ReadAsStreamAsync(), null, cancellationToken);
+                var response = await JsonSerializer.DeserializeAsync(await result.Content.ReadAsStreamAsync(), HelixChannelGetEditorsResponseContext.Default.HelixChannelGetEditorsResponse, cancellationToken);
                 return response.Data;
             }
 
@@ -323,7 +330,7 @@ namespace Conceptoire.Twitch.API
                 };
                 await _authenticated.AuthenticateMessageAsync(httpMessage, cancellationToken);
                 var result = await _httpClient.SendAsync(httpMessage, cancellationToken);
-                response = await JsonSerializer.DeserializeAsync<HelixPaginatedResponse<TEntry>>(await result.Content.ReadAsStreamAsync(), null, cancellationToken);
+                response = await JsonSerializer.DeserializeAsync<HelixPaginatedResponse<TEntry>>(await result.Content.ReadAsStreamAsync(), (JsonSerializerOptions) null, cancellationToken);
 
                 _logger.LogDebug("Received response from Twitch API, items {responseItems}, pagination cursor {paginationCursor}", response?.Data?.Length, response?.Pagination?.Cursor ?? "not set");
                 if (response.Data != null)

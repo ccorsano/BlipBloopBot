@@ -10,4 +10,7 @@ namespace Conceptoire.Twitch.API
         [JsonPropertyName("pagination")]
         public HelixResponsePagination Pagination { get; set; }
     }
+
+    [JsonSerializable(typeof(HelixChannelsSearchResponse))]
+    internal partial class HelixChannelsSearchResponseContext : JsonSerializerContext { }
 }

@@ -98,6 +98,7 @@ namespace TwitchCategoriesCrawler
                 configuration.HasHeaderRecord = false;
             }
 
+            uint streamCount = 0;
             using (var textWriter = new StreamWriter("gamedb.csv", true))
             using (var csvWriter = new CsvWriter(textWriter, configuration))
             {
@@ -106,13 +107,15 @@ namespace TwitchCategoriesCrawler
                 //foreach (var steamLanguage in SteamConstants.TwitchLanguageMapping)
                 {
                     // Scan all categories
-                    await foreach (var category in _twitchAPIClient.EnumerateTwitchCategoriesAsync())
+                    await foreach (HelixGetStreamsEntry stream in _twitchAPIClient.EnumerateStreamsAsync())
                     {
+                        streamCount++;
+                        _logger.LogWarning("Stream {index}, {viewerCount}: {streamer} {categoryName}", streamCount, stream.ViewerCount, stream.UserName, stream.GameName);
                         GameInfo gameInfo = null;
 
                         if (_gameLocalization != null)
                         {
-                            var existingBaseEntry = await _gameLocalization.ResolveLocalizedGameInfoAsync("", category.Id);
+                            var existingBaseEntry = await _gameLocalization.ResolveLocalizedGameInfoAsync("", stream.GameId);
                             if (!Force && existingBaseEntry != null && !existingBaseEntry.IGDBId.HasValue)
                             {
                                 _logger.LogWarning("Found existing persisted base entry, no IGDB record, skipping");
@@ -120,7 +123,7 @@ namespace TwitchCategoriesCrawler
                             }
                             gameInfo = existingBaseEntry;
 
-                            var existingLog = await _gameLocalization.ResolveLocalizedGameInfoAsync(TargetLanguage, category.Id);
+                            var existingLog = await _gameLocalization.ResolveLocalizedGameInfoAsync(TargetLanguage, stream.GameId);
                             if (!Force && gameInfo != null && existingLog != null)
                             {
                                 _logger.LogWarning("Found existing persisted base entry, no IGDB record, skipping");
@@ -129,21 +132,21 @@ namespace TwitchCategoriesCrawler
                         }
                         else
                         {
-                            if (gameDb.TryGetValue((category.Id, steamLanguage.Key), out gameInfo))
+                            if (gameDb.TryGetValue((stream.GameId, steamLanguage.Key), out gameInfo))
                             {
-                                _logger.LogWarning("Found existing entry {categoryId}, {categoryName}, {language}", category.Id, category.Name, steamLanguage.Key);
+                                _logger.LogWarning("Found existing entry {categoryId}, {categoryName}, {language}", stream.GameId, stream.GameName, steamLanguage.Key);
                                 continue;
                             }
 
-                            if (gameDb.TryGetValue((category.Id, TwitchConstants.LanguageCodes.ENGLISH), out gameInfo))
+                            if (gameDb.TryGetValue((stream.GameId, TwitchConstants.LanguageCodes.ENGLISH), out gameInfo))
                             {
-                                _logger.LogWarning("Found existing base EN entry for {categoryId}, {categoryName}", category.Id, category.Name);
+                                _logger.LogWarning("Found existing base EN entry for {categoryId}, {categoryName}", stream.GameId, stream.GameName);
                             }
                             else
                             {
-                                if (steamLanguage.Key != TwitchConstants.LanguageCodes.ENGLISH && !gameDb.TryAdd((category.Id, TwitchConstants.LanguageCodes.ENGLISH), gameInfo))
+                                if (steamLanguage.Key != TwitchConstants.LanguageCodes.ENGLISH && !gameDb.TryAdd((stream.GameId, TwitchConstants.LanguageCodes.ENGLISH), gameInfo))
                                 {
-                                    _logger.LogWarning("Received same category twice {categoryId} ({categoryName})", category.Id, category.Name);
+                                    _logger.LogWarning("Received same category twice {categoryId} ({categoryName})", stream.GameId, stream.GameName);
                                 }
                             }
                         }
@@ -152,25 +155,31 @@ namespace TwitchCategoriesCrawler
                         {
                             gameInfo = new GameInfo
                             {
-                                TwitchCategoryId = category.Id,
+                                TwitchCategoryId = stream.GameId,
                                 Language = "",
-                                Name = category.Name,
+                                Name = stream.GameName,
                             };
                         }
 
                         // If we already resolved that category for this language, skip it
-                        if (gameDb.ContainsKey((category.Id, steamLanguage.Key)))
+                        if (gameDb.ContainsKey((stream.GameId, steamLanguage.Key)))
                         {
-                            _logger.LogWarning("Found existing localized {language} entry for {categoryId}, {categoryName}", steamLanguage.Key, category.Id, category.Name);
+                            _logger.LogWarning("Found existing localized {language} entry for {categoryId}, {categoryName}", steamLanguage.Key, stream.GameId, stream.GameName);
                             continue;
                         }
 
-                        var updatedGameInfo = await FetchCategoryInfo(category, steamLanguage.Key, steamLanguage.Value, gameInfo);
+                        var updatedGameInfo = await FetchCategoryInfo(stream, steamLanguage.Key, steamLanguage.Value, gameInfo);
                         csvWriter.WriteRecords(updatedGameInfo);
 
                         if (_gameLocalization != null)
                         {
                             await Task.WhenAll(updatedGameInfo.Select(gameInfo => _gameLocalization.SaveGameInfoAsync(gameInfo)));
+                        }
+
+                        if (stream.ViewerCount < 50)
+                        {
+                            _logger.LogWarning("Stopped iterating after {streamCount}", streamCount);
+                            break;
                         }
                     }
 
@@ -179,7 +188,7 @@ namespace TwitchCategoriesCrawler
             }
         }
 
-        public async Task<GameInfo[]> FetchCategoryInfo(HelixCategoriesSearchEntry category, string twitchLanguage, string steamLanguage, GameInfo gameInfo)
+        public async Task<GameInfo[]> FetchCategoryInfo(HelixGetStreamsEntry stream, string twitchLanguage, string steamLanguage, GameInfo gameInfo)
         {
             var resultList = new List<GameInfo>();
 
@@ -187,8 +196,8 @@ namespace TwitchCategoriesCrawler
 
             if (Force || !gameInfo.IGDBId.HasValue)
             {
-                _logger.LogInformation("Category: {categoryName}, id: {categoryId}", category.Name, category.Id);
-                var igdbExternalEntry = await _igdbClient.SearchExternalGame("uid", $"\"{category.Id}\"", IGDBExternalGameCategory.Twitch);
+                _logger.LogInformation("Category: {categoryName}, id: {categoryId}", stream.GameName, stream.GameId);
+                var igdbExternalEntry = await _igdbClient.SearchExternalGame("uid", $"\"{stream.GameId}\"", IGDBExternalGameCategory.Twitch);
                 if (igdbExternalEntry.Length == 0)
                 {
                     _logger.LogInformation("No IGDB entry");

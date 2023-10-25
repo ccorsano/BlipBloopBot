@@ -7,4 +7,7 @@ namespace Conceptoire.Twitch.API
         [JsonPropertyName("data")]
         public HelixChannelInfo[] Data { get; set; }
     }
+
+    [JsonSerializable(typeof(HelixChannelGetInfoResponse))]
+    internal partial class HelixChannelGetInfoResponseContext : JsonSerializerContext { }
 }
