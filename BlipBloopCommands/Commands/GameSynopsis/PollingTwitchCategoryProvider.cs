@@ -99,7 +99,7 @@ namespace BlipBloopCommands.Commands.GameSynopsis
 
         async Task<GameInfo> ITwitchCategoryProvider.FetchChannelInfo(string categoryId, string language, CancellationToken cancellationToken)
         {
-            if (_broacasterLogin != null && (_gameInfo.Language != language || _gameInfo.TwitchCategoryId != categoryId))
+            if (_broacasterLogin != null && (_gameInfo?.Language != language || _gameInfo?.TwitchCategoryId != categoryId))
             {
                 await RefreshCategory(_broacasterLogin, cancellationToken);
             }

@@ -34,7 +34,6 @@ namespace BotWorkerService
     public class SiloHostedService : IHostedService
     {
         private readonly IConfiguration _configuration;
-        private readonly IServiceProvider _services;
         private ISiloHost _siloHost;
 
         public SiloHostedService(IConfiguration configuration)

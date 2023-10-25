@@ -116,7 +116,7 @@ namespace BotServiceGrainInterface
         public async Task DeleteCommand(Guid commandId)
         {
             var command = _channelBotState.State.Commands.GetValueOrDefault(commandId);
-            _logger.LogInformation("Removing bot command {commandId} ({commandAliases} - )", commandId, string.Join(",", command?.Aliases ?? new string[0]), command?.Type);
+            _logger.LogInformation("Removing bot command {commandId} ({commandAliases} - {commandType})", commandId, string.Join(",", command?.Aliases ?? new string[0]), command?.Type);
             _channelBotState.State.Commands.Remove(commandId);
             await _chatBot.RemoveMessageProcessor(commandId);
 
