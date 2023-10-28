@@ -4,6 +4,7 @@ dotnet run -c Release -- sync -l=fr -c
 dotnet run -c Release -- sync -l=it -c
 dotnet run -c Release -- sync -l=de -c
 dotnet run -c Release -- sync -l=es -c
+dotnet run -c Release -- sync -l=uk -c
 dotnet run -c Release -- sync -l=da -c
 dotnet run -c Release -- sync -l=sv -c
 dotnet run -c Release -- sync -l=ru -c
@@ -19,3 +20,7 @@ rm gamedb_de.csv
 dotnet run -c Release -- export -l=de -o="gamedb_de.csv"
 rm gamedb_es.csv
 dotnet run -c Release -- export -l=es -o="gamedb_es.csv"
+rm gamedb_uk.csv
+dotnet run -c Release -- export -l=uk -o="gamedb_uk.csv"
+rm gamedb_ru.csv
+dotnet run -c Release -- export -l=ru -o="gamedb_ru.csv"
