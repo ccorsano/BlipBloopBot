@@ -1,7 +1,8 @@
-﻿using BlipBloopBot.Storage;
+﻿using Azure;
+using Azure.Data.Tables;
+using Azure.Data.Tables.Models;
+using BlipBloopBot.Storage;
 using Conceptoire.Twitch.Model;
-using Microsoft.Azure.Cosmos.Table;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -19,34 +20,30 @@ namespace BlipBloopCommands.Storage
         private readonly AzureGameLocalizationStoreOptions _options;
         private readonly ILogger _logger;
 
-        private CloudStorageAccount _account;
-        private CloudTableClient _tableClient;
-        private CloudTable _table;
+        private TableServiceClient _tableServiceClient;
+        private TableClient _tableClient;
 
         public AzureStorageGameLocalizationStore(IOptions<AzureGameLocalizationStoreOptions> options, ILogger<AzureStorageGameLocalizationStore> logger)
         {
             _options = options.Value;
             _logger = logger;
-            _account = CloudStorageAccount.Parse(_options.StorageConnectionString);
-            _tableClient = _account.CreateCloudTableClient();
-            _table = _tableClient.GetTableReference(_options.TableName);
+            _tableServiceClient = new TableServiceClient(_options.StorageConnectionString);
+            _tableClient = _tableServiceClient.GetTableClient(_options.TableName);
         }
 
         async Task<GameInfo> IGameLocalizationStore.ResolveLocalizedGameInfoAsync(string language, string twitchCategoryId, CancellationToken cancellationToken)
         {
             try
             {
-                TableOperation retrieveOperation = TableOperation.Retrieve<GameLocalizationInfoEntity>(twitchCategoryId, language);
-                TableResult result = await _table.ExecuteAsync(retrieveOperation, cancellationToken);
-                GameLocalizationInfoEntity gameInfoEntity = result.Result as GameLocalizationInfoEntity;
-                if (gameInfoEntity == null)
+                NullableResponse<GameLocalizationInfoEntity> response = await _tableClient.GetEntityIfExistsAsync<GameLocalizationInfoEntity>(twitchCategoryId, language, null, cancellationToken);
+                if (! response.HasValue)
                 {
                     return null;
                 }
 
-                return gameInfoEntity.ToGameInfo();
+                return response.Value.ToGameInfo();
             }
-            catch (StorageException e)
+            catch (RequestFailedException e)
             {
                 _logger.LogError(e, e.Message);
                 throw;
@@ -58,15 +55,14 @@ namespace BlipBloopCommands.Storage
             try
             {
                 var gameInfoEntity = new GameLocalizationInfoEntity(gameInfo);
-                var operation = TableOperation.InsertOrReplace(gameInfoEntity);
-                var result = await _table.ExecuteAsync(operation, cancellationToken);
-                if (result.HttpStatusCode / 100 != 2)
+                var result = await _tableClient.UpsertEntityAsync(gameInfoEntity, TableUpdateMode.Merge, cancellationToken);
+                if (result.IsError)
                 {
-                    _logger.LogError("Non success code on insert {httpStatus}", result.HttpStatusCode);
+                    _logger.LogError("Non success code on insert {httpStatus}", result.Status);
                     throw new Exception("Error http code on insert");
                 }
             }
-            catch (StorageException e)
+            catch (RequestFailedException e)
             {
                 _logger.LogError(e, e.Message);
                 throw;
@@ -75,39 +71,36 @@ namespace BlipBloopCommands.Storage
 
         async IAsyncEnumerable<GameInfo> IGameLocalizationStore.EnumerateGameInfoAsync(string language, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            var query = new TableQuery<GameLocalizationInfoEntity>()
-            {
-                TakeCount = 1000
-            }.Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, language));
+            AsyncPageable<GameLocalizationInfoEntity> query = _tableClient
+                .QueryAsync<GameLocalizationInfoEntity>(e => e.RowKey == language, 1000);
             
-            TableContinuationToken continuationToken = null;
-            do
+            await foreach (Page<GameLocalizationInfoEntity> page in query.AsPages())
             {
-                TableQuerySegment<GameLocalizationInfoEntity> segment = await _table.ExecuteQuerySegmentedAsync(query, continuationToken);
-
-                foreach (var entry in segment)
+                foreach (GameLocalizationInfoEntity value in page.Values)
                 {
-                    yield return entry.ToGameInfo();
+                    yield return value.ToGameInfo();
                 }
-
-                continuationToken = segment.ContinuationToken;
             }
-            while (continuationToken != null);
         }
     }
 
-    public class GameLocalizationInfoEntity : TableEntity
+    public class GameLocalizationInfoEntity : ITableEntity
     {
         public GameLocalizationInfoEntity()
         {
         }
 
-        public GameLocalizationInfoEntity(string gameId, string locale) : base(gameId, locale)
+        public GameLocalizationInfoEntity(string gameId, string locale)
         {
+            PartitionKey = gameId;
+            RowKey = locale;
         }
 
-        public GameLocalizationInfoEntity(GameInfo gameInfo) : base(gameInfo.TwitchCategoryId, gameInfo.Language)
+        public GameLocalizationInfoEntity(GameInfo gameInfo)
         {
+            PartitionKey = gameInfo.TwitchCategoryId;
+            RowKey = gameInfo.Language;
+
             Name = gameInfo.Name;
             Synopsis = gameInfo.Synopsis;
             Summary = gameInfo.Summary;
@@ -125,6 +118,11 @@ namespace BlipBloopCommands.Storage
             }
             SteamId = (long?) gameInfo.SteamId;
         }
+
+        public string PartitionKey { get; set; }
+        public string RowKey { get; set; }
+        public DateTimeOffset? Timestamp { get; set; }
+        public ETag ETag { get; set; }
 
         public string TwitchCategoryId => PartitionKey;
         public string Language => RowKey;

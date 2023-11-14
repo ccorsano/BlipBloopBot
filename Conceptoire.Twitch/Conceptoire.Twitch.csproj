@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>Conceptoire.Twitch</RootNamespace>
-    <Version>0.2.0.0</Version>
+    <Version>0.3.0.0</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseFile></PackageLicenseFile>
     <RepositoryUrl>https://github.com/ccorsano/BlipBloopBot</RepositoryUrl>
@@ -17,15 +17,15 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="5.0.0" />
-    <PackageReference Include="Polly" Version="7.2.1" />
-    <PackageReference Include="protobuf-net" Version="3.0.101" />
-    <PackageReference Include="System.IO.Pipelines" Version="5.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+    <PackageReference Include="Polly" Version="8.2.0" />
+    <PackageReference Include="protobuf-net" Version="3.2.26" />
+    <PackageReference Include="System.IO.Pipelines" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -48,7 +48,7 @@
       <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
   <ItemGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
-      <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
+      <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>

@@ -1,24 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
-
   <ItemGroup>
     <None Remove="gamedb_fr.csv" />
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Include="gamedb_fr.csv" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="CsvHelper" Version="26.1.0" />
-    <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
+    <PackageReference Include="Azure.Data.Tables" Version="12.8.2" />
+    <PackageReference Include="CsvHelper" Version="30.0.1" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Conceptoire.Twitch\Conceptoire.Twitch.csproj" />
   </ItemGroup>
-
 </Project>
