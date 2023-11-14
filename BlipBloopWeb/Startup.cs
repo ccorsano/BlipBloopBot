@@ -20,13 +20,11 @@ using Conceptoire.Twitch.API;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Conceptoire.Twitch.Authentication;
-using Microsoft.Extensions.Options;
 using BlipBloopBot.Storage;
 using BlipBloopCommands.Storage;
 using MudBlazor.Services;
 using System;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using System.Net.Http;
 
 namespace BlipBloopWeb
 {
