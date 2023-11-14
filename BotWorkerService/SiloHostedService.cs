@@ -73,21 +73,21 @@ namespace BotWorkerService
             {
                 builder.AddAzureTableGrainStorage("profileStore", (AzureTableStorageOptions options) =>
                 {
-                    options.ConnectionString = azureStorageConnectionString;
+                    options.ConfigureTableServiceClient(azureStorageConnectionString);
                     options.TableName = "profiles";
                     options.UseJson = true;
                     options.IndentJson = false;
                 });
                 builder.AddAzureTableGrainStorage("channelStore", (AzureTableStorageOptions options) =>
                 {
-                    options.ConnectionString = azureStorageConnectionString;
+                    options.ConfigureTableServiceClient(azureStorageConnectionString);
                     options.TableName = "channels";
                     options.UseJson = true;
                     options.IndentJson = false;
                 });
                 builder.AddAzureTableGrainStorage("botSettingsStore", (AzureTableStorageOptions options) =>
                 {
-                    options.ConnectionString = azureStorageConnectionString;
+                    options.ConfigureTableServiceClient(azureStorageConnectionString);
                     options.TableName = "botsettings";
                     options.UseJson = true;
                     options.IndentJson = false;
