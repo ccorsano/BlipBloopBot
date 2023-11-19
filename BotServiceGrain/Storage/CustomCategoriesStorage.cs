@@ -1,6 +1,7 @@
-﻿using BotServiceGrainInterface;
+﻿using Azure;
+using Azure.Data.Tables;
+using BotServiceGrainInterface;
 using BotServiceGrainInterface.Model;
-using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -10,41 +11,50 @@ using Orleans.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace BotServiceGrain.Storage
 {
-    public class CustomCategoryEntity : TableEntity
+    public class CustomCategoryEntity : ITableEntity
     {
+        private string _rowKey;
+
         public CustomCategoryEntity() { }
 
         public CustomCategoryEntity(string channelId, string categoryId, string locale)
-            :base(channelId, $"{categoryId}:{locale}")
         {
+            PartitionKey = channelId;
+            _rowKey = $"{categoryId}:{locale}";
             CategoryId = categoryId;
             Locale = locale;
         }
+        public string PartitionKey { get; set; }
+        public string RowKey {
+            get => _rowKey;
+            set
+            {
+                var split = RowKey.Split(':');
+                CategoryId = split[0];
+                Locale = split[1];
+            }
+        }
+
+        public DateTimeOffset? Timestamp { get; set; }
+        public ETag ETag { get; set; }
 
         public string Description { get; set; }
 
-        [IgnoreProperty]
+        [IgnoreDataMember]
         public string ChannelId => PartitionKey;
 
-        [IgnoreProperty]
+        [IgnoreDataMember]
         public string CategoryId { get; private set; }
         
-        [IgnoreProperty]
+        [IgnoreDataMember]
         public string Locale { get; private set; }
-
-        public override void ReadEntity(IDictionary<string, EntityProperty> properties, OperationContext operationContext)
-        {
-            base.ReadEntity(properties, operationContext);
-            var split = RowKey.Split(':');
-            CategoryId = split[0];
-            Locale = split[1];
-        }
     }
 
     public class CustomCategoriesStorage : IGrainStorage, ILifecycleParticipant<ISiloLifecycle>
@@ -52,9 +62,8 @@ namespace BotServiceGrain.Storage
         private readonly string _storageName;
         private readonly CustomCategoriesStorageOptions _storageOptions;
         private ILogger _logger;
-        private CloudStorageAccount _account;
-        private CloudTableClient _tableClient;
-        private CloudTable _table;
+        private TableServiceClient _tableClient;
+        private TableClient _table;
 
         public CustomCategoriesStorage(string storageName,
             CustomCategoriesStorageOptions storageOptions,
@@ -67,50 +76,41 @@ namespace BotServiceGrain.Storage
 
         private async Task Init(CancellationToken ct)
         {
-            _account = CloudStorageAccount.Parse(_storageOptions.ConnectionString);
-            _tableClient = _account.CreateCloudTableClient();
-            _table = _tableClient.GetTableReference(_storageOptions.TableName);
+            _tableClient = new TableServiceClient(_storageOptions.ConnectionString);
+            _table = _tableClient.GetTableClient(_storageOptions.TableName);
             await _table.CreateIfNotExistsAsync();
         }
 
-        public async Task ClearStateAsync(string grainType, GrainReference grainReference, IGrainState grainState)
+        public async Task ClearStateAsync<T>(string grainType, GrainId grainId, IGrainState<T> grainState)
         {
-            var entityList = await FetchAll(grainReference);
+            var entityList = await FetchAll(grainId);
             try
             {
-                var batch = new TableBatchOperation();
-                foreach(var entity in entityList)
-                {
-                    batch.Delete(entity);
-                }
-                await _table.ExecuteBatchAsync(batch);
+                List<TableTransactionAction> deleteBatch = entityList.Select(e => new TableTransactionAction(TableTransactionActionType.Delete, e)).ToList();
+                await _table.SubmitTransactionAsync(deleteBatch);
             }
-            catch (StorageException e)
+            catch (Exception e) when (e is RequestFailedException || e is InvalidOperationException)
             {
                 _logger.LogError(e, "Could not clear state");
                 throw;
             }
         }
 
-        private async Task<List<CustomCategoryEntity>> FetchAll(GrainReference grainReference)
+        private async Task<List<CustomCategoryEntity>> FetchAll(GrainId grainId)
         {
             try
             {
-                var query = new TableQuery<CustomCategoryEntity>();
-                query.FilterString = TableQuery.GenerateFilterCondition("PartitionKey", "eq", grainReference.GetPrimaryKeyString());
+                AsyncPageable<CustomCategoryEntity> query = _table.QueryAsync<CustomCategoryEntity>(e => e.PartitionKey == grainId.Key.ToString());
 
-                TableQuerySegment<CustomCategoryEntity> querySegment = null;
                 var entityList = new List<CustomCategoryEntity>();
-                while (querySegment == null || querySegment.ContinuationToken != null)
+                await foreach (var entity in query)
                 {
-                    querySegment = await _table.ExecuteQuerySegmentedAsync(query, querySegment != null ?
-                                                     querySegment.ContinuationToken : null);
-                    entityList.AddRange(querySegment);
+                    entityList.Add(entity);
                 }
 
                 return entityList;
             }
-            catch (StorageException e)
+            catch (RequestFailedException e)
             {
                 _logger.LogError(e, "Failed to read state from Table Storage");
                 throw;
@@ -122,11 +122,15 @@ namespace BotServiceGrain.Storage
             lifecycle.Subscribe(OptionFormattingUtilities.Name<CustomCategoriesStorage>(_storageName), ServiceLifecycleStage.ApplicationServices, Init);
         }
 
-        public async Task ReadStateAsync(string grainType, GrainReference grainReference, IGrainState grainState)
+        public async Task ReadStateAsync<T>(string grainType, GrainId grainReference, IGrainState<T> grainState)
         {
+            if (typeof(T) != typeof(CategoryDescriptionState))
+            {
+                throw new InvalidOperationException("ReadState called with unexpected type");
+            }
             var entities = await FetchAll(grainReference);
             
-            var state = (CategoryDescriptionState) grainState.State;
+            var state = grainState.State as CategoryDescriptionState;
             var descriptions = entities.Select(e => new CustomCategoryDescription
             {
                 TwitchCategoryId = e.CategoryId,
@@ -136,11 +140,15 @@ namespace BotServiceGrain.Storage
             state.Descriptions = descriptions.ToDictionary(d => new CategoryKey { TwitchCategoryId = d.TwitchCategoryId, Locale = d.Locale }, d => d);
         }
 
-        public async Task WriteStateAsync(string grainType, GrainReference grainReference, IGrainState grainState)
+        public async Task WriteStateAsync<T>(string grainType, GrainId grainReference, IGrainState<T> grainState)
         {
+            if (typeof(T) != typeof(CategoryDescriptionState))
+            {
+                throw new InvalidOperationException("ReadState called with unexpected type");
+            }
             var entities = await FetchAll(grainReference);
 
-            var state = (CategoryDescriptionState)grainState.State;
+            var state = grainState.State as CategoryDescriptionState;
 
             var removedEntries = entities.Where(e => !state.Descriptions.ContainsKey(new CategoryKey
             {
@@ -149,26 +157,24 @@ namespace BotServiceGrain.Storage
             }));
             var createdEntries = state.Descriptions.Values.Where(e => !entities.Any(s => s.CategoryId == e.TwitchCategoryId && s.Locale == e.Locale));
 
-            var batchOp = new TableBatchOperation();
-            foreach(var deleted in removedEntries)
-            {
-                batchOp.Delete(deleted);
-            }
+            List<TableTransactionAction> batchOperations = new();
+            batchOperations.AddRange(removedEntries.Select(e => new TableTransactionAction(TableTransactionActionType.Delete, e)));
+
             foreach(var description in state.Descriptions.Values)
             {
                 var entity = entities.FirstOrDefault(e => e.CategoryId == description.TwitchCategoryId && e.Locale == description.Locale);
                 if (entity == null)
                 {
-                    entity = new CustomCategoryEntity(grainReference.GetPrimaryKeyString(), description.TwitchCategoryId, description.Locale);
+                    entity = new CustomCategoryEntity(grainReference.Key.ToString(), description.TwitchCategoryId, description.Locale);
                 }
                 if (entity.Description == description.Description)
                 {
                     continue;
                 }
                 entity.Description = description.Description;
-                batchOp.InsertOrReplace(entity);
+                batchOperations.Add(new TableTransactionAction(TableTransactionActionType.UpsertReplace, entity));
             }
-            await _table.ExecuteBatchAsync(batchOp);
+            await _table.SubmitTransactionAsync(batchOperations);
         }
     }
 }

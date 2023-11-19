@@ -13,7 +13,7 @@ namespace BotServiceGrain.Storage
 {
     public static class CustomCategoriesStorageExtensions
     {
-        public static ISiloHostBuilder AddCustomCategoriesStorage(this ISiloHostBuilder builder, string providerName, Action<CustomCategoriesStorageOptions> options)
+        public static ISiloBuilder AddCustomCategoriesStorage(this ISiloBuilder builder, string providerName, Action<CustomCategoriesStorageOptions> options)
         {
             return builder.ConfigureServices(services => services.AddCustomCategoriesStorage(providerName, options));
         }

@@ -47,28 +47,6 @@ namespace BlipBloopWeb
             });
             services.AddApplicationInsightsTelemetry();
 
-            services.AddTransient<IClientBuilder>(services =>
-            {
-                var builder = new ClientBuilder()
-                    // Clustering information
-                    .Configure<ClusterOptions>(options =>
-                    {
-                        options.ClusterId = "dev";
-                        options.ServiceId = "TwitchServices";
-                    })
-                    .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(IChannelGrain).Assembly));
-
-                var redisClusteringUrl = Configuration.GetValue<string>("REDIS_URL");
-                if (! string.IsNullOrEmpty(redisClusteringUrl))
-                {
-                    builder.UseRedisClustering(redisClusteringUrl);
-                }
-                else
-                {
-                    builder.UseLocalhostClustering();
-                }
-                return builder;
-            });
             services.AddSingleton<IClientProvider, GrainClientProvider>();
 
             // Load config, mainly the EventSub secret used for registration

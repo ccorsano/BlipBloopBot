@@ -10,38 +10,44 @@ using Orleans.Runtime;
 using System;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BotServiceGrain
 {
-    public class UserGrain : Grain, IUserGrain
+    public class UserGrain : IGrainBase, IUserGrain
     {
+        private readonly IGrainFactory _grainFactory;
         private readonly IPersistentState<ProfileState> _profile;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger _logger;
 
         private TwitchAPIClient _twitchAPIClient;
-        private string UserId => GrainReference.GrainIdentity.PrimaryKeyString;
+        private string UserId => GrainContext.GrainId.ToString();
         private HelixValidateTokenResponse _tokenInfo;
 
         public UserGrain(
+            IGrainContext grainContext,
+            IGrainFactory grainFactory,
             [PersistentState("profile", "profileStore")] IPersistentState<ProfileState> profile,
             IHttpClientFactory httpClientFactory,
             ILogger<UserGrain> logger)
         {
+            GrainContext = grainContext;
+            _grainFactory = grainFactory;
             _profile = profile;
             _httpClientFactory = httpClientFactory;
             _logger = logger;
         }
 
-        public override async Task OnActivateAsync()
+        public IGrainContext GrainContext { get; }
+
+        public async Task OnActivateAsync(CancellationToken cancellationToken)
         {
             if (_profile.RecordExists)
             {
                 await SetOAuthToken(_profile.State.OAuthToken);
             }
-
-            await base.OnActivateAsync();
         }
 
         public async Task<bool> SetOAuthToken(string oauthToken)
@@ -51,7 +57,7 @@ namespace BotServiceGrain
             var authenticated = new AuthenticationBuilder()
                 .FromOAuthToken(oauthToken)
                 .Build();
-            _twitchAPIClient = new TwitchAPIClient(authenticated, _httpClientFactory, ServiceProvider.GetRequiredService<ILogger<TwitchAPIClient>>());
+            _twitchAPIClient = new TwitchAPIClient(authenticated, _httpClientFactory, GrainContext.ActivationServices.GetRequiredService<ILogger<TwitchAPIClient>>());
             var validated = await _twitchAPIClient.ValidateToken();
 
             if (validated != null)
@@ -66,7 +72,7 @@ namespace BotServiceGrain
                         ChannelId = _tokenInfo.UserId,
                         ChannelName = _tokenInfo.Login,
                     });
-                    var channelGrain = GrainFactory.GetGrain<IChannelGrain>(UserId);
+                    var channelGrain = _grainFactory.GetGrain<IChannelGrain>(UserId);
                     await channelGrain.Activate(_profile.State.OAuthToken);
                 }
 
@@ -95,7 +101,7 @@ namespace BotServiceGrain
                 throw new InvalidOperationException("Missing active user token");
             }
 
-            var channelGrain = GrainFactory.GetGrain<IChannelGrain>(UserId);
+            var channelGrain = _grainFactory.GetGrain<IChannelGrain>(UserId);
             await channelGrain.Activate(_profile.State.OAuthToken);
 
             var channelInfo = await channelGrain.GetChannelInfo();
@@ -137,7 +143,7 @@ namespace BotServiceGrain
                 _profile.State.CanBeBotOnChannels.Add(channelInfo);
             }
 
-            var channelGrain = GrainFactory.GetGrain<IChannelGrain>(channelId);
+            var channelGrain = _grainFactory.GetGrain<IChannelGrain>(channelId);
             await channelGrain.AllowBotAccount(
                 new BotServiceGrainInterface.Model.BotAccountInfo {
                     UserId = UserId,
@@ -151,7 +157,7 @@ namespace BotServiceGrain
         {
             if (_profile.State.CanBeBotOnChannels.Any(c => c.BroadcasterId == channelId))
             {
-                var channelGrain = GrainFactory.GetGrain<IChannelGrain>(channelId);
+                var channelGrain = _grainFactory.GetGrain<IChannelGrain>(channelId);
                 await channelGrain.DisallowBotAccount(UserId);
 
                 var channelInfo = await _twitchAPIClient.GetChannelInfoAsync(channelId);

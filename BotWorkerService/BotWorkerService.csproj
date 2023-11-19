@@ -13,13 +13,12 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.21.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.AI" Version="3.7.1" />
-    <PackageReference Include="Microsoft.Orleans.Persistence.AzureStorage" Version="3.7.1" />
-    <PackageReference Include="Microsoft.Orleans.Server" Version="3.7.1" />
+    <PackageReference Include="Microsoft.Orleans.Persistence.AzureStorage" Version="7.2.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Orleans.Server" Version="7.2.3" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
-    <PackageReference Include="Orleans.Clustering.Redis" Version="3.2.2" />
-    <PackageReference Include="Orleans.Persistence.Redis" Version="3.2.2" />
+    <PackageReference Include="Orleans.Clustering.Redis" Version="7.0.0" />
+    <PackageReference Include="Orleans.Persistence.Redis" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>

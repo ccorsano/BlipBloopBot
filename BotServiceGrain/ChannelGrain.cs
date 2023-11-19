@@ -19,8 +19,9 @@ using static Conceptoire.Twitch.Constants.TwitchConstants;
 
 namespace BotServiceGrainInterface
 {
-    public class ChannelGrain : Grain, IChannelGrain
+    public class ChannelGrain : IGrainBase, IChannelGrain
     {
+        private readonly IGrainFactory _grainFactory;
         private readonly IPersistentState<ChannelState> _channelState;
         private readonly IPersistentState<ChannelBotSettingsState> _channelBotState;
         private readonly IPersistentState<CategoryDescriptionState> _categoriesState;
@@ -40,6 +41,8 @@ namespace BotServiceGrainInterface
         private CancellationTokenSource _botCancellationSource;
 
         public ChannelGrain(
+            IGrainContext grainContext,
+            IGrainFactory grainFactory,
             [PersistentState("channel", "channelStore")] IPersistentState<ChannelState> channelState,
             [PersistentState("botsettings", "botSettingsStore")] IPersistentState<ChannelBotSettingsState> botSettingsState,
             [PersistentState("customcategories", "customCategoriesStore")] IPersistentState<CategoryDescriptionState> customCategoriesState,
@@ -49,6 +52,8 @@ namespace BotServiceGrainInterface
             IEnumerable<CommandRegistration> commands,
             ILogger<ChannelGrain> logger)
         {
+            GrainContext = grainContext;
+            _grainFactory = grainFactory;
             _channelState = channelState;
             _channelBotState = botSettingsState;
             _categoriesState = customCategoriesState;
@@ -59,7 +64,9 @@ namespace BotServiceGrainInterface
             _logger = logger;
         }
 
-        public override async Task OnActivateAsync()
+        public IGrainContext GrainContext { get; }
+
+        public async Task OnActivateAsync(CancellationToken cancellationToken)
         {
             _channelId = this.GetPrimaryKeyString();
             _logger.LogInformation("Activating channel grain {channelId}", _channelId);
@@ -94,8 +101,6 @@ namespace BotServiceGrainInterface
                 }
             }
 
-            await base.OnActivateAsync();
-
             _channelInfo = await _appClient.GetChannelInfoAsync(_channelId);
             await OnChannelUpdate(_channelInfo);
         }
@@ -123,10 +128,10 @@ namespace BotServiceGrainInterface
             await _channelBotState.WriteStateAsync();
         }
 
-        public override Task OnDeactivateAsync()
+        public Task OnDeactivateAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Deactivating channel grain {channelId}", _channelId);
-            return base.OnDeactivateAsync();
+            return Task.CompletedTask;
         }
 
         async Task IChannelGrain.Activate(string userToken)
@@ -155,7 +160,7 @@ namespace BotServiceGrainInterface
             await _channelState.WriteStateAsync();
 
             var editorsTasks = _channelState.State.Editors.Select(editor =>
-                GrainFactory.GetGrain<IUserGrain>(editor.UserId).SetRole(new UserRole
+                _grainFactory.GetGrain<IUserGrain>(editor.UserId).SetRole(new UserRole
                 {
                     Role = ChannelRole.Editor,
                     ChannelId = _channelId,
@@ -164,7 +169,7 @@ namespace BotServiceGrainInterface
             );
 
             var modsTasks = _channelState.State.Moderators.Select(moderator =>
-                GrainFactory.GetGrain<IUserGrain>(moderator.UserId).SetRole(new UserRole
+                _grainFactory.GetGrain<IUserGrain>(moderator.UserId).SetRole(new UserRole
                 {
                     Role = ChannelRole.Moderator,
                     ChannelId = _channelId,
@@ -218,7 +223,7 @@ namespace BotServiceGrainInterface
             {
                 return _options.OAuthToken;
             }
-            var botGrain = GrainFactory.GetGrain<IUserGrain>(activeBotInfo.UserId);
+            var botGrain = _grainFactory.GetGrain<IUserGrain>(activeBotInfo.UserId);
             return await botGrain.GetOAuthToken();
         }
 
@@ -252,7 +257,7 @@ namespace BotServiceGrainInterface
             var botChatAuthenticated = Twitch.AuthenticateBot()
                 .FromOAuthToken(oauthToken)
                 .Build();
-            _chatBot = new TwitchChatBot(botChatAuthenticated, _appClient, ServiceProvider, ServiceProvider.GetRequiredService<ILogger<TwitchChatBot>>());
+            _chatBot = new TwitchChatBot(botChatAuthenticated, _appClient, GrainContext.ActivationServices, GrainContext.ActivationServices.GetRequiredService<ILogger<TwitchChatBot>>());
 
             var orleansTaskScheduler = TaskScheduler.Current;
 

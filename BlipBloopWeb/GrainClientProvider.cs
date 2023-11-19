@@ -20,19 +20,17 @@ namespace BotServiceGrainInterface
             _lazyClient = new Lazy<Task<IClusterClient>>(ConnectClient);
         }
 
-        private async Task<IClusterClient> ConnectClient()
+        private Task<IClusterClient> ConnectClient()
         {
-            var clientBuilder = _serviceProvider.GetRequiredService<IClientBuilder>();
-            var client = clientBuilder.Build();
-            await client.Connect();
-            return client;
+            var client = _serviceProvider.GetRequiredService<IClusterClient>();
+            return Task.FromResult(client);
         }
 
         public void Dispose()
         {
             if (_lazyClient.IsValueCreated && _lazyClient.Value.IsCompletedSuccessfully)
             {
-                _lazyClient.Value.Result.Close();
+                //_lazyClient.Value.Result;
             }
         }
 
