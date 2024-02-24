@@ -3,10 +3,6 @@ using Conceptoire.Twitch.Commands;
 using Orleans;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace BotServiceGrainInterface.Model
 {
@@ -134,16 +130,8 @@ namespace BotServiceGrainInterface.Model
     }
 
     [RegisterConverter]
-    public sealed class SurrogatesConverter
+    public sealed class HelixChannelInfoSurrogateConverter
         : IConverter<HelixChannelInfo, HelixChannelInfoSurrogate>
-        , IConverter<ChannelStaff, ChannelStaffSurrogate>
-        , IConverter<HelixChannelEditor, HelixChannelEditorSurrogate>
-        , IConverter<HelixChannelModerator, HelixChannelModeratorSurrogate>
-        , IConverter<CommandOptions, CommandOptionsSurrogate>
-        , IConverter<CommandMetadata, CommandMetadataSurrogate>
-        , IConverter<BotAccountInfo, BotAccountInfoSurrogate>
-        , IConverter<CustomCategoryDescription, CustomCategoryDescriptionSurrogate>
-        , IConverter<UserRole, UserRoleSurrogate>
     {
         public HelixChannelInfo ConvertFromSurrogate(in HelixChannelInfoSurrogate s) =>
             new()
@@ -166,6 +154,12 @@ namespace BotServiceGrainInterface.Model
                 GameName = i.GameName,
                 Title = i.Title,
             };
+    }
+
+    [RegisterConverter]
+    public sealed class ChannelStaffSurrogateConverter
+        : IConverter<ChannelStaff, ChannelStaffSurrogate>
+    {
         public ChannelStaff ConvertFromSurrogate(in ChannelStaffSurrogate s) =>
             new()
             {
@@ -179,6 +173,12 @@ namespace BotServiceGrainInterface.Model
                 Editors = i.Editors,
                 Moderators = i.Moderators,
             };
+    }
+
+    [RegisterConverter]
+    public sealed class HelixChannelEditorSurrogateConverter
+        : IConverter<HelixChannelEditor, HelixChannelEditorSurrogate>
+    {
         public HelixChannelEditor ConvertFromSurrogate(in HelixChannelEditorSurrogate s) =>
             new()
             {
@@ -194,7 +194,12 @@ namespace BotServiceGrainInterface.Model
                 UserId = i.UserId,
                 CreatedAt = i.CreatedAt,
             };
+    }
 
+    [RegisterConverter]
+    public sealed class HelixChannelModeratorSurrogateConverter
+        : IConverter<HelixChannelModerator, HelixChannelModeratorSurrogate>
+    {
         public HelixChannelModerator ConvertFromSurrogate(in HelixChannelModeratorSurrogate s) =>
             new()
             {
@@ -210,7 +215,12 @@ namespace BotServiceGrainInterface.Model
                 UserLogin = i.UserLogin,
                 UserName = i.UserName,
             };
+    }
 
+    [RegisterConverter]
+    public sealed class CommandOptionsSurrogateConverter
+        : IConverter<CommandOptions, CommandOptionsSurrogate>
+    {
         public CommandOptions ConvertFromSurrogate(in CommandOptionsSurrogate s) =>
             new()
             {
@@ -228,7 +238,12 @@ namespace BotServiceGrainInterface.Model
                 Parameters = i.Parameters,
                 Type = i.Type,
             };
+    }
 
+    [RegisterConverter]
+    public sealed class CommandMetadataSurrogateConverter
+        : IConverter<CommandMetadata, CommandMetadataSurrogate>
+    {
         public CommandMetadata ConvertFromSurrogate(in CommandMetadataSurrogate s) =>
             new()
             {
@@ -242,7 +257,12 @@ namespace BotServiceGrainInterface.Model
                 Description = i.Description,
                 Name = i.Name,
             };
+    }
 
+    [RegisterConverter]
+    public sealed class BotAccountInfoSurrogateConverter
+        : IConverter<BotAccountInfo, BotAccountInfoSurrogate>
+    {
         public BotAccountInfo ConvertFromSurrogate(in BotAccountInfoSurrogate s) =>
             new()
             {
@@ -258,7 +278,12 @@ namespace BotServiceGrainInterface.Model
                 UserId = i.UserId,
                 UserLogin = i.UserLogin,
             };
+    }
 
+    [RegisterConverter]
+    public sealed class CustomCategoryDescriptionSurrogateConverter
+        : IConverter<CustomCategoryDescription, CustomCategoryDescriptionSurrogate>
+    {
         public CustomCategoryDescription ConvertFromSurrogate(in CustomCategoryDescriptionSurrogate s) =>
             new()
             {
@@ -274,7 +299,12 @@ namespace BotServiceGrainInterface.Model
                 Description = i.Description,
                 Locale = i.Locale,
             };
+    }
 
+    [RegisterConverter]
+    public sealed class UserRoleSurrogateConverter
+        : IConverter<UserRole, UserRoleSurrogate>
+    {
         public UserRole ConvertFromSurrogate(in UserRoleSurrogate s) =>
             new()
             {

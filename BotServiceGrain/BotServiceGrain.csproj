@@ -2,12 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+	  <OrleansCodeGenLogLevel>Trace</OrleansCodeGenLogLevel>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Data.Tables" Version="12.8.2" />
+    <PackageReference Include="Azure.Data.Tables" Version="12.8.3" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Orleans.Server" Version="7.2.3" />
+    <PackageReference Include="Microsoft.Orleans.Server" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

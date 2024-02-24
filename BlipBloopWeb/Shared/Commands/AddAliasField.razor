@@ -4,19 +4,20 @@
     @if (IsEditing)
     {
         <MudContainer Class="px-0">
-            <MudTextFieldString
-                                ValueChanged="AddAlias"
-                                Validation="@(new Func<string,bool>(ValidateAliasFormat))"
-                                OnKeyUp="OnKeyUp"
-                                Margin="Margin.Dense"
-                                Variant="Variant.Outlined"
-                                Label="Trigger" />
+            <MudTextField
+                        T="string"
+                        TextChanged="AddAlias"
+                        Validation="@(new Func<string,bool>(ValidateAliasFormat))"
+                        OnKeyUp="OnKeyUp"
+                        Margin="Margin.Dense"
+                        Variant="Variant.Outlined"
+                        Label="Trigger" />
         </MudContainer>
     }
     else
     {
         <MudContainer Class="px-0">
-            <MudIconButton Icon="@Icons.Outlined.AddCircle" OnClick="OnEdit" />
+            <MudIconButton Icon="@Icons.Material.Outlined.AddCircle" OnClick="OnEdit" />
         </MudContainer>
     }
 </MudContainer>

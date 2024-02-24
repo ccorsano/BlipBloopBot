@@ -1,13 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Orleans;
 using Orleans.Hosting;
-using Orleans.Runtime;
-using Orleans.Storage;
+using Orleans.Runtime.Hosting;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BotServiceGrain.Storage
 {
@@ -21,9 +15,7 @@ namespace BotServiceGrain.Storage
         public static IServiceCollection AddCustomCategoriesStorage(this IServiceCollection services, string providerName, Action<CustomCategoriesStorageOptions> options)
         {
             services.AddOptions<CustomCategoriesStorageOptions>(providerName).Configure(options);
-            return services
-                .AddSingletonNamedService(providerName, CustomCategoriesStorageFactory.Create)
-                .AddSingletonNamedService(providerName, (s, n) => (ILifecycleParticipant<ISiloLifecycle>)s.GetRequiredServiceByName<IGrainStorage>(n));
+            return services.AddGrainStorage(providerName, CustomCategoriesStorageFactory.Create);
         }
     }
 }

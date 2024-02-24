@@ -1,4 +1,4 @@
-version: '3.4'
+version: '3.9'
 
 services:
   blipbloopweb:
@@ -7,9 +7,13 @@ services:
       dockerfile: BlipBloopWeb/Dockerfile
     ports:
       - 80
-      - 443
+      - 33935:443
     environment:
       REDIS_URL: redis_db
+    networks:
+      - aft-backend
+    depends_on:
+      - redis_db
   blipbloopbackend:
     build:
       context: .
@@ -20,7 +24,30 @@ services:
     environment:
       REDIS_URL: redis_db
       HOSTNAME: blipbloopbackend
+      Storage__AzureStorageConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://host.docker.internal:10000/devstoreaccount1;QueueEndpoint=http://host.docker.internal:10001/devstoreaccount1;TableEndpoint=http://host.docker.internal:10002/devstoreaccount1;"
+    networks:
+      - aft-backend
+    depends_on:
+      - azurite
+      - redis_db
   redis_db:
     image: redis:alpine
-
-    
+    networks:
+      - aft-backend
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: aft-backend-azurite
+    hostname: azurite
+    restart: always
+    command: 'azurite --loose --blobHost 0.0.0.0 --blobPort 10000 --queueHost 0.0.0.0 --queuePort 10001 --tableHost 0.0.0.0 --tablePort 10002 --location /workspace --debug /workspace/debug.log'
+    ports:
+      - 10000:10000
+      - 10001:10001
+      - 10002:10002
+    volumes:
+      - ./azurite:/workspace
+    networks:
+      - aft-backend
+networks:
+  aft-backend:
+    name: aft-backend-network

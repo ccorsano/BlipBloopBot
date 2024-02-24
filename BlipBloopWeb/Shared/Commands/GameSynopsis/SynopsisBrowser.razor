@@ -13,7 +13,7 @@
 <MudTable Context="category" ServerData="state => ServerReload(state)" @ref="table">
     <ToolBarContent>
         <MudText Typo="Typo.h6">Categories</MudText>
-        <MudToolBarSpacer />
+        <MudSpacer />
         <MudSwitch Label="Customized only" T="bool" CheckedChanged="@OnToggleCustomized" Color="Color.Info" />
         <LanguageSelect @bind-Value="@SelectedLocale" />
         <MudTextField Label="Filter" T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>

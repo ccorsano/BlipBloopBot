@@ -1,8 +1,8 @@
 ﻿<MudTable T="CommandProperty" @bind-SelectedItem="SelectedItem" Items="Parameters" @ref="PropertyTable">
     <ToolBarContent>
         <MudText>Parameters</MudText>
-        <MudToolBarSpacer />
-        <MudIconButton Icon="@Icons.Filled.AddCircle" OnClick="(_) => AddParameter()" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.AddCircle" OnClick="(_) => AddParameter()" />
     </ToolBarContent>
     <HeaderContent>
         <MudTh>Key</MudTh>
@@ -23,7 +23,7 @@
         </MudTd>
         <MudTd Class="pa-0">
             <MudTooltip Text="Delete">
-                <MudIconButton Class="pa-0" Icon="@Icons.Filled.Delete" OnClick="(_) => Delete()" />
+                <MudIconButton Class="pa-0" Icon="@Icons.Material.Filled.Delete" OnClick="(_) => Delete()" />
             </MudTooltip>
         </MudTd>
     </RowEditingTemplate>
