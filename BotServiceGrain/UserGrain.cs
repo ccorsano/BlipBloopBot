@@ -23,7 +23,7 @@ namespace BotServiceGrain
         private readonly ILogger _logger;
 
         private TwitchAPIClient _twitchAPIClient;
-        private string UserId => GrainContext.GrainId.ToString();
+        private string UserId => GrainContext.GrainId.Key.ToString();
         private HelixValidateTokenResponse _tokenInfo;
 
         public UserGrain(
