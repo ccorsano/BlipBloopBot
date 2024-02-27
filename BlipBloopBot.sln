@@ -25,6 +25,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Conceptoire.Twitch.Abstract
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Conceptoire.Twitch", "Conceptoire.Twitch\Conceptoire.Twitch.csproj", "{DC9C993A-CD19-4616-8F5A-386B43A1445A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlipBloopBot.AppHost", "BlipBloopBot.AppHost\BlipBloopBot.AppHost.csproj", "{21539811-38A1-4FD2-BD65-5F6421123D49}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlipBloopBot.ServiceDefaults", "BlipBloopBot.ServiceDefaults\BlipBloopBot.ServiceDefaults.csproj", "{ED3DA6AA-DF58-4FA6-BDA7-6E6100219A18}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -121,6 +125,22 @@ Global
 		{DC9C993A-CD19-4616-8F5A-386B43A1445A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DC9C993A-CD19-4616-8F5A-386B43A1445A}.Release|x86.ActiveCfg = Release|Any CPU
 		{DC9C993A-CD19-4616-8F5A-386B43A1445A}.Release|x86.Build.0 = Release|Any CPU
+		{21539811-38A1-4FD2-BD65-5F6421123D49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21539811-38A1-4FD2-BD65-5F6421123D49}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21539811-38A1-4FD2-BD65-5F6421123D49}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{21539811-38A1-4FD2-BD65-5F6421123D49}.Debug|x86.Build.0 = Debug|Any CPU
+		{21539811-38A1-4FD2-BD65-5F6421123D49}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21539811-38A1-4FD2-BD65-5F6421123D49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21539811-38A1-4FD2-BD65-5F6421123D49}.Release|x86.ActiveCfg = Release|Any CPU
+		{21539811-38A1-4FD2-BD65-5F6421123D49}.Release|x86.Build.0 = Release|Any CPU
+		{ED3DA6AA-DF58-4FA6-BDA7-6E6100219A18}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED3DA6AA-DF58-4FA6-BDA7-6E6100219A18}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED3DA6AA-DF58-4FA6-BDA7-6E6100219A18}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{ED3DA6AA-DF58-4FA6-BDA7-6E6100219A18}.Debug|x86.Build.0 = Debug|Any CPU
+		{ED3DA6AA-DF58-4FA6-BDA7-6E6100219A18}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED3DA6AA-DF58-4FA6-BDA7-6E6100219A18}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED3DA6AA-DF58-4FA6-BDA7-6E6100219A18}.Release|x86.ActiveCfg = Release|Any CPU
+		{ED3DA6AA-DF58-4FA6-BDA7-6E6100219A18}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

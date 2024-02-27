@@ -26,6 +26,7 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BlipBloopBot.ServiceDefaults\BlipBloopBot.ServiceDefaults.csproj" />
     <ProjectReference Include="..\BlipBloopCommands\BlipBloopCommands.csproj" />
     <ProjectReference Include="..\BotServiceGrainInterface\BotServiceGrainInterface.csproj" />
     <ProjectReference Include="..\Conceptoire.Twitch\Conceptoire.Twitch.csproj" />
