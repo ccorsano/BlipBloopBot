@@ -63,12 +63,20 @@ namespace Conceptoire.Twitch.Steam
 
                 using (var responseStream = await response.Content.ReadAsStreamAsync())
                 {
-                    var wrapper = await JsonSerializer.DeserializeAsync<SteamStoreResult>(responseStream, new JsonSerializerOptions
+                    if (responseStream.Length > 0)
                     {
-                        PropertyNameCaseInsensitive = true
-                    });
+                        var wrapper = await JsonSerializer.DeserializeAsync<SteamStoreResult>(responseStream, new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
 
-                    result = wrapper[appId].Data;
+                        result = wrapper[appId].Data;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Empty result for title {appId}", appId);
+                        result = null;
+                    }
                 }
 
                 _cache.Set(cacheKey, result);

@@ -176,7 +176,7 @@ namespace TwitchCategoriesCrawler
                             await Task.WhenAll(updatedGameInfo.Select(gameInfo => _gameLocalization.SaveGameInfoAsync(gameInfo)));
                         }
 
-                        if (stream.ViewerCount < 50)
+                        if (stream.ViewerCount < 3)
                         {
                             _logger.LogWarning("Stopped iterating after {streamCount}", streamCount);
                             break;
