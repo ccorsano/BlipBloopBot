@@ -1,0 +1,7 @@
+﻿{
+  "type": "MESSAGE",
+  "data": {
+    "topic": "channel-bits-badge-unlocks.401394874",
+    "message": "\r\n     {\r\n          \"user_id\":\"232889822\",\"user_name\":\"willowolf\",\"channel_id\":\"401394874\",\"channel_name\":\"fun_test12345\",\"badge_tier\":1000,\"chat_message\":\"this should be received by the public pubsub listener\",\"time\":\"2020-12-06T00:01:43.71253159Z\"}"
+  }
+}
