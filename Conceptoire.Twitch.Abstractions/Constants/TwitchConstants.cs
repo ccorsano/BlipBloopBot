@@ -244,5 +244,74 @@ namespace Conceptoire.Twitch.Constants
         };
 
         public const string IRCWebSocketUri = "wss://irc-ws.chat.twitch.tv:443";
+
+        public const string PubSubWebSocketUri = "wss://pubsub-edge.twitch.tv";
+
+        public enum PubSubServerMessageType
+        {
+            Pong,
+            Reconnect,
+            Response,
+            Message,
+        }
+
+        public const string PUBSUB_SERVER_PONG = "PONG";
+        public const string PUBSUB_SERVER_RECONNECT = "RECONNECT";
+        public const string PUBSUB_SERVER_RESPONSE = "RESPONSE";
+        public const string PUBSUB_SERVER_MESSAGE = "MESSAGE";
+
+        public enum PubSubClientRequestType
+        {
+            Ping,
+            Listen,
+            Unlisten,
+        }
+
+        public const string PUBSUB_CLIENT_PING = "PING";
+        public const string PUBSUB_CLIENT_LISTEN = "LISTEN";
+        public const string PUBSUB_CLIENT_UNLISTEN = "UNLISTEN";
+
+        public enum PubSubTopicType
+        {
+            BitsV1,
+            BitsV2,
+            BitsBadge,
+            ChannelPointsV1,
+            ChannelSubscriptionsV1,
+            ChatModeration,
+            Whispers,
+        }
+
+        public const string PUBSUB_TOPIC_CHANNEL_BITS_EVENTS_V1 = "channel-bits-events-v1";
+        public const string PUBSUB_TOPIC_CHANNEL_BITS_EVENTS_V2 = "channel-bits-events-v2";
+        public const string PUBSUB_TOPIC_CHANNEL_BITS_BADGE_UNLOCKS = "channel-bits-badge-unlocks";
+        public const string PUBSUB_TOPIC_CHANNEL_POINTS_CHANNEL_V1 = "channel-points-channel-v1";
+        public const string PUBSUB_TOPIC_CHANNEL_SUBSCRIBE_EVENTS_V1 = "channel-subscribe-events-v1";
+        public const string PUBSUB_TOPIC_CHAT_MODERATOR_ACTIONS = "chat_moderator_actions";
+        public const string PUBSUB_TOPIC_WHISPERS = "whispers";
+
+        public static PubSubTopicType GetTopicValue(string topicString) => topicString switch
+        {
+            PUBSUB_TOPIC_CHANNEL_BITS_EVENTS_V1 => PubSubTopicType.BitsV1,
+            PUBSUB_TOPIC_CHANNEL_BITS_EVENTS_V2 => PubSubTopicType.BitsV2,
+            PUBSUB_TOPIC_CHANNEL_BITS_BADGE_UNLOCKS => PubSubTopicType.BitsBadge,
+            PUBSUB_TOPIC_CHANNEL_POINTS_CHANNEL_V1 => PubSubTopicType.ChannelPointsV1,
+            PUBSUB_TOPIC_CHANNEL_SUBSCRIBE_EVENTS_V1 => PubSubTopicType.ChannelSubscriptionsV1,
+            PUBSUB_TOPIC_CHAT_MODERATOR_ACTIONS => PubSubTopicType.ChatModeration,
+            PUBSUB_TOPIC_WHISPERS => PubSubTopicType.Whispers,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        public static string GetTopicString(PubSubTopicType topicValue) => topicValue switch
+        {
+            PubSubTopicType.BitsV1 => PUBSUB_TOPIC_CHANNEL_BITS_EVENTS_V1,
+            PubSubTopicType.BitsV2 => PUBSUB_TOPIC_CHANNEL_BITS_EVENTS_V2,
+            PubSubTopicType.BitsBadge => PUBSUB_TOPIC_CHANNEL_BITS_BADGE_UNLOCKS,
+            PubSubTopicType.ChannelPointsV1 => PUBSUB_TOPIC_CHANNEL_POINTS_CHANNEL_V1,
+            PubSubTopicType.ChannelSubscriptionsV1 => PUBSUB_TOPIC_CHANNEL_SUBSCRIBE_EVENTS_V1,
+            PubSubTopicType.ChatModeration => PUBSUB_TOPIC_CHAT_MODERATOR_ACTIONS,
+            PubSubTopicType.Whispers => PUBSUB_TOPIC_WHISPERS,
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 }
