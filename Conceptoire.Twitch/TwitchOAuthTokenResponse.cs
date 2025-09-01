@@ -19,4 +19,7 @@ namespace Conceptoire.Twitch
         [JsonPropertyName("token_type")]
         public string TokenType { get; set; }
     }
+
+    [JsonSerializable(typeof(TwitchOAuthTokenResponse))]
+    internal partial class TwitchOAuthTokenResponseContext : JsonSerializerContext { }
 }

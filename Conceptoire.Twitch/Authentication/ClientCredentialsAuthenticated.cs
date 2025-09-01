@@ -1,5 +1,4 @@
-﻿using Conceptoire.Twitch.Authentication;
-using Conceptoire.Twitch.Constants;
+﻿using Conceptoire.Twitch.Constants;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -72,7 +71,7 @@ namespace Conceptoire.Twitch.Authentication
             var result = await _httpClient.PostAsync(uriBuilder.Uri, reqContent, cancellationToken);
             result.EnsureSuccessStatusCode();
 
-            _tokenResponse = await JsonSerializer.DeserializeAsync<TwitchOAuthTokenResponse>(await result.Content.ReadAsStreamAsync());
+            _tokenResponse = await JsonSerializer.DeserializeAsync(await result.Content.ReadAsStreamAsync(), TwitchOAuthTokenResponseContext.Default.TwitchOAuthTokenResponse, cancellationToken);
             _tokenExpiration = DateTimeOffset.UtcNow.AddSeconds(_tokenResponse.ExpiresIn);
         }
 
