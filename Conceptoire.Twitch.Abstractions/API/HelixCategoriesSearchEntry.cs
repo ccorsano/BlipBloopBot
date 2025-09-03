@@ -12,6 +12,9 @@ namespace Conceptoire.Twitch.API
         public string Name { get; set; }
 
         [JsonPropertyName("box_art_url")]
-        public Uri BoxArtUri { get; set; }
+        public string BoxArtUrl { get; set; }
+
+        [JsonIgnore]
+        public Uri BoxArtUri => string.IsNullOrEmpty(BoxArtUrl) ? null : new Uri(BoxArtUrl);
     }
 }

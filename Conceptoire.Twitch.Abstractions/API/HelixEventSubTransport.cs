@@ -9,7 +9,10 @@ namespace Conceptoire.Twitch.API
         public string Method { get; set; }
 
         [JsonPropertyName("callback")]
-        public Uri Callback { get; set; }
+        public string Callback { get; set; }
+
+        [JsonIgnore]
+        public Uri CallbackUri => string.IsNullOrEmpty(Callback) ? null : new Uri(Callback);
 
         /// <summary>
         /// Only outgoing

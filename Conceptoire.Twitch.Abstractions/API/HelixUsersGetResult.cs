@@ -24,10 +24,16 @@ namespace Conceptoire.Twitch.API
         public string Description { get; set; }
 
         [JsonPropertyName("profile_image_url")]
-        public Uri ProfileImageUrl { get; set; }
+        public string ProfileImageUrl { get; set; }
+
+        [JsonIgnore]
+        public Uri ProfileImageUri => string.IsNullOrEmpty(ProfileImageUrl) ? null : new Uri(ProfileImageUrl);
 
         [JsonPropertyName("offline_image_url")]
-        public Uri OfflineImageUrl { get; set; }
+        public string OfflineImageUrl { get; set; }
+
+        [JsonIgnore]
+        public Uri OfflineImageUri => string.IsNullOrEmpty(OfflineImageUrl) ? null : new Uri(OfflineImageUrl);
 
         [JsonPropertyName("view_count")]
         public long ViewCount { get; set; }

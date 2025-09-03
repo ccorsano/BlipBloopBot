@@ -44,7 +44,10 @@ namespace Conceptoire.Twitch.API
         public string Language { get; set; }
 
         [JsonPropertyName("thumbnail_url")]
-        public Uri ThumbnailUrl { get; set; }
+        public string ThumbnailUrl { get; set; }
+
+        [JsonIgnore]
+        public Uri ThumbnailUri => string.IsNullOrEmpty(ThumbnailUrl) ? null : new Uri(ThumbnailUrl);
 
         [JsonPropertyName("is_mature")]
         public bool IsMature { get; set; }

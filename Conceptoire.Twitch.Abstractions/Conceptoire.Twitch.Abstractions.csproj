@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>Conceptoire.Twitch</RootNamespace>
-    <Version>0.1.4</Version>
+    <Version>1.0.0</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/ccorsano/BlipBloopBot</RepositoryUrl>
@@ -12,6 +12,7 @@
     <Authors>Christian Corsano</Authors>
     <PackageProjectUrl>https://github.com/ccorsano/BlipBloopBot</PackageProjectUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
+	<LangVersion>10</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

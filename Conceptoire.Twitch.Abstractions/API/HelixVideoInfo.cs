@@ -37,7 +37,10 @@ namespace Conceptoire.Twitch.API
         public DateTimeOffset PublishedAt { get; set; }
 
         [JsonPropertyName("url")]
-        public Uri Url { get; set; }
+        public string Url { get; set; }
+
+        [JsonIgnore]
+        public Uri Uri => string.IsNullOrEmpty(Url) ? null : new Uri(Url);
 
         [JsonPropertyName("thumbnail_url")]
         public string ThumbnailUrl { get; set; }

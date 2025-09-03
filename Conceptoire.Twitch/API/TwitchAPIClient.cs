@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using static Conceptoire.Twitch.Constants.TwitchConstants;
@@ -46,7 +47,7 @@ namespace Conceptoire.Twitch.API
         public async Task<HelixEventSubSubscriptionData> CreateEventSubSubscription(HelixEventSubSubscriptionCreateRequest request, CancellationToken cancellationToken = default)
         {
             var uri = "https://api.twitch.tv/helix/eventsub/subscriptions";
-            var jsonContent = JsonContent.Create(request);
+            var jsonContent = JsonContent.Create(request, HelixJsonContext.Default.HelixEventSubSubscriptionCreateRequest);
             jsonContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
             var jsonMessage = new HttpRequestMessage(HttpMethod.Post, uri)
             {
@@ -57,7 +58,7 @@ namespace Conceptoire.Twitch.API
             var result = await _httpClient.SendAsync(jsonMessage, cancellationToken);
             result.EnsureSuccessStatusCode();
 
-            var response = await JsonSerializer.DeserializeAsync<HelixEventSubSubscriptionsListReponse>(await result.Content.ReadAsStreamAsync());
+            var response = await JsonSerializer.DeserializeAsync(await result.Content.ReadAsStreamAsync(), HelixJsonContext.Default.HelixEventSubSubscriptionsListReponse);
             return response.Data[0];
         }
 
@@ -72,7 +73,7 @@ namespace Conceptoire.Twitch.API
             {
                 return null;
             }
-            return await JsonSerializer.DeserializeAsync<HelixValidateTokenResponse>(await result.Content.ReadAsStreamAsync());
+            return await JsonSerializer.DeserializeAsync<HelixValidateTokenResponse>(await result.Content.ReadAsStreamAsync(), HelixJsonContext.Default.HelixValidateTokenResponse);
         }
 
         public async Task DeleteEventSubSubscription(string subscriptionId, CancellationToken cancellationToken = default)
@@ -95,7 +96,7 @@ namespace Conceptoire.Twitch.API
             {
                 uri = QueryHelpers.AddQueryString(uri, "status", GetEventSubStatusString(status.Value));
             }
-            return EnumerateHelixAPIAsync<HelixEventSubSubscriptionsListReponse, HelixEventSubSubscriptionData>(uri, cancellationToken);
+            return EnumerateHelixAPIAsync<HelixEventSubSubscriptionsListReponse, HelixEventSubSubscriptionData>(uri, HelixJsonContext.Default.HelixEventSubSubscriptionsListReponse, cancellationToken);
         }
 
         public Task<HelixUsersGetResult[]> GetUsersByLoginAsync(IEnumerable<string> logins, CancellationToken cancellationToken = default)
@@ -187,7 +188,7 @@ namespace Conceptoire.Twitch.API
         public IAsyncEnumerable<HelixGetStreamsEntry> EnumerateStreamsAsync(CancellationToken cancellationToken = default)
         {
             var baseUri = "https://api.twitch.tv/helix/streams";
-            return EnumerateHelixAPIAsync<HelixGetStreamsEntry>(baseUri);
+            return EnumerateHelixAPIAsync(baseUri, HelixJsonContext.Default.HelixPaginatedResponseHelixGetStreamsEntry, cancellationToken);
         }
 
         public IAsyncEnumerable<HelixCategoriesSearchEntry> EnumerateTwitchCategoriesAsync(CancellationToken cancellationToken = default)
@@ -197,7 +198,7 @@ namespace Conceptoire.Twitch.API
         {
             var baseUri = "https://api.twitch.tv/helix/search/categories";
             baseUri = QueryHelpers.AddQueryString(baseUri, "query", query);
-            return EnumerateHelixAPIAsync<HelixCategoriesSearchEntry>(baseUri);
+            return EnumerateHelixAPIAsync(baseUri, HelixJsonContext.Default.HelixPaginatedResponseHelixCategoriesSearchEntry, cancellationToken);
         }
 
         public IAsyncEnumerable<HelixVideoInfo> EnumerateTwitchChannelVideosAsync(string channelId, string videoType = null, CancellationToken cancellationToken = default)
@@ -208,7 +209,7 @@ namespace Conceptoire.Twitch.API
             {
                 baseUri = QueryHelpers.AddQueryString(baseUri, "type", videoType);
             }
-            return EnumerateHelixAPIAsync<HelixVideoInfo>(baseUri);
+            return EnumerateHelixAPIAsync(baseUri, HelixJsonContext.Default.HelixPaginatedResponseHelixVideoInfo, cancellationToken);
         }
 
         public IAsyncEnumerable<HelixClip> EnumerateTwitchChannelClipsAsync(string channelId, DateTime? startedAt = null, DateTime? endedAt = null, CancellationToken cancellationToken = default)
@@ -223,13 +224,13 @@ namespace Conceptoire.Twitch.API
             {
                 baseUri = $"{baseUri}&ended_at={endedAt.Value.ToString("yyyy-MM-dd'T'HH:mm:ssZ")}";
             }
-            return EnumerateHelixAPIAsync<HelixClip>(baseUri);
+            return EnumerateHelixAPIAsync(baseUri, HelixJsonContext.Default.HelixPaginatedResponseHelixClip, cancellationToken);
         }
 
         public IAsyncEnumerable<HelixCategoriesSearchEntry> EnumerateTopGamesAsync(CancellationToken cancellationToken = default)
         {
             var baseUri = "https://api.twitch.tv/helix/games/top";
-            return EnumerateHelixAPIAsync<HelixCategoriesSearchEntry>(baseUri);
+            return EnumerateHelixAPIAsync(baseUri, HelixJsonContext.Default.HelixPaginatedResponseHelixCategoriesSearchEntry, cancellationToken);
         }
 
         public async Task<HelixCategoriesSearchEntry[]> GetGamesInfo(string[] categoryIds, CancellationToken cancellationToken = default)
@@ -283,19 +284,19 @@ namespace Conceptoire.Twitch.API
         {
             var baseUri = "https://api.twitch.tv/helix/moderation/moderators";
             baseUri = QueryHelpers.AddQueryString(baseUri, "broadcaster_id", broadcasterId);
-            return EnumerateHelixAPIAsync<HelixChannelModerator>(baseUri);
+            return EnumerateHelixAPIAsync(baseUri, HelixJsonContext.Default.HelixPaginatedResponseHelixChannelModerator, cancellationToken);
         }
 
         public IAsyncEnumerable<HelixExtensionLiveChannel> EnumerateExtensionLiveChannelsAsync(string extensionId, CancellationToken cancellationToken = default)
         {
             var baseUri = "https://api.twitch.tv/helix/extensions/live";
             baseUri = QueryHelpers.AddQueryString(baseUri, "extension_id", extensionId);
-            return EnumerateHelixAPIAsync<HelixExtensionLiveChannel>(baseUri);
+            return EnumerateHelixAPIAsync(baseUri, HelixJsonContext.Default.HelixPaginatedResponseHelixExtensionLiveChannel, cancellationToken);
         }
 
-        private IAsyncEnumerable<TEntry> EnumerateHelixAPIAsync<TEntry>(string baseUri, CancellationToken cancellationToken = default)
+        private IAsyncEnumerable<TEntry> EnumerateHelixAPIAsync<TEntry>(string baseUri, JsonTypeInfo<HelixPaginatedResponse<TEntry>> typeInfo, CancellationToken cancellationToken = default)
             where TEntry : class
-            => EnumerateHelixAPIAsync<HelixPaginatedResponse<TEntry>, TEntry>(baseUri, cancellationToken);
+            => EnumerateHelixAPIAsync<HelixPaginatedResponse<TEntry>, TEntry>(baseUri, typeInfo, cancellationToken);
 
         /// <summary>
         /// Internal generic method to enumerate asynchronously through Twitch Helix responses
@@ -307,7 +308,7 @@ namespace Conceptoire.Twitch.API
         /// <typeparam name="TEntry">Enumeration entry type</typeparam>
         /// <param name="baseUri">Formatted GET Uri, with base arguments in query string</param>
         /// <returns>Async enumeration through the HTTP Get response</returns>
-        private async IAsyncEnumerable<TEntry> EnumerateHelixAPIAsync<TResponse, TEntry>(string baseUri, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        private async IAsyncEnumerable<TEntry> EnumerateHelixAPIAsync<TResponse, TEntry>(string baseUri, JsonTypeInfo<TResponse> typeInfo, [EnumeratorCancellation] CancellationToken cancellationToken = default)
             where TEntry : class
             where TResponse : HelixPaginatedResponse<TEntry>
         {
@@ -330,7 +331,7 @@ namespace Conceptoire.Twitch.API
                 };
                 await _authenticated.AuthenticateMessageAsync(httpMessage, cancellationToken);
                 var result = await _httpClient.SendAsync(httpMessage, cancellationToken);
-                response = await JsonSerializer.DeserializeAsync<HelixPaginatedResponse<TEntry>>(await result.Content.ReadAsStreamAsync(), (JsonSerializerOptions) null, cancellationToken);
+                response = await JsonSerializer.DeserializeAsync(await result.Content.ReadAsStreamAsync(), typeInfo, cancellationToken);
 
                 _logger.LogDebug("Received response from Twitch API, items {responseItems}, pagination cursor {paginationCursor}", response?.Data?.Length, response?.Pagination?.Cursor ?? "not set");
                 if (response.Data != null)
@@ -362,7 +363,7 @@ namespace Conceptoire.Twitch.API
                 Transport = new HelixEventSubTransport
                 {
                     Method = "webhook",
-                    Callback = callback,
+                    Callback = callback.ToString(),
                     Secret = secret,
                 },
                 Version = "1",

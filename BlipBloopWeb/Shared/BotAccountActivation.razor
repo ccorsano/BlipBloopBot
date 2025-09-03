@@ -41,7 +41,7 @@
                     {
                         <MudItem xs="12" sm="6" md="4">
                             <MudCard Class="ma-6">
-                                <MudCardMedia Image="@user.ProfileImageUrl.AbsoluteUri" Title="@user.DisplayName" />
+                                <MudCardMedia Image="@user.ProfileImageUrl" Title="@user.DisplayName" />
                                 <MudCardContent>
                                     <MudText Typo="Typo.h5">@user.DisplayName</MudText>
                                     <MudText Typo="Typo.body1">@user.Description</MudText>
@@ -71,7 +71,7 @@
                     {
                         <MudItem xs="6" sm="4" md="3">
                             <MudCard>
-                                <MudCardMedia Image="@channel.ProfileImageUrl.AbsoluteUri" Title="@channel.DisplayName" />
+                                <MudCardMedia Image="@channel.ProfileImageUrl" Title="@channel.DisplayName" />
                                 <MudCardContent>
                                     <MudText Typo="Typo.h5">@channel.DisplayName</MudText>
                                     <MudText Typo="Typo.body2">@channel.Description</MudText>

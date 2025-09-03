@@ -13,10 +13,13 @@ namespace Conceptoire.Twitch.API
         public string Id { get; set; }
 
         [JsonPropertyName("url")]
-        public Uri Url { get; set; }
+        public string Url { get; set; }
 
         [JsonPropertyName("embed_url")]
-        public Uri EmbedUrl { get; set; }
+        public string EmbedUrl { get; set; }
+
+        [JsonIgnore]
+        public Uri EmbedUri => string.IsNullOrEmpty(EmbedUrl) ? null : new Uri(EmbedUrl);
 
         [JsonPropertyName("broadcaster_id")]
         public string BroadcasterId { get; set; }
@@ -49,7 +52,10 @@ namespace Conceptoire.Twitch.API
         public DateTimeOffset CreatedAt { get; set; }
 
         [JsonPropertyName("thumbnail_url")]
-        public Uri ThumbnailUrl { get; set; }
+        public string ThumbnailUrl { get; set; }
+
+        [JsonIgnore]
+        public Uri ThumbnailUri => string.IsNullOrEmpty(ThumbnailUrl) ? null : new Uri(ThumbnailUrl);
 
         [JsonPropertyName("duration")]
         public double Duration { get; set; }

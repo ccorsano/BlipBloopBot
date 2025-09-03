@@ -21,5 +21,5 @@ namespace Conceptoire.Twitch
     }
 
     [JsonSerializable(typeof(TwitchOAuthTokenResponse))]
-    internal partial class TwitchOAuthTokenResponseContext : JsonSerializerContext { }
+    internal sealed partial class TwitchOAuthTokenResponseContext : JsonSerializerContext { }
 }

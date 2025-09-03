@@ -27,7 +27,10 @@ namespace Conceptoire.Twitch.API
         public Guid[] TagsIds { get; set; }
 
         [JsonPropertyName("thumbnail_url")]
-        public Uri ThumbnailUrl { get; set; }
+        public string ThumbnailUrl { get; set; }
+
+        [JsonIgnore]
+        public Uri ThumbnailUri => string.IsNullOrEmpty(ThumbnailUrl) ? null : new Uri(ThumbnailUrl);
 
         [JsonPropertyName("title")]
         public string Title { get; set; }
