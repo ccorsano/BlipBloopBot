@@ -66,7 +66,7 @@ namespace Conceptoire.Twitch.Authentication
             message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _oauthToken);
 
             var result = await _httpClient.SendAsync(message, cancellationToken);
-            var response = await JsonSerializer.DeserializeAsync<HelixValidateTokenResponse>(await result.Content.ReadAsStreamAsync());
+            var response = await JsonSerializer.DeserializeAsync(await result.Content.ReadAsStreamAsync(), HelixJsonContext.Default.HelixValidateTokenResponse);
 
             if (response.ExpiresIn < 0)
             {

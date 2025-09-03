@@ -9,8 +9,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipelines;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using static Conceptoire.Twitch.Constants.TwitchConstants;
 
@@ -161,68 +163,68 @@ namespace Conceptoire.Twitch.EventSub
 
         private TwitchEventSubCallbackPayload ReadPayload(string type, ReadOnlySequence<byte> data) => type switch
         {
-            EventSubTypes.ChannelBan => ReadPayloadAsync<TwitchEventSubChannelBanEvent>(data),
-            EventSubTypes.ChannelCheer => ReadPayloadAsync<TwitchEventSubChannelCheerEvent>(data),
-            EventSubTypes.ChannelCustomRewardAdd => ReadPayloadAsync<TwitchEventSubChannelPointsCustomRewardDefinitionEvent>(data),
-            EventSubTypes.ChannelCustomRewardUpdate => ReadPayloadAsync<TwitchEventSubChannelPointsCustomRewardDefinitionEvent>(data),
-            EventSubTypes.ChannelCustomRewardRemove => ReadPayloadAsync<TwitchEventSubChannelPointsCustomRewardDefinitionEvent>(data),
-            EventSubTypes.ChannelCustomRewardRedemptionAdd => ReadPayloadAsync<TwitchEventSubChannelPointsCustomRewardRedemptionEvent>(data),
-            EventSubTypes.ChannelCustomRewardRedemptionUpdate => ReadPayloadAsync<TwitchEventSubChannelPointsCustomRewardRedemptionEvent>(data),
-            EventSubTypes.ChannelCustomRewardRedemptionRemove => ReadPayloadAsync<TwitchEventSubChannelPointsCustomRewardRedemptionEvent>(data),
-            EventSubTypes.ChannelFollow => ReadPayloadAsync<TwitchEventSubChannelFollowEvent>(data),
-            EventSubTypes.ChannelModAdd => ReadPayloadAsync<TwitchEventSubChannelModAddEvent>(data),
-            EventSubTypes.ChannelModRemove => ReadPayloadAsync<TwitchEventSubChannelModRemoveEvent>(data),
-            EventSubTypes.ChannelRaid => ReadPayloadAsync<TwitchEventSubChannelRaidEvent>(data),
-            EventSubTypes.ChannelSubscribe => ReadPayloadAsync<TwitchEventSubChannelSubscribeEvent>(data),
-            EventSubTypes.ChannelUnban => ReadPayloadAsync<TwitchEventSubChannelUnbanEvent>(data),
-            EventSubTypes.ChannelUpdate => ReadPayloadAsync<TwitchEventSubChannelUpdateEvent>(data),
-            EventSubTypes.HypeTrainBegin => ReadPayloadAsync<TwitchEventSubHypeTrainBeginEvent>(data),
-            EventSubTypes.HypeTrainEnd => ReadPayloadAsync<TwitchEventSubHypeTrainEndEvent>(data),
-            EventSubTypes.HypeTrainProgress => ReadPayloadAsync<TwitchEventSubHypeTrainProgressEvent>(data),
-            EventSubTypes.StreamOffline => ReadPayloadAsync<TwitchEventSubStreamOfflineEvent>(data),
-            EventSubTypes.StreamOnline => ReadPayloadAsync<TwitchEventSubStreamOnlineEvent>(data),
-            EventSubTypes.UserRevoke => ReadPayloadAsync<TwitchEventSubUserRevokeEvent>(data),
-            EventSubTypes.UserUpdate => ReadPayloadAsync<TwitchEventSubUserUpdateEvent>(data),
+            EventSubTypes.ChannelBan => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelBanEvent),
+            EventSubTypes.ChannelCheer => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelCheerEvent),
+            EventSubTypes.ChannelCustomRewardAdd => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelPointsCustomRewardDefinitionEvent),
+            EventSubTypes.ChannelCustomRewardUpdate => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelPointsCustomRewardDefinitionEvent),
+            EventSubTypes.ChannelCustomRewardRemove => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelPointsCustomRewardDefinitionEvent),
+            EventSubTypes.ChannelCustomRewardRedemptionAdd => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelPointsCustomRewardRedemptionEvent),
+            EventSubTypes.ChannelCustomRewardRedemptionUpdate => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelPointsCustomRewardRedemptionEvent),
+            EventSubTypes.ChannelCustomRewardRedemptionRemove => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelPointsCustomRewardRedemptionEvent),
+            EventSubTypes.ChannelFollow => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelFollowEvent),
+            EventSubTypes.ChannelModAdd => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelModAddEvent),
+            EventSubTypes.ChannelModRemove => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelModRemoveEvent),
+            EventSubTypes.ChannelRaid => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelRaidEvent),
+            EventSubTypes.ChannelSubscribe => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelSubscribeEvent),
+            EventSubTypes.ChannelUnban => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelUnbanEvent),
+            EventSubTypes.ChannelUpdate => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelUpdateEvent),
+            EventSubTypes.HypeTrainBegin => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubHypeTrainBeginEvent),
+            EventSubTypes.HypeTrainEnd => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubHypeTrainEndEvent),
+            EventSubTypes.HypeTrainProgress => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubHypeTrainProgressEvent),
+            EventSubTypes.StreamOffline => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubStreamOfflineEvent),
+            EventSubTypes.StreamOnline => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubStreamOnlineEvent),
+            EventSubTypes.UserRevoke => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubUserRevokeEvent),
+            EventSubTypes.UserUpdate => ReadPayloadAsync(data, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubUserUpdateEvent),
             _ => throw new NotImplementedException()
         };
 
         private async Task<TwitchEventSubCallbackPayload> ReadPayloadAsync(string type, Stream stream) => type switch
         {
-            EventSubTypes.ChannelBan => await ReadPayloadAsync<TwitchEventSubChannelBanEvent>(stream),
-            EventSubTypes.ChannelCheer => await ReadPayloadAsync<TwitchEventSubChannelCheerEvent>(stream),
-            EventSubTypes.ChannelCustomRewardAdd => await ReadPayloadAsync<TwitchEventSubChannelPointsCustomRewardDefinitionEvent>(stream),
-            EventSubTypes.ChannelCustomRewardUpdate => await ReadPayloadAsync<TwitchEventSubChannelPointsCustomRewardDefinitionEvent>(stream),
-            EventSubTypes.ChannelCustomRewardRemove => await ReadPayloadAsync<TwitchEventSubChannelPointsCustomRewardDefinitionEvent>(stream),
-            EventSubTypes.ChannelCustomRewardRedemptionAdd => await ReadPayloadAsync<TwitchEventSubChannelPointsCustomRewardRedemptionEvent>(stream),
-            EventSubTypes.ChannelCustomRewardRedemptionUpdate => await ReadPayloadAsync<TwitchEventSubChannelPointsCustomRewardRedemptionEvent>(stream),
-            EventSubTypes.ChannelCustomRewardRedemptionRemove => await ReadPayloadAsync<TwitchEventSubChannelPointsCustomRewardRedemptionEvent>(stream),
-            EventSubTypes.ChannelFollow => await ReadPayloadAsync<TwitchEventSubChannelFollowEvent>(stream),
-            EventSubTypes.ChannelModAdd => await ReadPayloadAsync<TwitchEventSubChannelModAddEvent>(stream),
-            EventSubTypes.ChannelModRemove => await ReadPayloadAsync<TwitchEventSubChannelModRemoveEvent>(stream),
-            EventSubTypes.ChannelRaid => await ReadPayloadAsync<TwitchEventSubChannelRaidEvent>(stream),
-            EventSubTypes.ChannelSubscribe => await ReadPayloadAsync<TwitchEventSubChannelSubscribeEvent>(stream),
-            EventSubTypes.ChannelUnban => await ReadPayloadAsync<TwitchEventSubChannelUnbanEvent>(stream),
-            EventSubTypes.ChannelUpdate => await ReadPayloadAsync<TwitchEventSubChannelUpdateEvent>(stream),
-            EventSubTypes.HypeTrainBegin => await ReadPayloadAsync<TwitchEventSubHypeTrainBeginEvent>(stream),
-            EventSubTypes.HypeTrainEnd => await ReadPayloadAsync<TwitchEventSubHypeTrainEndEvent>(stream),
-            EventSubTypes.HypeTrainProgress => await ReadPayloadAsync<TwitchEventSubHypeTrainProgressEvent>(stream),
-            EventSubTypes.StreamOffline => await ReadPayloadAsync<TwitchEventSubStreamOfflineEvent>(stream),
-            EventSubTypes.StreamOnline => await ReadPayloadAsync<TwitchEventSubStreamOnlineEvent>(stream),
-            EventSubTypes.UserRevoke => await ReadPayloadAsync<TwitchEventSubUserRevokeEvent>(stream),
-            EventSubTypes.UserUpdate => await ReadPayloadAsync<TwitchEventSubUserUpdateEvent>(stream),
+            EventSubTypes.ChannelBan => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelBanEvent),
+            EventSubTypes.ChannelCheer => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelCheerEvent),
+            EventSubTypes.ChannelCustomRewardAdd => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelPointsCustomRewardDefinitionEvent),
+            EventSubTypes.ChannelCustomRewardUpdate => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelPointsCustomRewardDefinitionEvent),
+            EventSubTypes.ChannelCustomRewardRemove => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelPointsCustomRewardDefinitionEvent),
+            EventSubTypes.ChannelCustomRewardRedemptionAdd => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelPointsCustomRewardRedemptionEvent),
+            EventSubTypes.ChannelCustomRewardRedemptionUpdate => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelPointsCustomRewardRedemptionEvent),
+            EventSubTypes.ChannelCustomRewardRedemptionRemove => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelPointsCustomRewardRedemptionEvent),
+            EventSubTypes.ChannelFollow => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelFollowEvent),
+            EventSubTypes.ChannelModAdd => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelModAddEvent),
+            EventSubTypes.ChannelModRemove => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelModRemoveEvent),
+            EventSubTypes.ChannelRaid => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelRaidEvent),
+            EventSubTypes.ChannelSubscribe => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelSubscribeEvent),
+            EventSubTypes.ChannelUnban => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelUnbanEvent),
+            EventSubTypes.ChannelUpdate => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubChannelUpdateEvent),
+            EventSubTypes.HypeTrainBegin => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubHypeTrainBeginEvent),
+            EventSubTypes.HypeTrainEnd => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubHypeTrainEndEvent),
+            EventSubTypes.HypeTrainProgress => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubHypeTrainProgressEvent),
+            EventSubTypes.StreamOffline => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubStreamOfflineEvent),
+            EventSubTypes.StreamOnline => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubStreamOnlineEvent),
+            EventSubTypes.UserRevoke => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubUserRevokeEvent),
+            EventSubTypes.UserUpdate => await ReadPayloadAsync(stream, TwitchEventSubJsonContext.Default.TwitchEventSubCallbackPayloadTwitchEventSubUserUpdateEvent),
             _ => throw new NotImplementedException()
         };
 
-        private TwitchEventSubCallbackPayload<TEventSub> ReadPayloadAsync<TEventSub>(ReadOnlySequence<byte> data) where TEventSub : TwitchEventSubEvent
+        private TwitchEventSubCallbackPayload<TEventSub> ReadPayloadAsync<TEventSub>(ReadOnlySequence<byte> data, JsonTypeInfo<TwitchEventSubCallbackPayload<TEventSub>> typeInfo) where TEventSub : TwitchEventSubEvent
         {
-            var payload = JsonSerializer.Deserialize<TwitchEventSubCallbackPayload<TEventSub>>(data.FirstSpan);
+            var payload = JsonSerializer.Deserialize(data.FirstSpan, typeInfo);
             payload.BaseEvent = payload.Event;
             return payload;
         }
 
-        private async Task<TwitchEventSubCallbackPayload<TEventSub>> ReadPayloadAsync<TEventSub>(Stream stream) where TEventSub : TwitchEventSubEvent
+        private async Task<TwitchEventSubCallbackPayload<TEventSub>> ReadPayloadAsync<TEventSub>(Stream stream, JsonTypeInfo<TwitchEventSubCallbackPayload<TEventSub>> typeInfo) where TEventSub : TwitchEventSubEvent
         {
-            var payload = await JsonSerializer.DeserializeAsync<TwitchEventSubCallbackPayload<TEventSub>>(stream);
+            var payload = await JsonSerializer.DeserializeAsync(stream, typeInfo);
             payload.BaseEvent = payload.Event;
             return payload;
         }

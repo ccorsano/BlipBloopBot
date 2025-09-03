@@ -25,7 +25,7 @@ namespace Conceptoire.Twitch.API
 
         public override void Write(Utf8JsonWriter writer, HelixResponsePagination value, JsonSerializerOptions options)
         {
-            JsonSerializer.Serialize(writer, value, typeof(HelixResponsePagination), options);
+            JsonSerializer.Serialize(writer, value, HelixResponsePaginationInnerContext.Default.HelixResponsePaginationInner);
         }
     }
 

@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading.Tasks;
 using Conceptoire.Twitch.Commands;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Conceptoire.Twitch.Extensions
 {
@@ -17,7 +18,7 @@ namespace Conceptoire.Twitch.Extensions
         /// <param name="services">Builder instance</param>
         /// <param name="name">Name of the command</param>
         /// <returns></returns>
-        public static IServiceCollection AddCommand<TMessageProcessor>(this IServiceCollection services, string name)
+        public static IServiceCollection AddCommand<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TMessageProcessor>(this IServiceCollection services, string name)
             where TMessageProcessor : class, IMessageProcessor
             => AddCommand<TMessageProcessor>(services, new CommandMetadata { Name = name });
 
@@ -28,7 +29,7 @@ namespace Conceptoire.Twitch.Extensions
         /// <param name="services">Builder instance</param>
         /// <param name="metadata">Name and description of the command</param>
         /// <returns></returns>
-        public static IServiceCollection AddCommand<TMessageProcessor>(this IServiceCollection services, CommandMetadata metadata)
+        public static IServiceCollection AddCommand<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TMessageProcessor>(this IServiceCollection services, CommandMetadata metadata)
             where TMessageProcessor : class, IMessageProcessor
         {
             services.AddSingleton<TMessageProcessor>();
